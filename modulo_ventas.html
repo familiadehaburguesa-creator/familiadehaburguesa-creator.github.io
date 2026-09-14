@@ -1,0 +1,3004 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- PWA · Familia de Hamburguesa · instalable como app -->
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icons/favicon.ico" sizes="32x32">
+<link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FDH">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="application-name" content="Familia de Hamburguesa">
+<!-- /PWA -->
+<title>Ventas · Familia de Hamburguesa</title>
+<style>
+  :root{
+    --fondo:#17110e; --panel:#221913; --panel2:#2b1f17; --borde:#3a2b21;
+    --texto:#f6efe9; --suave:#b3a294; --tenue:#7d6d61;
+    --marca:#e0752c; --marca2:#c25a16;
+    --verde:#3f9e6a; --verdeF:#173026;
+    --rojo:#d9534f; --rojoF:#331a19;
+    --ambar:#d9a441; --ambarF:#332a17;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{
+    margin:0;background:var(--fondo);color:var(--texto);
+    font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    padding:12px 12px 28px;
+  }
+  .wrap{max-width:560px;margin:0 auto}
+  h1{font-size:19px;margin:0;font-weight:700}
+  .sub{font-size:12.5px;color:var(--suave);margin-top:2px}
+
+  .top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+  .volver{
+    flex:none;height:36px;padding:0 14px;border-radius:9px;background:transparent;
+    border:1px solid var(--borde);color:var(--suave);font:inherit;font-size:13.5px;
+    text-decoration:none;display:inline-flex;align-items:center;cursor:pointer;
+  }
+
+  .caja{background:var(--panel);border:1px solid var(--borde);border-radius:13px;padding:14px;margin-bottom:12px}
+  .caja h2{font-size:12px;text-transform:uppercase;letter-spacing:.8px;color:var(--suave);margin:0 0 10px;font-weight:700;
+           display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .refrescar{
+    flex:none;background:transparent;border:1px solid var(--borde);border-radius:8px;
+    color:var(--suave);font:inherit;font-size:11px;text-transform:none;letter-spacing:0;
+    padding:4px 10px;cursor:pointer;font-weight:600;
+  }
+
+  /* --- KPIs --- */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .kpis.dos{grid-template-columns:repeat(2,1fr)}
+  /* Los importes son largos por naturaleza: $1.250.000 no entra en una cuarta
+     parte del ancho. La plata va siempre de a dos por fila. */
+  #kpiCaja,#kpiVentas{grid-template-columns:repeat(2,1fr)}
+  /* HU3: cada grupo cierra con su total, que ocupa la fila entera. Es el
+     número que se mira primero: cuánto hay que rendir, y cuánto se vendió. */
+  .grupo{margin-bottom:14px}
+  .grupo:last-child{margin-bottom:0}
+  .grupoT{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+          color:var(--suave);margin-bottom:7px}
+  .kpi.total,.kpi.ancho{grid-column:1 / -1}
+  /* El total ocupa la fila entera, así que en vez de apilar número y etiqueta
+     los pone uno a cada lado: se lee como el renglón de cierre de una cuenta,
+     no como otra tarjeta más. */
+  .kpi.total{background:#241a0c;border-color:var(--marca);
+             display:flex;align-items:baseline;justify-content:space-between;
+             gap:12px;text-align:left;padding:11px 14px;flex-wrap:wrap}
+  .kpi.total .n{color:var(--marca);font-size:22px;height:auto;justify-content:flex-start}
+  .kpi.total .n.largo{font-size:19px}
+  .kpi.total .n.xlargo{font-size:16px}
+  .kpi.total .t{color:#e8d3a8;font-size:12.5px;margin-top:0;text-align:right}
+  .kpi.total .b{margin-top:0;font-size:11px;font-weight:600;width:100%;text-align:right}
+  /* El stock son cinco: carnes, los dos panes, barras y packs de cheddar.
+     En cuatro columnas la quinta caía sola en una fila nueva. */
+  #kpiStock{grid-template-columns:repeat(5,1fr)}
+  /* min-width:0 es lo que permite que una celda de grid se achique por debajo
+     de su contenido. Sin esto la última tarjeta se sale de la caja. */
+  .kpi{background:var(--panel2);border:1px solid var(--borde);border-radius:10px;
+       padding:9px 8px;text-align:center;min-width:0;overflow:hidden}
+  /* Alto fijo de la linea del numero: si una tarjeta muestra $0 y la de al
+     lado $12.500.000, la fuente cambia de tamano pero la tarjeta no. Sin esto
+     las cuatro quedaban de distinta altura. */
+  .kpi .n{font-size:20px;font-weight:800;line-height:1.1;font-variant-numeric:tabular-nums;
+          white-space:nowrap;height:25px;display:flex;align-items:center;justify-content:center}
+  /* La cifra se achica sola cuando es larga, en vez de cortarse. */
+  .kpi .n.largo{font-size:17px}
+  .kpi .n.xlargo{font-size:14.5px;letter-spacing:-.2px}
+  .kpi .t, .kpi .b{overflow-wrap:anywhere}
+  .kpi .t{font-size:12px;color:var(--suave);margin-top:4px;line-height:1.25}
+  .kpi .b{font-size:11.5px;color:var(--marca);margin-top:4px;font-weight:700;line-height:1.2}
+  .kpi.rojo .b{color:#f2a6a4}
+  .kpi.rojo{background:var(--rojoF);border-color:var(--rojo)}
+  .kpi.rojo .n{color:#f2a6a4}
+  .kpi.plata .n{color:var(--verde)}
+  .kpi.total.plata .n{color:var(--verde)}
+  @media(max-width:420px){.kpis,#kpiStock{grid-template-columns:repeat(2,1fr)}}
+
+  /* --- Campos --- */
+  label{display:block;font-size:12.5px;color:var(--suave);margin-bottom:5px;font-weight:600}
+  input,select,textarea{
+    width:100%;height:46px;padding:0 12px;background:var(--panel2);
+    border:1px solid var(--borde);border-radius:10px;color:var(--texto);
+    font:inherit;font-size:16px;
+  }
+  textarea{height:70px;padding:10px 12px;resize:vertical}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--marca)}
+  /* Campo de dinero: el $ vive dentro del recuadro, pegado al numero */
+  .conpeso{position:relative}
+  .conpeso span{
+    position:absolute;left:12px;top:50%;transform:translateY(-50%);
+    color:var(--suave);font-size:16px;font-weight:700;pointer-events:none;
+  }
+  .conpeso input{padding-left:28px;font-variant-numeric:tabular-nums}
+  .fila{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+  .campo{margin-bottom:12px}
+  /* HU7: campo obligatorio sin completar */
+  input.error,textarea.error{border-color:var(--rojo);box-shadow:0 0 0 2px var(--rojoF)}
+  .errcampo{color:#f2a6a4;font-size:13.5px;font-weight:700;margin-top:6px}
+  /* HU7: quién y cuándo, puesto por el sistema */
+  .sello{grid-column:1/-1;font-size:13.5px;color:var(--suave);margin:-2px 0 12px;padding:9px 12px;border:1px dashed var(--borde);border-radius:10px}
+  .sello b{color:var(--texto)}
+  .t3{font-size:12.5px;color:var(--suave);margin-top:2px}
+
+  /* --- Botones --- */
+  .btn{
+    width:100%;height:48px;border:none;border-radius:11px;background:var(--marca);
+    color:#fff;font:inherit;font-size:16px;font-weight:700;cursor:pointer;
+    display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  }
+  .btn:active{background:var(--marca2)}
+  .btn[disabled]{opacity:.45;cursor:default}
+  .btn.gris{background:transparent;border:1px solid var(--borde);color:var(--suave);font-weight:600}
+  .btn.verde{background:var(--verde)}
+  .btn.chico{height:42px;font-size:14.5px}
+  .botonera{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .botonera .btn{width:100%}
+  /* En el celular, Cancelar va abajo y lejos del botón verde: no se toca por
+     error. En la compu van al lado, que es donde se gana altura. */
+  .cierre{display:grid;gap:10px}
+  .cierre .btn{width:100%}
+
+  /* --- Productos --- */
+  .prods{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+  .prod{
+    background:var(--panel2);border:1.5px solid var(--borde);border-radius:11px;
+    padding:13px 12px;text-align:left;cursor:pointer;color:var(--texto);font:inherit;
+  }
+  .prod.sel{border-color:var(--marca);background:#33220f}
+  /* HU1: el texto quedaba chico contra el tamaño de la tarjeta. Se sube el
+     cuerpo manteniendo la proporción título/subtexto. */
+  .prod .pn{font-size:17.5px;font-weight:700;line-height:1.2}
+  .prod .pd{font-size:14px;color:var(--suave);margin-top:3px;line-height:1.25}
+  /* Con cinco productos, en el celular la última tarjeta queda sola en su
+     fila: se estira a todo el ancho en vez de dejar el hueco. */
+  .prods .prod:last-child:nth-child(odd){grid-column:1 / -1}
+
+  /* --- Comanda / listas --- */
+  .item{
+    display:flex;align-items:flex-start;justify-content:space-between;gap:10px;
+    padding:10px 0;border-bottom:1px solid var(--borde);
+  }
+  .item:last-child{border-bottom:none}
+  .item .izq{min-width:0}
+  .item .t1{font-size:14px;font-weight:600}
+  .item .t2{font-size:12px;color:var(--suave);margin-top:2px}
+  .item .der{flex:none;text-align:right;font-variant-numeric:tabular-nums}
+  .item .monto{font-size:14.5px;font-weight:700}
+  .quitar{background:none;border:none;color:var(--rojo);font:inherit;font-size:12px;cursor:pointer;padding:4px 0 0}
+
+  .total{display:flex;align-items:baseline;justify-content:space-between;margin-top:12px;padding-top:12px;border-top:1px solid var(--borde)}
+  .total .et{font-size:13px;color:var(--suave)}
+  .total .nu{font-size:24px;font-weight:800;font-variant-numeric:tabular-nums}
+
+  /* --- Avisos --- */
+  .aviso{border-radius:10px;padding:11px 13px;font-size:13px;margin-bottom:12px;line-height:1.4}
+  .aviso.rojo{background:var(--rojoF);border:1px solid var(--rojo);color:#f2a6a4}
+  .aviso.ambar{background:var(--ambarF);border:1px solid var(--ambar);color:#f0cf94}
+  .aviso.verde{background:var(--verdeF);border:1px solid var(--verde);color:#96d9b5}
+  .aviso.info{background:var(--panel2);border:1px solid var(--borde);color:var(--suave)}
+
+  /* --- Cobro repartido (BLOQUE B) --- */
+  .vias{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+  /* HU5: quedaron tres campos. El último, si cae solo en su fila, se estira
+     en vez de dejar el hueco. */
+  .vias .via:last-child:nth-child(odd){grid-column:1 / -1}
+  .via label{font-size:12px}
+  .marcador{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    border-radius:10px;padding:11px 13px;font-size:13.5px;font-weight:600;margin-bottom:12px;
+  }
+  .marcador .n{font-variant-numeric:tabular-nums;font-size:16px;font-weight:800}
+  .marcador.ok{background:var(--verdeF);border:1px solid var(--verde);color:#96d9b5}
+  .marcador.mal{background:var(--rojoF);border:1px solid var(--rojo);color:#f2a6a4}
+
+  /* --- Checklist cierre --- */
+  .check{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--borde);cursor:pointer}
+  .check:last-of-type{border-bottom:none}
+  .check input{width:22px;height:22px;flex:none;accent-color:var(--marca)}
+  .check span{font-size:14px}
+
+  .pill{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;
+        padding:3px 8px;border-radius:20px;background:rgba(179,162,148,.16);color:var(--suave);margin-left:6px}
+  .pill.deuda{background:var(--rojoF);color:#f2a6a4}
+  .pill.ok{background:var(--verdeF);color:#96d9b5}
+  .pill.revisar{background:var(--ambarF);color:#f0cf94}
+
+  /* Cada deuda de la lista es un boton: se toca y se cobra. */
+  .deudaClic{cursor:pointer;border-radius:9px;margin:0 -6px;padding-left:6px;padding-right:6px}
+  .deudaClic:hover{background:var(--panel2)}
+  .deudaClic .linkcal{margin-top:4px}
+
+  .linkcal{
+    display:inline-block;margin-top:7px;font-size:12px;color:var(--marca);
+    text-decoration:none;border-bottom:1px solid rgba(224,117,44,.4);padding-bottom:1px;
+  }
+  /* --- Calendario propio --- */
+  .mesnav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+  .mesnom{font-size:15.5px;font-weight:700}
+  .flecha{
+    flex:none;width:40px;height:40px;border-radius:10px;background:var(--panel2);
+    border:1px solid var(--borde);color:var(--texto);font:inherit;font-size:20px;cursor:pointer;line-height:1;
+  }
+  .dow{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px}
+  .dow span{text-align:center;font-size:11px;color:var(--tenue);font-weight:700}
+  .mes{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+  .dia{
+    position:relative;aspect-ratio:1;border-radius:9px;background:var(--panel2);
+    border:1px solid transparent;color:var(--texto);font:inherit;font-size:13.5px;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;
+  }
+  .dia.fuera{background:transparent;color:var(--tenue);opacity:.35;cursor:default}
+  .dia.hoy{border-color:var(--suave);font-weight:800}
+  .dia.sel{background:var(--marca);color:#fff;font-weight:800}
+  .dia .punto{
+    position:absolute;bottom:5px;left:50%;transform:translateX(-50%);
+    width:5px;height:5px;border-radius:50%;background:var(--marca);
+  }
+  .dia.sel .punto{background:#fff}
+  .vacio{color:var(--tenue);font-size:13px;text-align:center;padding:14px 0}
+  .oculto{display:none !important}
+  .nota{font-size:11.5px;color:var(--tenue);margin-top:6px;line-height:1.4}
+  .hr{height:1px;background:var(--borde);margin:14px 0}
+
+  /* El título del día en el calendario NO es un rótulo fijo: dice QUÉ día
+     estás mirando y cambia al tocar el calendario. Con el gris chiquito del
+     resto de los h2 pasaba desapercibido y no se sabía de qué día eran los
+     pedidos que estabas leyendo. */
+  #tituloDia{
+    font-size:15.5px;text-transform:none;letter-spacing:0;font-weight:800;
+    color:var(--texto);background:var(--panel2);
+    border:1px solid var(--borde);border-left:3px solid var(--marca);
+    border-radius:9px;padding:10px 13px;margin:0 0 12px;
+  }
+
+  /* ===================== ESCRITORIO =====================
+     En el local atienden con una compu. Todo tiene que entrar en la pantalla
+     al 100% de zoom, sin scroll y sin achicar el navegador: en 1366x768 el
+     alto útil real es de unos 600px, así que cada campo se compacta y las
+     listas largas scrollean adentro de su propia caja, nunca la página. */
+  @media (min-width: 900px){
+    body{height:100vh;overflow:hidden;padding:12px 18px 10px}
+    /* Se aprovecha todo el ancho. El tope es alto solo para que en un monitor
+       muy grande el texto no quede en líneas interminables. */
+    .wrap{max-width:2000px;height:100%;display:flex;flex-direction:column;min-height:0}
+    .top{margin-bottom:9px}
+    h1{font-size:18px}
+    section{min-height:0}
+
+    /* Controles más compactos: acá se usa mouse, no el dedo. Bajar 8px por
+       campo es justo lo que hace que la pantalla de cobro entre sin scroll. */
+    .caja{padding:12px 13px;border-radius:12px}
+    .caja h2{font-size:12px;margin-bottom:9px}
+    input,select{height:38px}
+    textarea{height:58px;padding:8px 12px}
+    input,select,textarea{font-size:14.5px}
+    .conpeso span{font-size:14.5px}
+    .conpeso input{padding-left:26px}
+    label{font-size:12px;margin-bottom:4px}
+    .btn{height:42px;font-size:15px}
+    .btn.chico{height:37px;font-size:14px}
+    .campo,.fila,.vias,.prods{margin-bottom:10px}
+    .aviso{padding:9px 12px;font-size:12.5px;margin-bottom:10px}
+    .marcador{padding:9px 12px;margin-bottom:10px}
+    .kpi .n{font-size:20px}
+    #tituloDia{font-size:16px;padding:9px 13px;margin-bottom:11px}
+
+    /* --- Turno: tres columnas --- */
+    #pTurno{display:flex;flex-direction:column;min-height:0;flex:1}
+    #pTurno .tablero{
+      display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;
+      flex:1;min-height:0;align-items:stretch;
+    }
+    #pTurno .col{display:flex;flex-direction:column;gap:11px;min-height:0;max-height:100%;overflow:hidden}
+    #pTurno .col > .caja{margin-bottom:0}
+    /* Las listas que crecen (pedidos y movimientos) se estiran hasta el fondo
+       de su columna: así se ven varios pedidos de una, en vez de dos y media
+       con el resto escondido detrás de un scroll de 130px. */
+    #pTurno .col > .caja:has(#pedidos),
+    #pTurno .col > .caja:has(#movs),
+    #pTurno .col > .caja:has(#deudas){min-height:0;display:flex;flex-direction:column;flex:1}
+    #pedidos, #movs, #deudas{overflow-y:auto;min-height:0}
+    #pTurno #btnCerrar{margin-top:9px}
+
+    /* Las demás pantallas también entran sin scroll */
+    #pApertura, #pVenta, #pCierre, #pIngreso, #pRetiro, #pCobrarDeuda{
+      overflow-y:auto;min-height:0;flex:1;
+    }
+    /* Las pantallas de un solo formulario no necesitan todo el ancho. */
+    #pCobrarDeuda > .caja{max-width:680px}
+    #pApertura{display:grid;grid-template-columns:1fr 1fr;gap:13px;align-items:start}
+    #pVenta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;align-content:start}
+    #pVenta > .caja{margin-bottom:0}
+    #pCierre{display:grid;grid-template-columns:1fr 1fr;gap:13px;align-content:start}
+    #pCierre > .caja{margin-bottom:0}
+
+    /* La caja de cobro es la más alta y es la que empujaba el scroll.
+       Las cuatro formas de pago van en una sola línea, y los datos del que
+       queda debiendo, al lado en vez de abajo. */
+    #cajaCobro .vias{grid-template-columns:repeat(3,minmax(0,1fr))}
+    #cajaDeuda{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+    #cajaDeuda .campo{margin-bottom:0}
+    .cierre{grid-template-columns:1fr auto}
+    .cierre #btnCancelarVenta{width:auto;padding:0 22px}
+
+    /* --- Calendario de pedidos ---
+       El calendario tiene un ancho que le alcanza y no crece más. Todo el
+       espacio que sobra se lo lleva la lista de pedidos, que es lo que
+       realmente se lee. */
+    #pCalendario{
+      display:grid;grid-template-columns:400px minmax(0,1fr);
+      grid-template-rows:minmax(0,1fr) auto;gap:13px;
+      flex:1;min-height:0;overflow:hidden;
+    }
+    #pCalendario > .caja{margin-bottom:0;min-height:0;display:flex;flex-direction:column}
+    #pedidosDia{overflow-y:auto;min-height:0;flex:1}
+    #btnCerrarCalendario{grid-column:1;align-self:start;margin:0}
+    /* Con más aire, cada pedido del día se lee como una ficha y no como
+       renglones apretados. */
+    #pedidosDia .item{padding:12px 0}
+    #pedidosDia .item .t1{font-size:15px}
+    #pedidosDia .item .t2{font-size:12.5px;margin-top:3px}
+  }
+
+  /* Desde 1200px la venta va a tres columnas y el cobro se queda fijo en la
+     de la derecha, de arriba abajo. Es la única caja donde hay que apretar un
+     botón para cerrar la venta: no puede quedar debajo del pliegue. Lo demás
+     se acomoda solo en las dos columnas de la izquierda. */
+  @media (min-width: 1200px){
+    #pVenta{grid-template-columns:repeat(3,minmax(0,1fr));align-items:start}
+    /* La pregunta del tipo de venta se contesta una sola vez, al empezar.
+       Ocupa una banda fina arriba en vez de quedarse con una columna entera
+       vacía debajo, que era espacio muerto en el medio de la pantalla. */
+    #pVenta > .caja:first-child{grid-column:1 / -1}
+    #pVenta > .caja:first-child .botonera{grid-template-columns:repeat(2,230px);margin-bottom:0}
+    #cajaCobro{grid-column:3;grid-row:2 / span 5}
+    #cajaCobro .vias{grid-template-columns:1fr 1fr}
+    /* El cartel "repartí el total" sobra acá: el marcador de abajo ya dice en
+       vivo si la cuenta cierra o cuánto falta. */
+    #cajaCobro > .aviso{display:none}
+
+    /* --- Venta en el Negocio: dos columnas parejas ---
+       Este flujo tiene una caja menos que la entrega de pedido (no existe "qué
+       sale del stock"), así que con tres columnas quedaba una vacía en el
+       medio. A la izquierda todo lo que arma la venta, a la derecha el cobro. */
+    #pVenta.negocio{grid-template-columns:repeat(2,minmax(0,1fr))}
+    #pVenta.negocio #cajaProductos,
+    #pVenta.negocio #cajaComanda{grid-column:1}
+    #pVenta.negocio #cajaCobro{grid-column:2;grid-row:2 / span 4}
+
+    /* Antes de cargar el primer producto no hay nada que cobrar y la columna
+       derecha quedaría vacía. Mientras tanto, elegir qué se lleva ocupa todo
+       el ancho y los seis productos entran en una sola fila. */
+    #pVenta.negocio:has(#cajaComanda.oculto) #cajaProductos{grid-column:1 / -1}
+    #pVenta.negocio:has(#cajaComanda.oculto) #cajaProductos .prods{grid-template-columns:repeat(6,1fr)}
+    #pVenta.negocio:has(#cajaComanda.oculto) #cajaProductos .fila{grid-template-columns:repeat(3,1fr)}
+
+    #pCalendario{grid-template-columns:430px minmax(0,1fr)}
+  }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Oswald:wght@400;500;600&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#0c0a07">
+<style id="marca">
+/* ============================================================
+   CAPA DE MARCA · negro + dorado · 20-ago-2026 (validado con Samu)
+   ============================================================ */
+:root{--fondo:#0e0b07;--panel:#191409;--panel2:#221a0e;--borde:#3b2f1a;--marca:#d6ac5a;--marca2:#b8923f}
+h1{font-family:'Oswald','Segoe UI',sans-serif;text-transform:uppercase;letter-spacing:1.8px;font-weight:500}
+h2{font-family:'Oswald','Segoe UI',sans-serif;text-transform:uppercase;letter-spacing:1.1px;font-weight:500}
+.btn{background:linear-gradient(180deg,#e6c276,#c69838);color:#241a08}
+.btn:active{background:#c69838}
+.btn.gris{background:transparent;color:var(--suave)}
+.btn.verde{background:var(--verde);color:#fff}
+.top{justify-content:flex-start;gap:12px}
+.top .volver{margin-left:auto}
+.divisor-marca{display:block;text-align:center;color:rgba(214,172,90,.9);font-size:10px;line-height:0;margin:2px 0 14px;background:linear-gradient(90deg,transparent,rgba(214,172,90,.4) 18%,rgba(214,172,90,.4) 82%,transparent) center/100% 1px no-repeat}
+.lema-home{font-family:'Oswald','Segoe UI',sans-serif;letter-spacing:2.6px;font-size:11px;color:rgba(214,172,90,.95);margin-top:10px;text-align:center}
+
+/* --- Legibilidad total (requisito no negociable, 20-ago-2026):
+   blanco puro #FFFFFF sobre fondos oscuros · negro sobre dorado. --- */
+:root{--texto:#ffffff;--suave:#ddd2c6;--tenue:#b3a698}
+label{color:#fff}
+.btn.gris{color:#fff;border:1px solid rgba(214,172,90,.55)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <svg class="emblema" width="46" height="46" viewBox="0 0 120 120" role="img" aria-label="Familia de Hamburguesa"><circle cx="60" cy="60" r="57" fill="#0d0b08" stroke="#d6ac5a" stroke-width="2.4"/><circle cx="60" cy="60" r="51" fill="none" stroke="#d6ac5a" stroke-width="0.8" opacity=".8"/><path d="M44 36 a16 10 0 0 1 32 0 z" fill="#d6ac5a"/><line x1="44" y1="41" x2="76" y2="41" stroke="#d6ac5a" stroke-width="2.6" stroke-linecap="round"/><line x1="46" y1="46.5" x2="74" y2="46.5" stroke="#d6ac5a" stroke-width="4.6" stroke-linecap="round"/><text x="60" y="69" text-anchor="middle" font-family="'Dancing Script',cursive" font-weight="700" font-size="27" fill="#fff4e3">Familia</text><text x="60" y="77.5" text-anchor="middle" font-family="'Oswald','Segoe UI',sans-serif" font-size="6" letter-spacing="3" fill="#d6ac5a">— DE —</text><text x="60" y="89" text-anchor="middle" font-family="'Oswald','Segoe UI',sans-serif" font-weight="600" font-size="10" letter-spacing="0.8" fill="#fff4e3" textLength="58" lengthAdjust="spacingAndGlyphs">HAMBURGUESA</text><rect x="37.5" y="92.5" width="45" height="7" rx="2" fill="#d6ac5a"/><text x="60" y="97.4" text-anchor="middle" font-family="'Oswald','Segoe UI',sans-serif" font-weight="600" font-size="3.7" letter-spacing="0.4" fill="#1a1208" textLength="40" lengthAdjust="spacingAndGlyphs">CASERAS · RICAS · DE VERDAD</text><text x="60" y="107.5" text-anchor="middle" font-size="6.5" fill="#d6ac5a">★</text></svg>
+    <div>
+      <h1>Ventas del turno</h1>
+      <div class="sub" id="subtitulo">Ventas y caja</div>
+    </div>
+    <a class="volver" href="index.html">Volver</a>
+  </div>
+<div class="divisor-marca">★</div>
+
+  <!-- ================= APERTURA ================= -->
+  <section id="pApertura">
+    <div class="caja">
+      <h2>Abrir el turno</h2>
+      <div class="campo">
+        <label for="aQuien">¿Quién abre el turno?</label>
+        <select id="aQuien"></select>
+      </div>
+      <div class="fila">
+        <div><label for="aCarne">Carnes que hay ahora</label><input id="aCarne" type="number" inputmode="numeric" min="0" value="" placeholder="0"></div>
+        <div><label for="aChe">Barras de cheddar</label><input id="aChe" type="number" inputmode="numeric" min="0" value="" placeholder="0"></div>
+      </div>
+      <div class="fila">
+        <div><label for="aPanJ">Panes de Julio</label><input id="aPanJ" type="number" inputmode="numeric" min="0" value="" placeholder="0"></div>
+        <div><label for="aPanS">Panes de José</label><input id="aPanS" type="number" inputmode="numeric" min="0" value="" placeholder="0"></div>
+      </div>
+      <div class="fila">
+        <div><label for="aPack">Packs de cheddar (10 fetas)</label><input id="aPack" type="number" inputmode="numeric" min="0" value="" placeholder="0"></div>
+      </div>
+      <div class="aviso info" id="aBolsas" style="font-size:12.5px"></div>
+      <div class="campo">
+        <label for="aCaja">Fondo de caja inicial</label>
+        <div class="conpeso"><span>$</span><input id="aCaja" value="" placeholder="0"></div>
+        <div class="nota">El cambio con el que arranca el turno.</div>
+      </div>
+      <button class="btn" id="btnAbrir">Abrir turno</button>
+    </div>
+    <div class="caja" id="cajaFabrica">
+      <h2>En la fábrica</h2>
+      <div id="fabrica" class="vacio">Consultando…</div>
+    </div>
+  </section>
+
+  <!-- ================= TURNO ABIERTO ================= -->
+  <section id="pTurno" class="oculto">
+    <div class="tablero">
+
+    <div class="col">
+      <div class="caja">
+      <h2>Stock en el local</h2>
+      <div class="kpis" id="kpiStock"></div>
+    </div>
+
+    <div class="caja">
+      <h2>En la fábrica <button class="refrescar" id="btnRefrescarFabrica" type="button">Actualizar</button></h2>
+      <div id="fabricaTurno" class="vacio">Consultando…</div>
+      <button class="btn gris chico" id="btnCargarFabrica" style="margin-top:12px">Cargar el stock de fábrica</button>
+      <div class="oculto" id="cajaCargarFabrica" style="margin-top:12px">
+        <div class="fila">
+          <div>
+            <label for="pfCarnes">¿Cuántas carnes hay en la fábrica?</label>
+            <input id="pfCarnes" type="number" inputmode="numeric" min="0" value="0">
+            <div class="nota" id="pfBolsas"></div>
+          </div>
+          <div><label for="pfQuien">¿Quién lo contó?</label><select id="pfQuien"></select></div>
+        </div>
+        <div id="avisoParte"></div>
+        <button class="btn chico" id="btnGuardarParte">Guardar el parte</button>
+      </div>
+    </div>
+
+    </div>
+
+      <div class="col">
+      <div class="caja">
+      <h2>Plata del turno</h2>
+      <!-- HU3: dos grupos separados. Arriba la plata que se toca y se rinde;
+           abajo lo que se vendió, que NO arrastra el efectivo de inicio. -->
+      <div class="grupo">
+        <div class="grupoT">Caja · efectivo físico</div>
+        <div class="kpis" id="kpiCaja"></div>
+      </div>
+      <div class="grupo">
+        <div class="grupoT">Ventas del turno</div>
+        <div class="kpis" id="kpiVentas"></div>
+      </div>
+    </div>
+
+    <div class="caja">
+      <h2>¿Qué querés hacer?</h2>
+      <button class="btn" id="btnNueva" style="margin-bottom:10px">Nueva venta</button>
+      <div class="botonera">
+        <button class="btn gris chico" id="btnIngreso">Ingresó mercadería</button>
+        <button class="btn gris chico" id="btnRetiro">Retirar plata</button>
+      </div>
+    </div>
+
+    <div class="caja">
+      <h2>Para retirar hoy</h2>
+      <div id="pedidos" class="vacio">Consultando…</div>
+      <button class="btn gris chico" id="btnCalendario" style="margin-top:12px">Ver el calendario de pedidos</button>
+    </div>
+
+    </div>
+
+      <div class="col">
+      <div class="caja">
+      <h2>Lo que pasó en el turno</h2>
+      <div id="movs" class="vacio">Todavía no se cargó nada.</div>
+    </div>
+
+    <div class="caja">
+      <h2>Falta cobrar</h2>
+      <div id="deudas" class="vacio">Nadie quedó debiendo.</div>
+    </div>
+
+    </div>
+
+      <button class="btn gris" id="btnCerrar">Cerrar el turno</button>
+    <div class="nota" style="text-align:center">Abierto por <b id="tQuien"></b> · <span id="tDesde"></span></div>
+  </div>
+  </section>
+
+  <!-- ================= NUEVA VENTA ================= -->
+  <section id="pVenta" class="oculto">
+    <div class="caja">
+      <h2>¿Qué tipo de venta es?</h2>
+      <div class="botonera">
+        <button class="btn gris chico" id="btnTipoLocal">Venta en el Negocio</button>
+        <button class="btn gris chico" id="btnTipoPedido">Entregar pedido</button>
+      </div>
+    </div>
+
+    <!-- elegir pedido -->
+    <div class="caja oculto" id="cajaElegirPedido">
+      <h2>¿Cuál pedido entregás?</h2>
+      <div id="listaPedidos" class="vacio">Consultando…</div>
+    </div>
+
+    <!-- productos (solo venta en el negocio) -->
+    <div class="caja oculto" id="cajaProductos">
+      <h2>¿Qué se lleva?</h2>
+      <div class="prods" id="prods"></div>
+      <div class="fila">
+        <div>
+          <label for="vCant"><span id="lblCant">Cantidad</span></label>
+          <input id="vCant" type="number" inputmode="numeric" min="0" value="">
+        </div>
+        <div id="wrapProv">
+          <label for="vProv">¿De qué pan sale?</label>
+          <select id="vProv">
+            <option value="J">Pan de Julio</option>
+            <option value="S">Pan de José</option>
+          </select>
+        </div>
+      </div>
+      <div class="campo">
+        <label for="vPrecio">¿Cuánto le cobrás por esto?</label>
+        <div class="conpeso"><span>$</span><input id="vPrecio" value="0"></div>
+        <div class="nota" id="notaPrecio"></div>
+      </div>
+      <div id="avisoStock"></div>
+      <button class="btn chico" id="btnAgregar">Sumar a la venta</button>
+    </div>
+
+    <!-- qué sale del stock cuando se entrega un pedido -->
+    <div class="caja oculto" id="cajaSalida">
+      <h2>¿Qué sale del stock?</h2>
+      <div class="aviso info" id="avisoSalida"></div>
+      <div class="fila">
+        <div><label for="sCarne">Carnes</label><input id="sCarne" type="number" inputmode="numeric" min="0" value="0"></div>
+        <div><label for="sPack">Packs de cheddar (10 fetas)</label><input id="sPack" type="number" inputmode="numeric" min="0" value="0"></div>
+      </div>
+      <div class="fila">
+        <div><label for="sPanJ">Panes de Julio</label><input id="sPanJ" type="number" inputmode="numeric" min="0" value="0"></div>
+        <div><label for="sPanS">Panes de José</label><input id="sPanS" type="number" inputmode="numeric" min="0" value="0"></div>
+      </div>
+      <div class="fila">
+        <div><label for="sChe">Barras de cheddar</label><input id="sChe" type="number" inputmode="numeric" min="0" value="0"></div>
+      </div>
+      <div id="avisoStockPedido"></div>
+    </div>
+
+    <!-- comanda -->
+    <div class="caja oculto" id="cajaComanda">
+      <h2>Lo que se lleva</h2>
+      <div id="comanda"></div>
+      <div class="campo oculto" id="cajaImporte" style="margin-top:12px">
+        <label for="pTotal">¿Cuánto hay que cobrar por el pedido?</label>
+        <div class="conpeso"><span>$</span><input id="pTotal" value="0"></div>
+        <div class="nota" id="notaImporte"></div>
+      </div>
+      <div class="total"><span class="et">Total a cobrar</span><span class="nu" id="totalVenta">$0</span></div>
+      <button class="btn gris chico" id="btnOtroMas" style="margin-top:12px">Agregar otra cosa</button>
+    </div>
+
+    <!-- BLOQUE B: cobro repartido -->
+    <div class="caja oculto" id="cajaCobro">
+      <h2>¿Cómo lo paga?</h2>
+      <div class="aviso info">Repartí el total entre las formas de pago. Tiene que dar justo.</div>
+      <div class="vias">
+        <div class="via"><label for="cEfe">Efectivo</label><div class="conpeso"><span>$</span><input id="cEfe" value="0"></div></div>
+        <div class="via"><label for="cMp">Mercado Pago</label><div class="conpeso"><span>$</span><input id="cMp" value="0"></div></div>
+        <div class="via"><label for="cDeb">Queda debiendo</label><div class="conpeso"><span>$</span><input id="cDeb" value="0"></div></div>
+      </div>
+      <div class="marcador" id="marcador"><span id="marTexto">Falta repartir</span><span class="n" id="marNum">$0</span></div>
+
+      <!-- HU-05: para poder identificar la transferencia después. -->
+      <div id="cajaMP" class="oculto">
+        <div class="campo">
+          <label for="mpQuien">¿A nombre de quién entró la transferencia?</label>
+          <input id="mpQuien" type="text" placeholder="Nombre del que pagó" aria-describedby="mpQuienErr">
+          <div class="errcampo oculto" id="mpQuienErr" role="alert">El nombre del que paga por MP es obligatorio</div>
+          <div class="nota">Como figura en Mercado Pago, para poder encontrar el pago.</div>
+        </div>
+      </div>
+
+      <div id="cajaDeuda" class="oculto">
+        <div class="campo">
+          <label for="dQuien">¿Quién queda debiendo?</label>
+          <input id="dQuien" type="text" placeholder="Nombre y apellido" aria-describedby="dQuienErr">
+          <div class="errcampo oculto" id="dQuienErr" role="alert">El nombre del deudor es obligatorio</div>
+        </div>
+        <div class="campo">
+          <label for="dNota">¿Cuándo y cómo lo paga?</label>
+          <textarea id="dNota" placeholder="Ej: pasa el viernes con efectivo"></textarea>
+        </div>
+        <div class="sello" id="dSello"></div>
+      </div>
+
+      <div id="avisoCobro"></div>
+      <div class="cierre">
+        <button class="btn verde" id="btnFinalizar">Listo, cobrado</button>
+        <button class="btn gris chico" id="btnCancelarVenta">Cancelar</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CALENDARIO DE PEDIDOS ================= -->
+  <section id="pCalendario" class="oculto">
+    <div class="caja">
+      <div class="mesnav">
+        <button class="flecha" id="mesAnt" type="button">‹</button>
+        <div class="mesnom" id="mesNombre"></div>
+        <button class="flecha" id="mesSig" type="button">›</button>
+      </div>
+      <div class="dow">
+        <span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span>
+      </div>
+      <div class="mes" id="mes"></div>
+      <div class="nota" style="text-align:center">Los días con punto naranja tienen pedidos. Tocá uno para verlos.</div>
+    </div>
+
+    <div class="caja">
+      <h2 id="tituloDia">Pedidos del día</h2>
+      <div id="pedidosDia" class="vacio">Tocá un día del calendario.</div>
+    </div>
+
+    <button class="btn gris chico" id="btnCerrarCalendario">Volver al turno</button>
+  </section>
+
+  <!-- ================= BLOQUE A: INGRESO DE MERCADERÍA ================= -->
+  <section id="pIngreso" class="oculto">
+    <div class="caja">
+      <h2>Llegó mercadería</h2>
+      <div class="campo">
+        <label for="iQue">¿Qué llegó?</label>
+        <select id="iQue">
+          <option value="carne">Carnes</option>
+          <option value="panJ">Pan de Julio</option>
+          <option value="panS">Pan de José</option>
+          <option value="che">Barras de cheddar</option>
+          <option value="pack">Pack de cheddar - 10 Fetas</option>
+        </select>
+      </div>
+      <div class="fila">
+        <div><label for="iCant">¿Cuánto llegó?</label><input id="iCant" type="number" inputmode="numeric" min="1" value="0"><div class="nota" id="iBolsas"></div></div>
+        <div><label for="iQuien">¿Quién lo recibió?</label><select id="iQuien"></select></div>
+      </div>
+      <div class="campo">
+        <label for="iDe">¿De dónde vino?</label>
+        <select id="iDe">
+          <option>De la fábrica</option>
+          <option>Del proveedor</option>
+          <option>De otro local</option>
+        </select>
+      </div>
+      <div id="avisoIngreso"></div>
+      <button class="btn" id="btnGuardarIngreso">Sumar al stock</button>
+      <button class="btn gris chico" id="btnCancelarIngreso" style="margin-top:10px">Cancelar</button>
+    </div>
+  </section>
+
+  <!-- ================= RETIRO DE CAJA ================= -->
+  <section id="pRetiro" class="oculto">
+    <div class="caja">
+      <h2>Sacar plata de la caja</h2>
+      <div id="infoCaja" class="aviso info"></div>
+      <div class="fila">
+        <div><label for="rCuanto">¿Cuánto sacás?</label><div class="conpeso"><span>$</span><input id="rCuanto" value="0"></div></div>
+        <div><label for="rQuien">¿Quién la saca?</label><select id="rQuien"></select></div>
+      </div>
+      <div class="campo">
+        <label for="rMotivo">¿Para qué?</label>
+        <input id="rMotivo" type="text" placeholder="Ej: pagar al proveedor de pan">
+      </div>
+      <div id="avisoRetiro"></div>
+      <button class="btn" id="btnGuardarRetiro">Sacar de la caja</button>
+      <button class="btn gris chico" id="btnCancelarRetiro" style="margin-top:10px">Cancelar</button>
+    </div>
+  </section>
+
+  <!-- ================= COBRAR UNA DEUDA ================= -->
+  <section id="pCobrarDeuda" class="oculto">
+    <div class="caja">
+      <h2>Cobrar lo que debían</h2>
+      <div id="deudaQuien" class="aviso info"></div>
+      <div class="fila">
+        <div>
+          <label for="dcMonto">¿Cuánto te paga ahora?</label>
+          <div class="conpeso"><span>$</span><input id="dcMonto" value="0"></div>
+          <div class="nota" id="dcNotaMonto"></div>
+        </div>
+        <div>
+          <label for="dcVia">¿Cómo te paga?</label>
+          <select id="dcVia">
+            <option value="efe">Efectivo</option>
+            <option value="mp">Mercado Pago</option>
+          </select>
+        </div>
+      </div>
+      <div class="botonera" style="margin-bottom:12px">
+        <button class="btn gris chico" id="btnPagaTodo">Paga todo</button>
+        <button class="btn gris chico" id="btnPagaMitad">Paga la mitad</button>
+      </div>
+      <div class="campo">
+        <label for="dcQuien">¿Quién está cobrando?</label>
+        <select id="dcQuien"></select>
+      </div>
+      <div id="dcHistorial"></div>
+      <div id="avisoCobroDeuda"></div>
+      <div class="cierre">
+        <button class="btn verde" id="btnGuardarCobroDeuda">Listo, cobrado</button>
+        <button class="btn gris chico" id="btnCancelarCobroDeuda">Cancelar</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CIERRE ================= -->
+  <section id="pCierre" class="oculto">
+    <div class="caja">
+      <h2>Antes de cerrar, revisá</h2>
+      <div id="checklist"></div>
+    </div>
+
+    <div class="caja" id="cajaConteo">
+      <h2>Contá lo que hay</h2>
+      <div class="aviso info">Escribí lo que contaste de verdad. Los números esperados aparecen después.</div>
+      <div class="fila">
+        <div><label for="zCarne">Carnes contadas</label><input id="zCarne" type="number" inputmode="numeric" min="0" placeholder="—"></div>
+        <div><label for="zChe">Barras contadas</label><input id="zChe" type="number" inputmode="numeric" min="0" placeholder="—"></div>
+      </div>
+      <div class="fila">
+        <div><label for="zPanJ">Panes de Julio</label><input id="zPanJ" type="number" inputmode="numeric" min="0" placeholder="—"></div>
+        <div><label for="zPanS">Panes de José</label><input id="zPanS" type="number" inputmode="numeric" min="0" placeholder="—"></div>
+      </div>
+      <div class="fila">
+        <div><label for="zPack">Packs contados</label><input id="zPack" type="number" inputmode="numeric" min="0" placeholder="—"></div>
+      </div>
+      <div class="aviso info" id="zBolsas" style="font-size:12.5px"></div>
+      <div class="campo">
+        <label for="zCaja">Plata contada en la caja</label>
+        <div class="conpeso"><span>$</span><input id="zCaja" placeholder="—"></div>
+        <div class="nota">Contá los billetes y monedas que hay ahora en la caja.</div>
+      </div>
+      <!-- HU-04: lo cobrado por MP en ESTE turno, mirado en la app de Mercado Pago. -->
+      <div class="campo">
+        <label for="zMp">Cobrado por MP en el turno</label>
+        <div class="conpeso"><span>$</span><input id="zMp" placeholder="—"></div>
+        <div class="nota">Mirá en Mercado Pago cuánto entró durante tu turno.</div>
+      </div>
+      <div id="avisoConteo"></div>
+      <button class="btn chico" id="btnComparar">Comparar con lo esperado</button>
+    </div>
+
+    <div class="caja oculto" id="cajaResultado">
+      <h2>Cómo cerró el turno</h2>
+      <div id="resultado"></div>
+      <div class="hr"></div>
+      <!-- HU-07: si lo contado no coincide con lo esperado, esto pasa a ser obligatorio. -->
+      <div class="campo">
+        <label for="zObs" id="lblObs">Observaciones</label>
+        <textarea id="zObs" rows="3" placeholder="Ej: faltan 20 carnes, se rompió una caja al descargar"></textarea>
+        <div class="nota" id="notaObs">Opcional si todo coincide.</div>
+      </div>
+      <div id="avisoObs"></div>
+      <button class="btn verde" id="btnConfirmarCierre">Confirmar el cierre</button>
+    </div>
+
+    <button class="btn gris chico" id="btnCancelarCierre">Volver al turno</button>
+  </section>
+
+  <!-- ================= CERRADO ================= -->
+  <section id="pCerrado" class="oculto">
+    <div class="caja">
+      <h2>Turno cerrado</h2>
+      <div id="resumenFinal"></div>
+      <div class="hr"></div>
+      <button class="btn" id="btnNuevoTurno">Abrir el próximo turno</button>
+    </div>
+  </section>
+
+</div>
+
+<script>
+/* ==========================================================================
+   FAMILIA DE HAMBURGUESA — Ventas del turno
+   Incluye BLOQUE A (ingreso de mercadería) y BLOQUE B (cobro repartido).
+   ========================================================================== */
+
+var NUBE = 'https://script.google.com/macros/s/AKfycbxfraGEgAFUeypW4D9wsEct90sH4DRZjOJsQiky-WZtF41qPOaul9HDlgSjynwHAjpk/exec';
+
+var CATALOGO = [
+  {id:'carne',   n:'Solo carnes',    d:'sin pan',               u:'carnes',   paso:10, pan:false},
+  {id:'pan',     n:'Con pan',        d:'carne + pan',           u:'unidades', paso:10, pan:true },
+  // HU14: pan suelto, sin carne. Mismo selector de proveedor que "Con pan":
+  // descuenta SOLO del pan elegido (Julio o José).
+  {id:'solopan', n:'Solo pan',       d:'sin carne',             u:'panes',    paso:10, pan:true },
+  // HU6: un combo es la unidad de venta del formulario de pedidos
+  // ("10 Carnes + 10 Panes + 10 Fetas de Cheddar"): descuenta 1 pack de fetas.
+  {id:'combo',   n:'Combo',          d:'10 carnes + 10 panes + 1 pack cheddar', u:'combos', paso:1, pan:true },
+  {id:'cheddar', n:'Cheddar barra',  d:'se vende por barra',    u:'barras',   paso:1,  pan:false},
+  // HU1: el pack de 10 fetas es inventario propio, NO sale de las barras.
+  // Se cuenta, se ingresa y se descuenta por separado.
+  {id:'chepack', n:'Cheddar pack',   d:'10 fetas',              u:'packs',    paso:1,  pan:false}
+];
+
+/**
+ * LISTA DE PRECIOS OFICIAL (la del cartel del local).
+ * Solo estas cantidades tienen precio de lista. Cualquier otra cantidad se
+ * cobra a mano: el precio lo pone quien atiende, según lo que acordó.
+ */
+var LISTA = {
+  carne: {10:8000,  50:32000, 100:50000},
+  pan:   {10:14000, 50:58000, 100:92000}
+};
+
+/** ¿Esta cantidad tiene precio de lista? Devuelve el importe o null. */
+function precioDeLista(id, cant){
+  var l = LISTA[id];
+  if (!l) return null;
+  return (l[cant] !== undefined) ? l[cant] : null;
+}
+
+var PRECIOS_DEF = {carne:700, pan:1300, combo:1550, cheddar:12000, chepack:1200};
+/**
+ * HU6 (11-09-2026): lo que sale del stock por CADA combo vendido.
+ * Antes el combo se contaba por hamburguesa y descontaba barras
+ * (1 barra cada 140). Ahora sale del inventario de packs de 10 fetas.
+ */
+var COMBO = {carne:10, pan:10, pack:1};
+
+/**
+ * Cuántas unidades trae una bolsa de cada cosa.
+ * En el local piensan en BOLSAS, no en unidades sueltas: "diez bolsas de pan"
+ * les sale más rápido que "cien panes". Por eso todo se muestra en las dos
+ * lecturas a la vez.
+ *   carne 50 → del relevamiento (Proceso de Fabricación: "50 por bolsa")
+ *   pan   10 → NO figura en el relevamiento; viene del módulo viejo y lo
+ *              confirmó Samu el 17-ago-2026
+ */
+var POR_BOLSA = {carne:50, panJ:10, panS:10, che:1, pack:1};
+
+function enBolsas(n, tipo){
+  var x = POR_BOLSA[tipo] || 1;
+  if (x === 1) return '';
+  var b = n / x;
+  var entera = Math.abs(b - Math.round(b)) < 0.001;
+  // Con separador también acá: 1.000 bolsas de pan es un número que se lee.
+  var txt = entera ? miles(Math.round(b)) : b.toFixed(1).replace('.', ',');
+  return txt + (Math.abs(b) === 1 ? ' bolsa' : ' bolsas');
+}
+
+var GENTE = ['Pablo','Yami','Cielo','Paula','Mara','Soporte','Valen'];
+
+// Calendario "Registro de Pedidos - Familia de Hamburguesas".
+// El script del formulario ya guarda el ID del evento en la columna "ID Evento"
+// de cada fila; con eso se arma el link directo al evento.
+var CALENDARIO = '919b78a49a29ebfa942650df011e34e9d55a4b8a2acef4f6a63886fa58e44f2b@group.calendar.google.com';
+
+var K_TURNO = 'fdh_turno_v1', K_PRECIOS = 'fdh_precios_v1', K_DEUDAS = 'fdh_deudas_v1';
+
+var T = null;          // turno activo
+var PRECIOS = {};
+var venta = null;      // venta en curso
+var precioAuto = null; // precio que puso el sistema desde la lista
+var sel = null;        // producto seleccionado
+
+/* ---------------------- utilidades ---------------------- */
+
+function $(id){ return document.getElementById(id); }
+function ver(id, si){ $(id).classList[si ? 'remove' : 'add']('oculto'); }
+/** Limpia puntos de miles antes de convertir: "300.000" -> 300000 */
+function num(v){
+  if (typeof v === 'string') v = v.replace(/\./g, '').replace(',', '.');
+  var n = parseFloat(v);
+  return isFinite(n) ? n : 0;
+}
+function ent(v){ return Math.round(num(v)); }
+
+/** 300000 -> "300.000" */
+function miles(n){ return Math.round(num(n)).toLocaleString('es-AR'); }
+
+/** Importe para leer de un vistazo: $300.000 */
+function pesos(n){ return '$' + miles(n); }
+
+/** Importe escrito completo, como en el cartel: $300.000.- */
+function pesosCartel(n){ return '$' + miles(n) + '.-'; }
+
+/**
+ * Formatea un campo numérico mientras se escribe, conservando la posición
+ * del cursor. Se usa `text` y no `number` porque los campos numéricos del
+ * navegador no aceptan puntos de miles.
+ */
+function formatearMonto(el){
+  var antes = el.value;
+  var posDesdeElFinal = antes.length - (el.selectionStart || antes.length);
+  var limpio = antes.replace(/[^\d]/g, '');
+  var nuevo = limpio ? Number(limpio).toLocaleString('es-AR') : '';
+  if (nuevo !== antes){
+    el.value = nuevo;
+    var pos = Math.max(0, nuevo.length - posDesdeElFinal);
+    try { el.setSelectionRange(pos, pos); } catch(e){}
+  }
+}
+
+/** Deja listos todos los campos numéricos para que se formateen solos. */
+function activarCamposDeDinero(ids){
+  ids.forEach(function(id){
+    var el = $(id);
+    if (!el) return;
+    el.type = 'text';
+    el.setAttribute('inputmode', 'numeric');
+    el.addEventListener('input', function(){ formatearMonto(el); });
+    if (el.value) formatearMonto(el);
+  });
+}
+
+/**
+ * Escribe un número en un campo y lo deja formateado.
+ * Asignar el valor por código no dispara el evento `input`, así que sin esto
+ * un campo precargado desde un pedido mostraría "3000" hasta que alguien lo
+ * tocara, y al lado habría otro que sí dice "3.000".
+ */
+function ponerNumero(id, valor){
+  var el = $(id);
+  if (!el) return;
+  el.value = (valor === '' || valor === null || valor === undefined) ? '' : miles(valor);
+}
+function hora(){ var d = new Date(); return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); }
+
+/**
+ * HU7: el usuario activo es el que entró por el Home (sessionStorage
+ * 'fdh_sesion', misma pestaña). Si alguien abrió Ventas sin pasar por el
+ * Home, se usa quien abrió el turno: nunca queda vacío.
+ */
+var NOMBRE_PERFIL = {pablo:'Pablo', paula:'Paula', cielo:'Cielo', yami:'Yami', mara:'Mara',
+                     valen:'Valen', soporte:'Soporte', samu:'Samu'};
+function usuarioActivo(){
+  var id = null;
+  try{ id = sessionStorage.getItem('fdh_sesion'); }catch(e){}
+  if (id) return NOMBRE_PERFIL[id] || (id.charAt(0).toUpperCase() + id.slice(1));
+  return (T && T.quien) || '';
+}
+/** 'Nota · 13:23 · turno de X' -> '13:23'. La hora viaja al final de la nota. */
+function horaDeNota(n){
+  var partes = String(n || '').split('\u00b7');
+  for (var i = 1; i < partes.length; i++){
+    var m = partes[i].trim().match(/^(\d{1,2}:\d{2})$/);
+    if (m) return m[1].padStart(5, '0');
+  }
+  return '';
+}
+/** Primer tramo de la nota, sin la hora ni el turno. */
+function textoDeNota(n){ return String(n || '').split('\u00b7')[0].trim(); }
+
+function hoyLocal(){
+  var d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+function limpiaClave(k){
+  return String(k).toLowerCase().normalize('NFD')
+    .replace(/[̀-ͯ]/g,'')
+    .replace(/\s+/g,' ').trim();
+}
+
+/** Busca un valor en la fila del formulario por palabras contenidas en el encabezado. */
+function campo(f){
+  var pal = Array.prototype.slice.call(arguments,1).map(limpiaClave);
+  for (var k in f){
+    var kn = limpiaClave(k);
+    var todas = true;
+    for (var i=0;i<pal.length;i++){ if (kn.indexOf(pal[i]) < 0) { todas = false; break; } }
+    if (todas) return f[k];
+  }
+  return '';
+}
+
+function esDeHoy(v){
+  if (!v) return false;
+  var s = String(v);
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0,10) === hoyLocal();
+  var m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (m){
+    var iso = m[3] + '-' + String(m[2]).padStart(2,'0') + '-' + String(m[1]).padStart(2,'0');
+    return iso === hoyLocal();
+  }
+  var d = new Date(s);
+  if (!isNaN(d.getTime())){
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0') === hoyLocal();
+  }
+  return false;
+}
+
+/* ---------------------- nube ---------------------- */
+
+var cbN = 0;
+function traer(hoja, ok){
+  var nombre = 'fdhcb' + (++cbN);
+  var listo = false;
+  window[nombre] = function(r){ listo = true; try{ ok(r); }catch(e){} limpiar(); };
+  var s = document.createElement('script');
+  s.src = NUBE + (hoja ? '?hoja=' + encodeURIComponent(hoja) + '&' : '?') + 'callback=' + nombre;
+  s.onerror = function(){ if(!listo){ ok(null); limpiar(); } };
+  document.head.appendChild(s);
+  setTimeout(function(){ if(!listo){ ok(null); limpiar(); } }, 12000);
+  function limpiar(){ try{ delete window[nombre]; }catch(e){} if(s.parentNode) s.parentNode.removeChild(s); }
+}
+
+/** POST al Cuaderno. No se puede confirmar (respuesta opaca), así que se avisa. */
+function guardarEnNube(hoja, fila, aviso){
+  try{
+    fetch(NUBE, {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain'},
+                 body: JSON.stringify({hoja:hoja, fila:fila})})
+      .catch(function(){ if(aviso) aviso(false); });
+  }catch(e){ if(aviso) aviso(false); }
+}
+
+/**
+ * Marca el pedido como "Entregado" en la planilla del formulario.
+ * Sin esto, el pedido le sigue apareciendo pendiente al turno siguiente y a
+ * cualquier otro dispositivo, porque la verdad vive en la planilla y no acá.
+ *
+ * Manda SIEMPRE la marca temporal, que es la que identifica la fila sin lugar
+ * a dudas, y el N° solo si es un número de verdad. Si mandara un N° repetido,
+ * la planilla marcaría como entregada la fila de otro cliente.
+ */
+function marcarEntregadoEnNube(f){
+  var marca = campo(f,'marca','temporal');
+  var num = numeroPedido(f);
+  if (!marca && !num) return false;
+  try{
+    fetch(NUBE, {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify({
+        // "Pedido Entregado" textual: la columna Estado de la planilla tiene
+        // validacion de datos y rechaza cualquier otro texto.
+        accion:'estadoPedido', marca: marca ? new Date(marca).getTime() : '',
+        numero:num, estado:'Pedido Entregado',
+        quien: (T && T.quien) || ''
+      })});
+  }catch(e){}
+  return true;
+}
+
+/* ---------------------- turno ---------------------- */
+
+function turnoNuevo(){
+  return {
+    quien:'', desde:'', abierto:false,
+    ini:  {carne:0, panJ:0, panS:0, che:0, pack:0, caja:0},
+    entr: {carne:0, panJ:0, panS:0, che:0, pack:0},
+    stock:{carne:0, panJ:0, panS:0, che:0, pack:0},
+    vend: {carne:0, panJ:0, panS:0, che:0, pack:0},
+    caja:0, ventas:0,
+    cobros:{efe:0, tra:0, mp:0, deb:0},
+    // Cobranza de deudas de otros turnos. Va aparte de `cobros` porque entra a
+    // la caja pero no es venta de este turno.
+    cobrosDeuda:{efe:0, tra:0, mp:0},
+    retiros:0,
+    movs:[], deudas:[], entregados:[]
+  };
+}
+
+/**
+ * El N° de pedido SOLO si es un número de verdad.
+ * El 18/08 la planilla empezó a escribir el texto "PEDIDO RECIBIDO" en esa
+ * columna, igual para todos los pedidos. Si lo tomábamos como identificador,
+ * los tres pedidos del día eran "el mismo": entregabas uno y desaparecían los
+ * tres. Un identificador sin dígitos no identifica nada.
+ */
+function numeroPedido(f){
+  var n = String(campo(f,'n°','pedido') || campo(f,'numero','pedido') || '').trim();
+  return /\d/.test(n) ? n : '';
+}
+
+/**
+ * Identifica un pedido de forma única.
+ *
+ * Primero el N° de pedido: es el identificador del negocio, el que figura en
+ * la planilla y el que dice la gente por teléfono. Solo cuenta si tiene
+ * dígitos: el 18/08 la planilla escribió el texto "PEDIDO RECIBIDO" en esa
+ * columna para tres pedidos distintos, y tratarlos como el mismo hacía que
+ * entregar uno borrara los tres.
+ *
+ * Si falta el número, se cae a la marca temporal, que es el instante exacto
+ * del envío del formulario —con milisegundos— y no se repite.
+ */
+function clavePedido(f){
+  var n = numeroPedido(f);
+  if (n) return 'n:' + n;
+  var t = campo(f,'marca','temporal');
+  if (t) return 'ts:' + new Date(t).getTime();
+  return 'x:' + limpiaClave(campo(f,'nombre','apellido')) + '|' + fechaDe(f);
+}
+
+function yaEntregado(f){
+  if (!T || !T.entregados) return false;
+  return T.entregados.indexOf(clavePedido(f)) >= 0;
+}
+
+function guardarTurno(){ try{ localStorage.setItem(K_TURNO, JSON.stringify(T)); }catch(e){} }
+function cargarTurno(){
+  try{
+    var t = JSON.parse(localStorage.getItem(K_TURNO) || 'null');
+    if (t && t.abierto){ completarPacks(t); fusionarTransferencias(t); return t; }
+  }catch(e){}
+  return null;
+}
+
+/**
+ * Turnos abiertos antes de que existiera el pack de cheddar.
+ * Les falta la clave `pack` en ini/entr/stock/vend: sin esto el primer
+ * descuento hace `undefined - 3` = NaN y el stock queda roto en silencio
+ * hasta el cierre. Arranca en 0, que es lo honesto: nadie lo contó al abrir.
+ */
+function completarPacks(t){
+  ['ini','entr','stock','vend'].forEach(function(k){
+    if (t[k] && typeof t[k].pack !== 'number') t[k].pack = 0;
+  });
+}
+
+/**
+ * Turnos abiertos antes de que se eliminara la vía "Transferencia" (HU5).
+ * Lo que ya se había cobrado por transferencia pasa a Mercado Pago: es la
+ * única vía digital que queda, y dejarlo en `tra` sería plata cobrada que no
+ * aparece bajo ninguna etiqueta de la pantalla.
+ */
+function fusionarTransferencias(t){
+  ['cobros','cobrosDeuda'].forEach(function(k){
+    var o = t[k];
+    if (o && o.tra > 0){ o.mp = (o.mp || 0) + o.tra; o.tra = 0; }
+  });
+}
+
+/* ---------------------- libro de deudas ----------------------
+ * Una deuda no se termina cuando termina el turno: el que quedó debiendo
+ * vuelve otro día, y lo cobra otra persona. Por eso las deudas viven acá
+ * afuera del turno y sobreviven al cierre. Cada una guarda cuánto se debía
+ * al principio, cuánto falta hoy, y quién fue cobrando cada parte.
+ */
+function leerDeudas(){
+  try{ var l = JSON.parse(localStorage.getItem(K_DEUDAS) || '[]'); return Array.isArray(l) ? l : []; }
+  catch(e){ return []; }
+}
+function guardarDeudas(l){ try{ localStorage.setItem(K_DEUDAS, JSON.stringify(l)); }catch(e){} }
+
+/** Las que todavía tienen saldo. Es lo que se ve en "Falta cobrar". */
+function deudasAbiertas(){
+  return leerDeudas().filter(function(d){ return num(d.saldo) > 0; });
+}
+function totalPorCobrar(){
+  return deudasAbiertas().reduce(function(t,d){ return t + num(d.saldo); }, 0);
+}
+
+function anotarDeuda(quien, monto, nota, sello, detalle){
+  // HU7: usuario, fecha y hora los pone el sistema en el momento de confirmar.
+  sello = sello || {usuario: usuarioActivo(), fecha: hoyLocal(), hora: hora()};
+  var turno = (T && T.quien) || '';
+  var l = leerDeudas();
+  l.push({
+    id: 'd' + Date.now() + Math.floor(Math.random()*1000),
+    quien: quien || 'Sin nombre',
+    original: monto, saldo: monto,
+    nota: nota || '',
+    fecha: sello.fecha, hora: sello.hora,
+    usuario: sello.usuario,
+    turno: turno,
+    cargas: [{fecha: sello.fecha, hora: sello.hora, usuario: sello.usuario, monto: monto}],
+    cobros: []
+  });
+  guardarDeudas(l);
+  // La deuda tambien va a la nube (hoja Deudas): el saldo por cliente lo
+  // calcula el MENSAJERO. Asi "Falta cobrar" es el mismo numero en todos
+  // los dispositivos y no muere con este navegador.
+  // Sin tocar el MENSAJERO: `Quien` = el usuario que lo cargó y la hora va
+  // al final de la nota (así ya venía; horaDeNota() la lee de vuelta).
+  guardarEnNube('Deudas', {
+    Fecha: sello.fecha, Cliente: quien || 'Sin nombre', Movimiento: 'Deuda nueva',
+    Monto: monto, Via: '', Quien: sello.usuario,
+    // HU-10: el detalle de lo que se llev\u00f3 viaja en la MISMA nota, con el
+    // separador "\u00b7" que ya usa el sistema. No hace falta columna nueva ni tocar
+    // el MENSAJERO. La hora queda al final para que horaDeNota() la siga leyendo.
+    Nota: (nota || '') + (detalle ? ' \u00b7 ' + detalle : '') + ' \u00b7 ' + sello.hora +
+          (turno && turno !== sello.usuario ? ' \u00b7 turno de ' + turno : '')
+  });
+}
+
+/**
+ * Reconstruye el libro local de deudas desde la nube: una entrada por cliente
+ * con saldo abierto (el saldo lo calculo el servidor). Lo local queda como
+ * cache para cuando no hay internet.
+ */
+function sincronizarDeudas(cuandoTermine){
+  traer('Deudas', function(r){
+    if (!r || !r.ok || !r.datos){ if (cuandoTermine) cuandoTermine(false); return; }
+    var porCliente = {};
+    r.datos.forEach(function(f){
+      var clave = limpiaClave(f.Cliente);
+      if (!clave) return;
+      var e = porCliente[clave] || (porCliente[clave] = {
+        id: 'n:' + clave, quien: String(f.Cliente), original: 0, saldo: 0,
+        nota: '', fecha: '', hora: '', usuario: '', turno: '', cargas: [], cobros: []
+      });
+      var fecha = String(f.Fecha || '').slice(0,10);
+      var hs = horaDeNota(f.Nota);
+      if (/cobro/i.test(String(f.Movimiento || ''))){
+        e.cobros.push({monto: num(f.Monto), via: String(f.Via || ''), quien: String(f.Quien || ''), fecha: fecha, hora: hs});
+      } else {
+        e.original += num(f.Monto);
+        e.cargas.push({fecha: fecha, hora: hs, usuario: String(f.Quien || ''), monto: num(f.Monto)});
+        if (!e.fecha){ e.fecha = fecha; e.hora = hs; e.usuario = String(f.Quien || ''); }
+        if (f.Nota) e.nota = textoDeNota(f.Nota);
+        if (f.Quien) e.turno = String(f.Quien);
+      }
+      e.saldo = num(f.SaldoCliente);   // el ultimo movimiento del cliente manda
+      // Si el cliente quedó en cero, lo anterior ya está saldado: la próxima
+      // deuda arranca de nuevo (fecha, hora y quién la cargó son los de ella).
+      if (e.saldo <= 0){
+        e.original = 0; e.cargas = []; e.cobros = [];
+        e.fecha = ''; e.hora = ''; e.usuario = ''; e.nota = '';
+      }
+    });
+    var libro = Object.keys(porCliente).map(function(k){ return porCliente[k]; });
+    guardarDeudas(libro);
+    pintarDeudas(); pintarKPIs();
+    if (cuandoTermine) cuandoTermine(true);
+  });
+}
+function guardarPrecios(){ try{ localStorage.setItem(K_PRECIOS, JSON.stringify(PRECIOS)); }catch(e){} }
+function cargarPrecios(){
+  PRECIOS = {};
+  for (var k in PRECIOS_DEF) PRECIOS[k] = PRECIOS_DEF[k];
+  try{
+    var p = JSON.parse(localStorage.getItem(K_PRECIOS) || 'null');
+    if (p) for (var j in p) if (PRECIOS[j] !== undefined) PRECIOS[j] = num(p[j]);
+  }catch(e){}
+}
+
+/* ---------------------- pantallas ---------------------- */
+
+function mostrar(cual){
+  ['pApertura','pTurno','pVenta','pCalendario','pIngreso','pRetiro','pCobrarDeuda','pCierre','pCerrado'].forEach(function(p){
+    ver(p, p === cual);
+  });
+  window.scrollTo(0,0);
+}
+
+/* ---------------------- KPIs ---------------------- */
+
+/**
+ * Un número suelto se formatea acá y no en cada llamada: así ningún KPI nuevo
+ * se puede olvidar del separador de miles. Si ya viene como texto (un importe
+ * armado con pesos(), por ejemplo) se respeta tal cual.
+ */
+function kpi(n, t, clase, sub){
+  var txt = (typeof n === 'number') ? miles(n) : n;
+  // El CSS no puede medir cuánto ocupa un texto, así que el tamaño de fuente
+  // se decide acá por la cantidad de caracteres. "$1.250.000" son 10: con la
+  // fuente grande se cortaba contra el borde de la tarjeta.
+  var largo = String(txt).length;
+  var tam = largo >= 10 ? ' xlargo' : (largo >= 8 ? ' largo' : '');
+  return '<div class="kpi ' + (clase||'') + '"><div class="n' + tam + '">' + txt + '</div>' +
+         '<div class="t">' + t + '</div>' +
+         (sub ? '<div class="b">' + sub + '</div>' : '') + '</div>';
+}
+
+function pintarKPIs(){
+  var s = T.stock;
+  $('kpiStock').innerHTML =
+    kpi(s.carne, 'Carnes', s.carne < 0 ? 'rojo' : '', enBolsas(s.carne,'carne')) +
+    kpi(s.panJ,  'Pan Julio', s.panJ < 0 ? 'rojo' : '', enBolsas(s.panJ,'panJ')) +
+    kpi(s.panS,  'Pan José', s.panS < 0 ? 'rojo' : '', enBolsas(s.panS,'panS')) +
+    kpi(s.che,   'Barras cheddar', s.che < 0 ? 'rojo' : '') +
+    kpi(s.pack,  'Packs cheddar', s.pack < 0 ? 'rojo' : '');
+
+  var c = T.cobros;
+  var cd = T.cobrosDeuda || {efe:0, tra:0, mp:0};
+
+  // --- Grupo 1: la plata física. De dónde salió y cuánto hay que rendir. ---
+  // El total NO es la suma de las dos primeras: los retiros ya salieron de la
+  // caja. Por eso se muestran, en vez de dejar un total que no cierra.
+  var hc = kpi(pesos(T.ini.caja),      'Efectivo de inicio') +
+           kpi(pesos(c.efe + cd.efe),  'Cobrado en efectivo');
+  if (T.retiros > 0) hc += kpi('- ' + pesos(T.retiros), 'Se retiró de la caja', 'rojo ancho');
+  hc += kpi(pesos(T.caja), 'Total efectivo en caja', 'total');
+  $('kpiCaja').innerHTML = hc;
+
+  // --- Grupo 2: las ventas. Sin el efectivo de inicio, que no es una venta. ---
+  // `tra` siempre es 0 de acá en adelante (HU5), pero se sigue sumando para
+  // que un turno abierto antes del cambio no pierda plata de la vista.
+  var porCobrar = totalPorCobrar();
+  $('kpiVentas').innerHTML =
+    kpi(pesos(T.ventas), 'Total ventas', 'total plata', 'sin el efectivo de inicio') +
+    kpi(pesos(c.efe), 'Cobrado en efectivo') +
+    kpi(pesos(c.tra + c.mp), 'Cobrado por Mercado Pago') +
+    // Lo que falta cobrar es el saldo de TODAS las deudas abiertas, no solo
+    // las que nacieron en este turno: si ayer alguien quedo debiendo, hoy se
+    // le sigue debiendo a la caja.
+    // Va a fila entera: es el único de los tres que pide una acción.
+    kpi(pesos(porCobrar), 'Falta cobrar', porCobrar > 0 ? 'rojo ancho' : 'ancho');
+}
+
+/* ---------------------- movimientos ---------------------- */
+
+function pintarMovs(){
+  if (!T.movs.length){ $('movs').className = 'vacio'; $('movs').textContent = 'Todavía no se cargó nada.'; return; }
+  $('movs').className = '';
+  var h = '';
+  for (var i = T.movs.length - 1; i >= 0; i--){
+    var m = T.movs[i];
+    h += '<div class="item"><div class="izq"><div class="t1">' + m.titulo + '</div>' +
+         '<div class="t2">' + m.hora + ' · ' + m.detalle + '</div></div>' +
+         '<div class="der"><div class="monto">' + (m.monto || '') + '</div></div></div>';
+  }
+  $('movs').innerHTML = h;
+}
+
+function pintarDeudas(){
+  var lista = deudasAbiertas();
+  if (!lista.length){ $('deudas').className = 'vacio'; $('deudas').textContent = 'Nadie quedó debiendo.'; return; }
+  $('deudas').className = '';
+  var hoy = hoyLocal();
+  var h = '';
+  lista.forEach(function(d){
+    // Una deuda de otro dia se marca con la fecha: no es lo mismo "quedo
+    // debiendo recien" que "debe desde hace una semana".
+    var pagado = num(d.original) - num(d.saldo);
+    // HU7: cada carga con su fecha, hora y quién la registró.
+    var cargas = (d.cargas && d.cargas.length) ? d.cargas
+               : [{fecha: d.fecha, hora: d.hora, usuario: d.usuario || d.turno, monto: d.original}];
+    var t3 = cargas.map(function(c){
+      return '<div class="t3">' + selloTexto(c.fecha, c.hora, c.usuario) +
+             (cargas.length > 1 ? ' \u00b7 ' + pesos(c.monto) : '') + '</div>';
+    }).join('');
+    var t2 = d.nota || '';
+    if (pagado > 0) t2 += (t2 ? ' \u00b7 ' : '') + 'ya pag\u00f3 ' + pesos(pagado) + ' de ' + pesos(d.original);
+    h += '<div class="item deudaClic" data-deuda="' + d.id + '">' +
+         '<div class="izq"><div class="t1">' + d.quien + '</div>' + t3 +
+         (t2 ? '<div class="t2">' + t2 + '</div>' : '') +
+         '<div class="linkcal">Cobrar</div></div>' +
+         '<div class="der"><div class="monto">' + pesos(d.saldo) + '</div></div></div>';
+  });
+  $('deudas').innerHTML = h;
+  Array.prototype.forEach.call($('deudas').querySelectorAll('[data-deuda]'), function(el){
+    el.addEventListener('click', function(){ abrirCobroDeuda(el.getAttribute('data-deuda')); });
+  });
+}
+
+/** '11/09 · 14:32 · cargó Paula' — lo que se ve en cada deuda. */
+function selloTexto(fecha, hs, usuario){
+  var p = String(fecha || '').split('-');
+  var f = p.length === 3 ? p[2] + '/' + p[1] : '';
+  return [f, hs || 'sin hora', usuario ? 'carg\u00f3 ' + usuario : 'sin usuario'].filter(Boolean).join(' \u00b7 ');
+}
+
+/** '2026-08-17' -> '17 de agosto' */
+function diaCorto(f){
+  var p = String(f || '').split('-');
+  if (p.length !== 3) return String(f || '');
+  return ent(p[2]) + ' de ' + MESES[ent(p[1]) - 1];
+}
+
+function anotar(titulo, detalle, monto){
+  T.movs.push({titulo:titulo, detalle:detalle, monto:monto || '', hora:hora()});
+}
+
+/**
+ * Traduce a bolsas lo que se está tipeando, en vivo.
+ * En el local cuentan bolsas: ver la equivalencia mientras cargan evita el
+ * error de escribir 200 pensando en bolsas cuando el campo pide unidades.
+ */
+function espejoBolsas(destino, ids){
+  var partes = [];
+  var etiquetas = {carne:'carnes', panJ:'pan Julio', panS:'pan José'};
+  ['carne','panJ','panS'].forEach(function(k){
+    var el = $(ids[k]);
+    if (!el) return;
+    var n = ent(el.value);
+    if (!n) return;
+    partes.push('<b>' + miles(n) + '</b> ' + etiquetas[k] + ' = <b>' + enBolsas(n, k) + '</b>');
+  });
+  $(destino).innerHTML = partes.length
+    ? partes.join('&nbsp; · &nbsp;')
+    : 'Escribí las <b>unidades</b>. Acá te muestro a cuántas bolsas equivalen.';
+}
+
+function espejoApertura(){ espejoBolsas('aBolsas', {carne:'aCarne', panJ:'aPanJ', panS:'aPanS'}); }
+function espejoCierre(){   espejoBolsas('zBolsas', {carne:'zCarne', panJ:'zPanJ', panS:'zPanS'}); }
+
+/* ---------------------- fábrica y pedidos ---------------------- */
+
+/**
+ * Stock de la fábrica. Se muestra en la apertura Y en el panel del turno:
+ * el mostrador tiene que poder ver de cuánto dispone para pedir un envío
+ * ANTES de quedarse sin mercadería.
+ */
+/**
+ * Ultimo stock conocido de la fabrica. Se guarda para poder validar contra el
+ * antes de traer mercaderia: sin este dato no se puede saber si alcanza.
+ * `sabido` distingue "la fabrica tiene 0" de "no sabemos cuanto tiene".
+ */
+var FABRICA = {listas:0, camara:0, quien:'', fecha:'', sabido:false};
+
+function traerFabrica(cuandoTermine){
+  pintarFabrica('Consultando…', null);
+  traer('Producción', function(r){
+    if (!r || !r.ok || !r.datos || !r.datos.length){
+      FABRICA = {listas:0, camara:0, quien:'', fecha:'', sabido:false};
+      pintarFabrica(r ? 'La fábrica todavía no cargó producción hoy.' : 'No se pudo consultar la fábrica.', null);
+      if (cuandoTermine) cuandoTermine(FABRICA);
+      return;
+    }
+    var f = r.datos[r.datos.length - 1];
+    FABRICA = {
+      // StockResultante = carnes LISTAS en freezers · CamaraResultante = congelandose
+      listas: num(f.StockResultante !== '' && f.StockResultante != null ? f.StockResultante : f.CarnesProducidas),
+      camara: num(f.CamaraResultante || 0),
+      quien:  f.Quien || '',
+      fecha:  f.Fecha || '',
+      sabido: true
+    };
+    pintarFabrica(null, FABRICA);
+    if (cuandoTermine) cuandoTermine(FABRICA);
+  });
+}
+
+function pintarFabrica(mensaje, d){
+  var destinos = [$('fabrica'), $('fabricaTurno')];
+  destinos.forEach(function(el){
+    if (!el) return;
+    if (mensaje){ el.className = 'vacio'; el.textContent = mensaje; return; }
+
+    el.className = '';
+    // Bolsa = 50 unidades · canasto = 60 unidades (los dos salen del relevamiento).
+    var h = '<div class="kpis dos">' +
+            kpi(Math.floor(d.listas/50), 'Bolsas listas', '', miles(d.listas) + ' carnes en freezers') +
+            kpi(Math.floor(d.camara/60), 'En cámara', '', d.camara > 0 ? miles(d.camara) + ' carnes congelándose · disponibles al embolsar' : 'nada congelándose') + '</div>';
+
+    // Aviso útil para el mostrador: si en el local queda menos de un día de
+    // venta y en la fábrica hay de sobra, conviene pedir un envío ahora.
+    if (T && T.abierto){
+      var totalFab = d.listas + d.camara;
+      if (T.stock.carne <= 0){
+        h += '<div class="aviso rojo" style="margin:10px 0 0">Te quedaste sin carnes en el local. En la fábrica hay ' +
+             miles(totalFab) + ' (' + miles(d.listas) + ' listas). Pedí un envío.</div>';
+      } else if (totalFab > 0 && T.stock.carne < totalFab * 0.2){
+        h += '<div class="aviso ambar" style="margin:10px 0 0">Queda poco en el local (' + miles(T.stock.carne) +
+             ') y en la fábrica hay ' + miles(totalFab) + '. Buen momento para pedir un envío.</div>';
+      }
+    }
+    var pie = [];
+    if (d.fecha) pie.push('Último parte: ' + String(d.fecha).slice(0,10));
+    if (d.quien) pie.push('cargado por ' + d.quien);
+    if (pie.length) h += '<div class="nota" style="text-align:center">' + pie.join(' · ') + '</div>';
+
+    el.innerHTML = h;
+  });
+}
+
+var PEDIDOS_HOY = [];
+var PEDIDOS_TODOS = [];
+
+/** Fecha de retiro normalizada a 'aaaa-mm-dd', o '' si no se entiende. */
+function fechaDe(f){
+  var v = campo(f,'fecha','retiro');
+  if (!v) return '';
+  var s = String(v);
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0,10);
+  var m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (m) return m[3] + '-' + String(m[2]).padStart(2,'0') + '-' + String(m[1]).padStart(2,'0');
+  var d = new Date(s);
+  if (isNaN(d.getTime())) return '';
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+function traerPedidos(){
+  traer('PedidosForm', function(r){
+    PEDIDOS_HOY = []; PEDIDOS_TODOS = [];
+    if (r && r.ok && r.datos){
+      r.datos.forEach(function(f){
+        var est = limpiaClave(campo(f,'estado'));
+        if (est.indexOf('cancelado') >= 0) return;
+        PEDIDOS_TODOS.push(f);
+        if (!esDeHoy(campo(f,'fecha','retiro'))) return;
+        if (est.indexOf('entregado') >= 0) return;
+        PEDIDOS_HOY.push(f);
+      });
+    }
+    pintarPedidos();
+    if (!$('pCalendario').classList.contains('oculto')) pintarMes();
+  });
+}
+
+/* ---------------------- calendario propio ---------------------- */
+
+var MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+var mesVista = null;   // {a:2026, m:7}  (m es 0-11)
+var diaElegido = null;
+
+function pedidosPorDia(){
+  var mapa = {};
+  PEDIDOS_TODOS.forEach(function(f){
+    var k = fechaDe(f);
+    if (!k) return;
+    if (!mapa[k]) mapa[k] = [];
+    mapa[k].push(f);
+  });
+  return mapa;
+}
+
+function abrirCalendario(){
+  var h = hoyLocal().split('-');
+  if (!mesVista) mesVista = {a: ent(h[0]), m: ent(h[1]) - 1};
+  if (!diaElegido) diaElegido = hoyLocal();
+  pintarMes();
+  mostrar('pCalendario');
+}
+
+function pintarMes(){
+  var mapa = pedidosPorDia();
+  var a = mesVista.a, m = mesVista.m;
+  $('mesNombre').textContent = MESES[m].charAt(0).toUpperCase() + MESES[m].slice(1) + ' de ' + a;
+
+  var primero = new Date(a, m, 1);
+  var arranque = (primero.getDay() + 6) % 7;          // lunes = 0
+  var diasMes = new Date(a, m + 1, 0).getDate();
+  var hoy = hoyLocal();
+
+  var h = '';
+  for (var i = 0; i < arranque; i++) h += '<div class="dia fuera"></div>';
+  for (var d = 1; d <= diasMes; d++){
+    var k = a + '-' + String(m+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+    var cl = 'dia';
+    if (k === hoy) cl += ' hoy';
+    if (k === diaElegido) cl += ' sel';
+    h += '<button type="button" class="' + cl + '" data-dia="' + k + '">' + d +
+         (mapa[k] ? '<span class="punto"></span>' : '') + '</button>';
+  }
+  $('mes').innerHTML = h;
+
+  Array.prototype.forEach.call($('mes').querySelectorAll('[data-dia]'), function(b){
+    b.addEventListener('click', function(){ diaElegido = b.getAttribute('data-dia'); pintarMes(); });
+  });
+
+  pintarPedidosDia(mapa);
+}
+
+function pintarPedidosDia(mapa){
+  var lista = mapa[diaElegido] || [];
+  var p = diaElegido.split('-');
+  $('tituloDia').textContent = 'Pedidos del ' + ent(p[2]) + ' de ' + MESES[ent(p[1]) - 1];
+
+  var el = $('pedidosDia');
+  if (!lista.length){
+    el.className = 'vacio';
+    el.textContent = 'Ese día no hay pedidos.';
+    return;
+  }
+  el.className = '';
+  el.innerHTML = lista.map(function(f,i){ return tarjetaPedido(f, i, false); }).join('');
+}
+
+/**
+ * El formulario guarda las cantidades como texto plano: "3000 Unidades".
+ * A cuatro cifras sin puntos, 3000 y 300 se confunden de un vistazo, que es
+ * justo como se lee un pedido en el mostrador. Se les pone el separador.
+ */
+function conMiles(txt){
+  return String(txt || '').replace(/\d{4,}/g, function(n){ return miles(n); });
+}
+
+function detallePedido(f){
+  var p = [];
+  var combo = campo(f,'combo','seleccionado'), cc = campo(f,'cantidad','combo');
+  if (combo && limpiaClave(combo) !== 'no') p.push((cc ? cc + ' x ' : '') + combo);
+  var ca = campo(f,'cantidad','carnes'); if (ca && limpiaClave(ca).indexOf('no lleva') < 0) p.push(ca + ' de carne');
+  var pa = campo(f,'cantidad','panes');  if (pa && limpiaClave(pa).indexOf('no lleva') < 0) p.push(pa + ' de pan');
+  var ch = campo(f,'cheddar');           if (ch && limpiaClave(ch).indexOf('sin cheddar') < 0) p.push(ch + ' de cheddar');
+  return p.length ? conMiles(p.join(' · ')) : 'Sin detalle cargado';
+}
+
+/**
+ * Link al evento del pedido en Google Calendar.
+ * Google abre un evento con /r/eventedit/<base64 de "idEvento idCalendario">.
+ * Si la fila todavía no tiene ID de evento, se cae al día del retiro,
+ * que siempre abre aunque el evento no exista.
+ */
+function linkCalendario(f){
+  var ev = String(campo(f,'id','evento') || '').replace(/@.*$/, '').trim();
+  if (ev){
+    try{ return 'https://calendar.google.com/calendar/r/eventedit/' + btoa(ev + ' ' + CALENDARIO).replace(/=+$/, ''); }catch(e){}
+  }
+  var d = new Date(campo(f,'fecha','retiro'));
+  if (isNaN(d.getTime())) return 'https://calendar.google.com/calendar/r/day';
+  return 'https://calendar.google.com/calendar/r/day/' + d.getFullYear() + '/' + (d.getMonth()+1) + '/' + d.getDate();
+}
+
+/**
+ * Cuánta mercadería sale por un pedido, leído del texto del formulario.
+ * El formulario guarda cosas como "10 Carnes + 10 Panes + 10 Fetas de Cheddar"
+ * por combo, o "200 Unidades" sueltas. Esto lo traduce a números.
+ * SIEMPRE se muestra en pantalla para que el mostrador lo confirme: es una
+ * lectura, no una verdad.
+ */
+function desglosarPedido(f){
+  var r = {carnes:0, panes:0, cheddar:0, packs:0, dudoso:false};
+
+  // 1) Combo x cantidad
+  var combo = String(campo(f,'combo','seleccionado') || '');
+  var cant  = ent(campo(f,'cantidad','combo'));
+  if (combo && cant > 0){
+    var mCar = combo.match(/(\d+)\s*carne/i);
+    var mPan = combo.match(/(\d+)\s*pan/i);
+    var mChe = combo.match(/(\d+)\s*feta/i);
+    if (mCar) r.carnes += ent(mCar[1]) * cant;
+    if (mPan) r.panes  += ent(mPan[1]) * cant;
+    // HU6: las fetas del combo salen del inventario de packs de 10, no de las barras.
+    if (mChe) r.packs += Math.ceil((ent(mChe[1]) * cant) / 10);
+  } else if (combo && !cant){
+    r.dudoso = true;
+  }
+
+  // 2) Cantidades sueltas
+  r.carnes += soloNumero(campo(f,'cantidad','carnes'), r);
+  r.panes  += soloNumero(campo(f,'cantidad','panes'), r);
+
+  // 3) Cheddar suelto, en barras
+  var ch = String(campo(f,'cheddar') || '');
+  if (ch && limpiaClave(ch).indexOf('sin cheddar') < 0){
+    var mb = ch.match(/(\d+)/);
+    if (mb) r.cheddar += ent(mb[1]);
+    else r.dudoso = true;
+  }
+
+  return r;
+}
+
+/** "200 Unidades" -> 200 · "1.000 Unidades" -> 1000 · "No lleva" -> 0 · "s" -> 0 y marca dudoso */
+function soloNumero(v, r){
+  var s = String(v || '').trim();
+  if (!s) return 0;
+  var l = limpiaClave(s);
+  if (l.indexOf('no lleva') >= 0 || l === 'no') return 0;
+  var m = s.replace(/\./g,'').match(/(\d+)/);
+  if (m) return ent(m[1]);
+  if (r) r.dudoso = true;
+  return 0;
+}
+
+/** Datos de cobro que ahora vienen del formulario. */
+function cobroDePedido(f){
+  return {
+    total: ent(campo(f,'cuanto','cobrar')),
+    dejo:  ent(campo(f,'cuanto','deja')),
+    como:  String(campo(f,'como','paga') || '')
+  };
+}
+
+function tarjetaPedido(f, i, conBoton){
+  var c = cobroDePedido(f);
+  var saldo = c.total - c.dejo;
+  var chip = '';
+  if (c.total > 0){
+    if (saldo > 0)       chip = '<span class="pill deuda">Falta ' + pesos(saldo) + '</span>';
+    else if (saldo === 0) chip = '<span class="pill ok">Ya pagado</span>';
+    // Dejó MÁS de lo que costaba: casi siempre es un error de carga en el
+    // formulario. No se puede tapar mostrando "Ya pagado".
+    else chip = '<span class="pill revisar">Revisar: dejó ' + pesos(-saldo) + ' de más</span>';
+  }
+  // Si la planilla no le puso número, se avisa. Antes se mostraba el texto
+  // basura de esa columna como si fuera el número.
+  var num_ = numeroPedido(f);
+  var chipNum = num_
+    ? ' <span class="pill">' + num_ + '</span>'
+    : ' <span class="pill revisar">Sin N° de pedido</span>';
+  var h = '<div class="item"><div class="izq">' +
+    '<div class="t1">' + (campo(f,'nombre','apellido') || 'Sin nombre') + chipNum + chip + '</div>' +
+    '<div class="t2">' + detallePedido(f) + '</div>';
+  var obs = campo(f,'observaciones');
+  if (obs) h += '<div class="t2">Nota: ' + obs + '</div>';
+  if (c.total > 0) h += '<div class="t2">Total ' + pesos(c.total) + (c.dejo > 0 ? ' · ya dejó ' + pesos(c.dejo) + (c.como ? ' (' + c.como + ')' : '') : '') + '</div>';
+  h += '<a class="linkcal" href="' + linkCalendario(f) + '" target="_blank" rel="noopener">Ver en el calendario</a>';
+  h += '</div>';
+  if (conBoton) h += '<div class="der"><button class="btn chico" style="width:auto;padding:0 14px" data-ped="' + i + '">Entregar</button></div>';
+  h += '</div>';
+  return h;
+}
+
+/** Los de hoy que todavía no se entregaron en este turno. */
+function pendientesHoy(){
+  return PEDIDOS_HOY.filter(function(f){ return !yaEntregado(f); });
+}
+
+function pintarPedidos(){
+  var el = $('pedidos');
+  var lista = pendientesHoy();
+  var entregados = PEDIDOS_HOY.length - lista.length;
+  if (!lista.length){
+    el.className = 'vacio';
+    el.textContent = entregados
+      ? 'Listo: ya se entregaron los ' + entregados + ' pedido(s) de hoy.'
+      : 'No hay pedidos para retirar hoy.';
+    return;
+  }
+  el.className = '';
+  el.innerHTML = lista.map(function(f){ return tarjetaPedido(f, PEDIDOS_HOY.indexOf(f), false); }).join('') +
+    (entregados ? '<div class="nota" style="text-align:center;margin-top:10px">' +
+      entregados + ' pedido(s) ya entregados en este turno.</div>' : '');
+}
+
+function pintarListaPedidos(){
+  var el = $('listaPedidos');
+  var lista = pendientesHoy();
+  if (!lista.length){ el.className = 'vacio'; el.textContent = 'No quedan pedidos por entregar hoy.'; return; }
+  el.className = '';
+  el.innerHTML = lista.map(function(f){ return tarjetaPedido(f, PEDIDOS_HOY.indexOf(f), true); }).join('');
+  Array.prototype.forEach.call(el.querySelectorAll('[data-ped]'), function(b){
+    b.addEventListener('click', function(){ elegirPedido(ent(b.getAttribute('data-ped'))); });
+  });
+}
+
+/* ---------------------- venta ---------------------- */
+
+function nuevaVenta(){
+  venta = {tipo:null, items:[], pedido:null};
+  sel = null;
+  // Cada venta arranca sin tipo elegido: el layout vuelve al neutro hasta que
+  // se elija negocio o pedido.
+  $('pVenta').classList.remove('negocio');
+  ver('cajaElegirPedido', false);
+  ver('cajaProductos', false);
+  ver('cajaSalida', false);
+  ver('cajaComanda', false);
+  ver('cajaCobro', false);
+  ver('cajaDeuda', false);
+  // Limpiar SIEMPRE los campos de cobro: si no, la venta siguiente arranca
+  // con los números de la anterior.
+  ['cEfe','cMp','cDeb'].forEach(function(id){ ponerNumero(id, 0); });
+  ['sCarne','sPanJ','sPanS','sChe','sPack'].forEach(function(id){ ponerNumero(id, 0); });
+  $('dQuien').value = ''; $('dNota').value = ''; marcarDeudorFaltante(false);
+  ponerNumero('vCant', 0); ponerNumero('vPrecio', 0);
+  $('avisoStock').innerHTML = '';
+  $('avisoCobro').innerHTML = '';
+  $('avisoStockPedido').innerHTML = '';
+  mostrar('pVenta');
+}
+
+function pintarProductos(){
+  $('prods').innerHTML = CATALOGO.map(function(p){
+    return '<button type="button" class="prod' + (sel && sel.id === p.id ? ' sel' : '') + '" data-p="' + p.id + '">' +
+           '<div class="pn">' + p.n + '</div><div class="pd">' + p.d + '</div></button>';
+  }).join('');
+  Array.prototype.forEach.call($('prods').querySelectorAll('[data-p]'), function(b){
+    b.addEventListener('click', function(){ elegirProducto(b.getAttribute('data-p')); });
+  });
+}
+
+function elegirProducto(id){
+  for (var i=0;i<CATALOGO.length;i++) if (CATALOGO[i].id === id) sel = CATALOGO[i];
+  pintarProductos();
+  ponerNumero('vCant', ''); ponerNumero('vPrecio', '');
+  precioAuto = null;
+  // "Con pan" y "Combo" se cuentan por UNIDAD ARMADA: cada unidad lleva
+  // una carne y un pan (y el combo, además, su parte de cheddar).
+  $('lblCant').textContent = sel.id === 'pan'     ? '¿Cuántas unidades? (cada una lleva 1 carne + 1 pan)'
+                           : sel.id === 'solopan' ? '¿Cuántos panes?'
+                           : sel.id === 'combo'   ? '¿Cuántos combos? (c/u: 10 carnes + 10 panes + 1 pack)'
+                           : sel.id === 'cheddar' ? '¿Cuántas barras?'
+                           : sel.id === 'chepack' ? '¿Cuántos packs de 10 fetas?'
+                           : '¿Cuántas carnes?';
+  ver('wrapProv', sel.pan);
+  recalcular();
+}
+
+function recalcular(){
+  if (!sel) return;
+  var c = ent($('vCant').value);
+  var deLista = precioDeLista(sel.id, c);
+
+  if (deLista !== null){
+    // Cantidad del cartel: se completa sola y se avisa de dónde sale.
+    $('vPrecio').value = miles(deLista);
+    precioAuto = deLista;
+    $('notaPrecio').innerHTML = '<b style="color:var(--verde)">Precio de lista</b> para ' + c + ' ' +
+      (sel.id === 'pan' ? 'con pan' : 'carnes') + ': ' + pesosCartel(deLista) + '. Podés cambiarlo.';
+  } else if (c > 0){
+    // Cualquier otra cantidad va a mano: no inventamos un precio.
+    // Si lo que hay escrito lo puso el sistema, se borra: dejarlo sería
+    // cobrar el precio de otra cantidad.
+    if (precioAuto !== null && ent($('vPrecio').value) === precioAuto) $('vPrecio').value = '';
+    precioAuto = null;
+    $('notaPrecio').innerHTML = 'Esta cantidad <b>no está en el cartel</b>. Escribí cuánto le cobrás.';
+  } else {
+    if (precioAuto !== null && ent($('vPrecio').value) === precioAuto) $('vPrecio').value = '';
+    precioAuto = null;
+    $('notaPrecio').innerHTML = textoLista(sel.id);
+  }
+  avisarStock(c);
+}
+
+/** Recordatorio de las cantidades que sí tienen precio fijo. */
+function textoLista(id){
+  var l = LISTA[id];
+  if (!l) return 'El precio de este producto se carga a mano.';
+  var partes = [];
+  for (var k in l) partes.push(k + ' = ' + pesosCartel(l[k]));
+  return 'Precios del cartel: ' + partes.join(' · ') + '. Otras cantidades van a mano.';
+}
+
+/** HU14: panes de ese proveedor que ya se llevan en ESTA venta (comanda). */
+function panEnComanda(prov){
+  if (!venta) return 0;
+  return venta.items.reduce(function(t, it){
+    if (it.prov !== prov) return t;
+    return t + (it.id === 'combo' ? it.cant * COMBO.pan : it.cant);
+  }, 0);
+}
+function nombrePan(prov){ return prov === 'S' ? 'Pan de José' : 'Pan de Julio'; }
+/** HU14: cuántos panes de ese proveedor quedan para esta venta. */
+function panDisponible(prov){
+  return (prov === 'S' ? T.stock.panS : T.stock.panJ) - panEnComanda(prov);
+}
+/** HU14 · escenario 4: "Solo pan" no se vende sin stock. Devuelve el aviso o ''. */
+function faltaPanSuelto(c, prov){
+  var d = panDisponible(prov);
+  if (c <= d) return '';
+  return 'Stock insuficiente de ' + nombrePan(prov) + ': hay ' + miles(Math.max(0, d)) +
+         (panEnComanda(prov) ? ' (sin contar lo que ya está en esta venta)' : '') +
+         ' y querés vender ' + miles(c) + '. Corregí la cantidad o cambiá de pan.';
+}
+
+function avisarStock(c){
+  var el = $('avisoStock');
+  el.innerHTML = '';
+  if (!sel || c <= 0) return;
+  var prov = $('vProv').value;
+  var faltas = [];
+  if (sel.id === 'solopan'){
+    var falta = faltaPanSuelto(c, prov);
+    if (falta){ el.innerHTML = '<div class="aviso rojo">' + falta + '</div>'; }
+    return;
+  }
+  if (sel.id === 'cheddar'){
+    if (c > T.stock.che) faltas.push('cheddar (hay ' + T.stock.che + ' barras)');
+  } else if (sel.id === 'chepack'){
+    if (c > T.stock.pack) faltas.push('packs de cheddar (hay ' + T.stock.pack + ')');
+  } else {
+    var esCombo = sel.id === 'combo';
+    var nCar = esCombo ? c * COMBO.carne : c, nPan = esCombo ? c * COMBO.pan : c;
+    if (nCar > T.stock.carne) faltas.push('carnes (hacen falta ' + nCar + ' y hay ' + T.stock.carne + ')');
+    if (sel.pan){
+      if (prov === 'J' && nPan > T.stock.panJ) faltas.push('pan de Julio (hacen falta ' + nPan + ' y hay ' + T.stock.panJ + ')');
+      if (prov === 'S' && nPan > T.stock.panS) faltas.push('pan de José (hacen falta ' + nPan + ' y hay ' + T.stock.panS + ')');
+    }
+    if (esCombo && c * COMBO.pack > T.stock.pack){
+      faltas.push('packs de cheddar (hacen falta ' + (c * COMBO.pack) + ' y hay ' + T.stock.pack + ')');
+    }
+  }
+  if (faltas.length){
+    el.innerHTML = '<div class="aviso ambar">No alcanza el stock de ' + faltas.join(' ni de ') +
+                   '. Podés vender igual, pero el conteo del cierre va a dar diferencia. ' +
+                   'Si acaba de llegar mercadería, cargala primero con “Ingresó mercadería”.</div>';
+  }
+}
+
+function agregarItem(){
+  if (!sel) return;
+  var c = ent($('vCant').value);
+  if (c <= 0){
+    $('avisoStock').innerHTML = '<div class="aviso rojo">Poné la cantidad.</div>';
+    return;
+  }
+  var precio = ent($('vPrecio').value);
+  if (precio <= 0){
+    $('avisoStock').innerHTML = '<div class="aviso rojo">Poné cuánto le cobrás.</div>';
+    return;
+  }
+  var prov = sel.pan ? $('vProv').value : null;
+  if (sel.id === 'solopan'){
+    var falta = faltaPanSuelto(c, prov);
+    if (falta){ $('avisoStock').innerHTML = '<div class="aviso rojo">' + falta + '</div>'; return; }
+  }
+  venta.items.push({id:sel.id, n:sel.n, cant:c, prov:prov, monto:precio});
+  sel = null;
+  pintarProductos();
+  ponerNumero('vCant', ''); ponerNumero('vPrecio', ''); $('avisoStock').innerHTML = '';
+  ver('cajaProductos', false);
+  pintarComanda();
+}
+
+function totalVenta(){
+  // Sin venta abierta no hay nada que sumar. Los campos de cobro siguen en el
+  // DOM aunque estén ocultos, y un `input` disparado sin venta no puede tirar
+  // un error que corte el resto de los listeners.
+  if (!venta) return 0;
+  var t = 0; venta.items.forEach(function(i){ t += i.monto; }); return t;
+}
+
+/** "3 combos (30 carnes · 30 panes · 3 packs de cheddar)" */
+function textoCombo(n){
+  return n + (n === 1 ? ' combo' : ' combos') + ' (' + conMiles(n * COMBO.carne) + ' carnes · ' +
+         conMiles(n * COMBO.pan) + ' panes · ' + (n * COMBO.pack) + (n * COMBO.pack === 1 ? ' pack' : ' packs') + ' de cheddar)';
+}
+
+function pintarComanda(){
+  if (!venta.items.length && !venta.pedido){ ver('cajaComanda', false); ver('cajaCobro', false); return; }
+  ver('cajaComanda', true);
+  var h = '';
+  if (venta.pedido){
+    var c = cobroDePedido(venta.pedido);
+    h += '<div class="item"><div class="izq"><div class="t1">' + (campo(venta.pedido,'nombre','apellido') || 'Pedido') + '</div>' +
+         '<div class="t2">' + detallePedido(venta.pedido) + '</div></div></div>';
+    ver('cajaImporte', true);
+    if (!venta.importeListo){
+      venta.importeListo = true;
+      ponerNumero('pTotal', c.total);
+      $('notaImporte').textContent = c.total > 0
+        ? 'Viene del pedido. Cambialo si acordaron otro precio.'
+        : 'Este pedido no trae importe cargado. Poné cuánto hay que cobrar.';
+      $('notaImporte').style.color = c.total > 0 ? '' : '#f0cf94';
+    }
+  } else {
+    ver('cajaImporte', false);
+  }
+  venta.items.forEach(function(it, i){
+    var prov = it.prov ? (it.prov === 'J' ? ' · pan de Julio' : ' · pan de José') : '';
+    h += '<div class="item"><div class="izq"><div class="t1">' + it.n + '</div>' +
+         '<div class="t2">' + (it.id === 'combo' ? textoCombo(it.cant) : conMiles(it.cant)) + prov + '</div></div>' +
+         '<div class="der"><div class="monto">' + pesos(it.monto) + '</div>' +
+         '<button class="quitar" data-q="' + i + '">quitar</button></div></div>';
+  });
+  $('comanda').innerHTML = h;
+  Array.prototype.forEach.call($('comanda').querySelectorAll('[data-q]'), function(b){
+    b.addEventListener('click', function(){
+      venta.items.splice(ent(b.getAttribute('data-q')), 1);
+      pintarComanda();
+    });
+  });
+  $('totalVenta').textContent = pesos(totalTodo());
+  ver('cajaCobro', true);
+  repartirAuto();
+  chequearCobro();
+}
+
+function totalTodo(){
+  if (!venta) return 0;
+  var t = totalVenta();
+  if (venta.pedido) t += ent($('pTotal').value);
+  return t;
+}
+
+/** Si el pedido ya trae seña, la precarga en la vía que corresponde. */
+function repartirAuto(){
+  if (!venta.pedido || venta.yaRepartido) return;
+  venta.yaRepartido = true;
+  var c = cobroDePedido(venta.pedido);
+  if (c.dejo <= 0) return;
+  var como = limpiaClave(c.como);
+  // El formulario de pedidos todavía ofrece "Transferencia" como forma de
+  // pago. Acá adentro ya no hay esa vía: la seña cae en Mercado Pago, que es
+  // la única digital que queda.
+  if (como.indexOf('efectivo') >= 0) ponerNumero('cEfe', c.dejo);
+  else ponerNumero('cMp', c.dejo);
+}
+
+function sumaVias(){
+  return ent($('cEfe').value) + ent($('cMp').value) + ent($('cDeb').value);
+}
+
+function chequearCobro(){
+  var total = totalTodo(), suma = sumaVias(), dif = total - suma;
+  var m = $('marcador');
+  if (total <= 0){
+    m.className = 'marcador mal';
+    $('marTexto').textContent = 'Falta poner cuánto se cobra';
+    $('marNum').textContent = '—';
+    ver('cajaDeuda', ent($('cDeb').value) > 0);
+    $('btnFinalizar').disabled = true;
+    return;
+  }
+  if (dif === 0 && total > 0){
+    m.className = 'marcador ok';
+    $('marTexto').textContent = 'Justo, la cuenta cierra';
+    $('marNum').textContent = pesos(total);
+  } else if (dif > 0){
+    m.className = 'marcador mal';
+    $('marTexto').textContent = 'Falta repartir';
+    $('marNum').textContent = pesos(dif);
+  } else {
+    m.className = 'marcador mal';
+    $('marTexto').textContent = 'Te pasaste por';
+    $('marNum').textContent = pesos(-dif);
+  }
+  ver('cajaDeuda', ent($('cDeb').value) > 0);
+  ver('cajaMP', ent($('cMp').value) > 0);   // HU-05
+  pintarSello();
+  $('btnFinalizar').disabled = !(dif === 0 && total > 0);
+}
+
+/** HU7: el campo del deudor, en rojo o normal. */
+function marcarDeudorFaltante(si){
+  $('dQuien').classList[si ? 'add' : 'remove']('error');
+  ver('dQuienErr', si);
+}
+/** HU7 · escenario 1: se muestra quién y cuándo, sin que nadie lo escriba. */
+function pintarSello(){
+  var u = usuarioActivo();
+  $('dSello').innerHTML = 'Lo registra <b>' + (u || 'sin usuario') + '</b> · ' +
+                          selloTexto(hoyLocal(), hora(), '').replace(/ \u00b7 sin usuario$/, '') +
+                          ' <span style="opacity:.75">(se guarda solo)</span>';
+}
+
+function finalizarVenta(){
+  var total = totalTodo();
+  // HU5: ya no existe la vía "Transferencia". `tra` queda en 0 y sigue vivo
+  // solo porque la hoja Ventas del Cuaderno escribe POR POSICIÓN: si se saca
+  // la columna, se desalinean MercadoPago y QuienCerro en silencio.
+  var efe = ent($('cEfe').value), tra = 0,
+      mp  = ent($('cMp').value),  deb = ent($('cDeb').value);
+
+  if (efe + tra + mp + deb !== total || total <= 0){
+    $('avisoCobro').innerHTML = '<div class="aviso rojo">La suma no da el total. Revisá los números.</div>';
+    return;
+  }
+  // HU-05: un cobro por MP sin nombre no se puede identificar después.
+  if (mp > 0 && !$('mpQuien').value.trim()){
+    $('mpQuien').classList.add('error'); ver('mpQuienErr', true);
+    $('avisoCobro').innerHTML = '<div class="aviso rojo">Poné a nombre de quién entró la transferencia.</div>';
+    try{ $('mpQuien').focus(); }catch(e){}
+    return;
+  }
+  $('mpQuien').classList.remove('error'); ver('mpQuienErr', false);
+  if (deb > 0){
+    if (!$('dQuien').value.trim()){
+      // HU7 · escenario 2: bloquea, marca el campo y no deja avanzar.
+      marcarDeudorFaltante(true);
+      $('avisoCobro').innerHTML = '<div class="aviso rojo">El nombre del deudor es obligatorio</div>';
+      $('dQuien').focus();
+      return;
+    }
+    if (!$('dNota').value.trim()){
+      $('avisoCobro').innerHTML = '<div class="aviso rojo">Escribí cuándo y cómo lo paga.</div>';
+      return;
+    }
+  }
+
+  // descontar stock — primero lo que sale por el pedido
+  var det = [];
+  if (venta.pedido){
+    var sC = ent($('sCarne').value), sJ = ent($('sPanJ').value),
+        sS = ent($('sPanS').value),  sH = ent($('sChe').value),
+        sK = ent($('sPack').value);
+    T.stock.pack  -= sK; T.vend.pack  += sK;
+    T.stock.carne -= sC; T.vend.carne += sC;
+    T.stock.panJ  -= sJ; T.vend.panJ  += sJ;
+    T.stock.panS  -= sS; T.vend.panS  += sS;
+    T.stock.che   -= sH; T.vend.che   += sH;
+    var partes = [];
+    if (sC) partes.push(sC + ' carnes');
+    if (sJ) partes.push(sJ + ' pan Julio');
+    if (sS) partes.push(sS + ' pan José');
+    if (sH) partes.push(sH + ' barras');
+    if (sK) partes.push(sK + (sK === 1 ? ' pack' : ' packs') + ' de cheddar');
+    if (partes.length) det.push(partes.join(', '));
+  }
+  venta.items.forEach(function(it){
+    if (it.id === 'cheddar'){ T.stock.che -= it.cant; T.vend.che += it.cant; }
+    else if (it.id === 'chepack'){ T.stock.pack -= it.cant; T.vend.pack += it.cant; }
+    else if (it.id === 'solopan'){
+      // HU14: solo el pan elegido; la carne no se toca.
+      var kPan = it.prov === 'S' ? 'panS' : 'panJ';
+      T.stock[kPan] -= it.cant; T.vend[kPan] += it.cant;
+    }
+    else if (it.id === 'combo'){
+      // HU6: cada combo = 10 carnes + 10 panes + 1 pack de 10 fetas.
+      var cCar = it.cant * COMBO.carne, cPan = it.cant * COMBO.pan, cPack = it.cant * COMBO.pack;
+      T.stock.carne -= cCar; T.vend.carne += cCar;
+      if (it.prov === 'J'){ T.stock.panJ -= cPan; T.vend.panJ += cPan; }
+      if (it.prov === 'S'){ T.stock.panS -= cPan; T.vend.panS += cPan; }
+      T.stock.pack -= cPack; T.vend.pack += cPack;
+    }
+    else {
+      T.stock.carne -= it.cant; T.vend.carne += it.cant;
+      if (it.prov === 'J'){ T.stock.panJ -= it.cant; T.vend.panJ += it.cant; }
+      if (it.prov === 'S'){ T.stock.panS -= it.cant; T.vend.panS += it.cant; }
+    }
+    det.push(it.id === 'combo' ? textoCombo(it.cant)
+           : it.id === 'solopan' ? it.cant + ' solo pan (' + nombrePan(it.prov).toLowerCase() + ')'
+           : it.cant + ' ' + it.n.toLowerCase());
+  });
+
+  // plata
+  T.ventas += total;
+  T.caja   += efe;              // SOLO el efectivo entra a la caja
+  T.cobros.efe += efe; T.cobros.tra += tra; T.cobros.mp += mp; T.cobros.deb += deb;
+
+  // HU-05: los pagadores por MP del turno, para poder identificar cada
+  // transferencia en el cierre. La hoja Ventas guarda el resumen del turno, no
+  // las ventas una por una: por eso se acumulan acá y viajan en una sola celda.
+  if (mp > 0){
+    T.pagadoresMP = T.pagadoresMP || [];
+    T.pagadoresMP.push($('mpQuien').value.trim() + ' ' + pesos(mp));
+    $('mpQuien').value = '';
+  }
+
+  if (deb > 0){
+    var quienDebe = $('dQuien').value.trim();
+    var sello = {usuario: usuarioActivo(), fecha: hoyLocal(), hora: hora()};
+    T.deudas.push({quien:quienDebe, monto:deb, nota:$('dNota').value.trim(), hora:sello.hora, usuario:sello.usuario});
+    // Y al libro, que es el que sobrevive al cierre del turno.
+    anotarDeuda(quienDebe, deb, $('dNota').value.trim(), sello, det.join(' · '));
+  }
+
+  var avisoNum = '';
+  if (venta.pedido){
+    T.entregados.push(clavePedido(venta.pedido));
+    if (!marcarEntregadoEnNube(venta.pedido)){
+      // Sin N° de pedido no hay forma de ubicar la fila en la planilla.
+      avisoNum = ' · ⚠ sin N° de pedido: marcalo a mano en la planilla';
+    }
+  }
+
+  var quien = venta.pedido ? (campo(venta.pedido,'nombre','apellido') || 'Pedido') : 'Mostrador';
+  var vias = [];
+  if (efe) vias.push('efectivo ' + pesos(efe));
+  if (mp)  vias.push('Mercado Pago ' + pesos(mp));
+  if (deb) vias.push('debe ' + pesos(deb));
+
+  anotar(venta.pedido ? 'Entregó pedido · ' + quien : 'Venta en el Negocio',
+         (det.length ? det.join(', ') + ' · ' : '') + vias.join(', ') + avisoNum,
+         pesos(total));
+
+  guardarTurno();
+  pintarKPIs(); pintarMovs(); pintarDeudas(); pintarPedidos();
+  venta = null;
+  mostrar('pTurno');
+}
+
+function elegirPedido(i){
+  venta.pedido = PEDIDOS_HOY[i];
+  ver('cajaElegirPedido', false);
+  ver('cajaProductos', false);
+
+  // Precargar lo que sale del stock, leído del pedido. Los panes van todos a
+  // Julio por defecto porque el formulario no pregunta el proveedor: el
+  // mostrador lo reparte si hace falta.
+  var d = desglosarPedido(venta.pedido);
+  ponerNumero('sCarne', d.carnes);
+  ponerNumero('sPanJ',  d.panes);
+  ponerNumero('sPanS',  0);
+  ponerNumero('sChe',   d.cheddar);
+  ponerNumero('sPack',  d.packs);
+
+  $('avisoSalida').innerHTML = d.dudoso
+    ? 'Este pedido tiene cantidades escritas a mano que no pude leer bien. <b>Revisá los números antes de entregar.</b>'
+    : 'Leído del pedido. Si entregás otra cosa, corregilo acá — esto es lo que se descuenta del stock.';
+  $('avisoSalida').className = d.dudoso ? 'aviso ambar' : 'aviso info';
+
+  ver('cajaSalida', true);
+  avisarStockPedido();
+  pintarComanda();
+}
+
+function avisarStockPedido(){
+  var c = ent($('sCarne').value), pj = ent($('sPanJ').value),
+      ps = ent($('sPanS').value), ch = ent($('sChe').value),
+      pk = ent($('sPack').value);
+  var faltan = [];
+  if (pk > T.stock.pack)  faltan.push('packs de cheddar (hay ' + T.stock.pack + ')');
+  if (c  > T.stock.carne) faltan.push('carnes (hay ' + T.stock.carne + ')');
+  if (pj > T.stock.panJ)  faltan.push('pan de Julio (hay ' + T.stock.panJ + ')');
+  if (ps > T.stock.panS)  faltan.push('pan de José (hay ' + T.stock.panS + ')');
+  if (ch > T.stock.che)   faltan.push('cheddar (hay ' + T.stock.che + ')');
+  $('avisoStockPedido').innerHTML = faltan.length
+    ? '<div class="aviso ambar">No alcanza el stock de ' + faltan.join(' ni de ') +
+      '. Si acaba de llegar mercadería, cargala con “Ingresó mercadería”.</div>'
+    : '';
+}
+
+/**
+ * Carga el parte de fábrica desde el mostrador.
+ * La fábrica debería cargarlo desde su propio módulo, pero mientras eso no
+ * pase el dato queda vacío y el KPI no sirve para nada. Con esto, quien esté
+ * en el local puede anotar lo que le informaron por teléfono.
+ */
+function guardarParteFabrica(){
+  var n = ent($('pfCarnes').value);
+  if (n <= 0){
+    $('avisoParte').innerHTML = '<div class="aviso rojo">Poné cuántas carnes hay en la fábrica.</div>';
+    return;
+  }
+  guardarEnNube('Producción', {
+    Fecha: hoyLocal(), CarnesProducidas: 0, StockResultante: n, Quien: $('pfQuien').value
+  });
+  $('avisoParte').innerHTML = '<div class="aviso verde">Parte enviado: ' + n + ' carnes (' +
+    enBolsas(n,'carne') + '). Puede tardar unos segundos en verse.</div>';
+  anotar('Se cargó el stock de fábrica', n + ' carnes · lo contó ' + $('pfQuien').value, '');
+  guardarTurno(); pintarMovs();
+  setTimeout(traerFabrica, 2500);
+}
+
+/* ---------------------- BLOQUE A: ingreso ---------------------- */
+
+function abrirIngreso(){
+  ponerNumero('iCant', 0);
+  $('avisoIngreso').innerHTML = '';
+  espejoIngreso();
+  mostrar('pIngreso');
+  // Se refresca el dato de la fabrica al entrar: si el que carga ve cuanto hay,
+  // se da cuenta solo de si el numero que va a escribir tiene sentido.
+  traerFabrica();
+}
+
+function espejoIngreso(){
+  var que = $('iQue').value, n = ent($('iCant').value);
+  var b = enBolsas(n, que);
+  var txt = (n > 0 && b) ? 'Son <b>' + b + '</b>' : 'En unidades, no en bolsas.';
+
+  // Cuando lo que llega sale de la fabrica, se muestra cuanto le queda: es el
+  // aviso que evita cargar de mas antes de apretar el boton.
+  if (que === 'carne' && vieneDeLaFabrica() && FABRICA.sabido){
+    var disp = FABRICA.listas + FABRICA.camara;
+    if (n > disp){
+      txt += ' \u00b7 <span style="color:#f2a6a4">Entre freezers y cámara hay ' + miles(disp) + '. No alcanza.</span>';
+    } else if (n > FABRICA.listas){
+      txt += ' \u00b7 <span style="color:#f2c14e">Listas hay ' + miles(FABRICA.listas) + ': las otras ' + miles(n - FABRICA.listas) + ' salen de la cámara (embolsado a día vencido)</span>';
+    } else if (n > 0){
+      txt += ' \u00b7 <span style="color:#b3a294">En freezers quedan ' + miles(FABRICA.listas - n) + ' listas</span>';
+    } else {
+      txt += ' \u00b7 <span style="color:#b3a294">Listas en freezers: ' + miles(FABRICA.listas) + (FABRICA.camara > 0 ? ' \u00b7 en cámara: ' + miles(FABRICA.camara) : '') + '</span>';
+    }
+  }
+  $('iBolsas').innerHTML = txt;
+}
+
+/** ¿Lo que llegó vino de la fábrica? Solo en ese caso hay que descontarle. */
+function vieneDeLaFabrica(){
+  return limpiaClave($('iDe').value).indexOf('fabrica') >= 0;
+}
+
+/**
+ * Traer carnes de la fabrica al local es un TRASLADO, no produccion.
+ * Antes cada ingreso escribia CarnesProducidas con la cantidad recibida: la
+ * fabrica figuraba produciendo mercaderia que solo se habia mudado de lugar,
+ * y ademas se pisaba su stock con el del local. Las mismas carnes quedaban
+ * contadas dos veces.
+ */
+function guardarIngreso(){
+  var que = $('iQue').value, c = ent($('iCant').value);
+  if (c <= 0){ $('avisoIngreso').innerHTML = '<div class="aviso rojo">Poné cuánto llegó.</div>'; return; }
+
+  var esTrasladoDeFabrica = (que === 'carne' && vieneDeLaFabrica());
+
+  // Antes de tocar nada se pregunta a la nube cuanto hay en la fabrica: el
+  // dato en pantalla puede tener horas y otro turno pudo haber pedido un envio
+  // en el medio.
+  if (esTrasladoDeFabrica){
+    $('avisoIngreso').innerHTML = '<div class="aviso info">Consultando el stock de la fábrica…</div>';
+    $('btnGuardarIngreso').disabled = true;
+    traerFabrica(function(f){
+      $('btnGuardarIngreso').disabled = false;
+      // Si no se sabe cuanto hay en la fabrica, la mercaderia igual llego y hay
+      // que poder registrarla: el local no puede quedar trabado esperando un
+      // dato que carga otro. Se suma al local y queda anotado que la fabrica
+      // no se pudo descontar.
+      if (!f.sabido){
+        confirmarIngreso(que, c, null, 'no se pudo descontar de la fábrica: no hay parte cargado');
+        return;
+      }
+      var disp = f.listas + f.camara;
+      if (c > disp){
+        $('avisoIngreso').innerHTML = '<div class="aviso rojo">No alcanza: entre freezers (<b>' +
+          miles(f.listas) + '</b> listas) y cámara (<b>' + miles(f.camara) + '</b>) hay <b>' + miles(disp) +
+          '</b> carnes y estás cargando <b>' + miles(c) + '</b>. Si de verdad llegó esa cantidad, primero actualizá el parte de fábrica.</div>';
+        return;
+      }
+      // Sale de los freezers primero; si no alcanza, el resto es de la cámara
+      // (lo embolsan a día vencido). El servidor hace la misma partición.
+      var deFrz = Math.min(c, f.listas), deCam = c - deFrz;
+      confirmarIngreso(que, c, {listas: f.listas - deFrz, camara: f.camara - deCam, deCamara: deCam}, '');
+    });
+    return;
+  }
+
+  // De un proveedor o de otro local: entra al local y la fabrica no se toca.
+  confirmarIngreso(que, c, null, '');
+}
+
+/**
+ * @param fabricaNuevo  {listas, camara, deCamara}: lo que le queda a la fabrica
+ *                      despues del envio, o null si no salio de la fabrica.
+ */
+function confirmarIngreso(que, c, fabricaNuevo, salvedad){
+  T.entr[que] += c;
+  T.stock[que] += c;
+
+  var nombres = {carne:'carnes', panJ:'panes de Julio', panS:'panes de José', che:'barras de cheddar', pack:'packs de cheddar'};
+  var deDonde = $('iDe').value;
+  var quien = $('iQuien').value;
+
+  anotar('Llegó mercadería',
+         miles(c) + ' ' + nombres[que] + ' · ' + deDonde.toLowerCase() + ' · recibió ' + quien +
+         (fabricaNuevo ? ' · quedan ' + miles(fabricaNuevo.listas) + ' listas en freezers' +
+           (fabricaNuevo.deCamara > 0 ? ' (' + miles(fabricaNuevo.deCamara) + ' salieron de la cámara)' : '') : '') +
+         (salvedad ? ' · \u26a0 ' + salvedad : ''),
+         '');
+
+  if (fabricaNuevo){
+    // Movimiento negativo: la fabrica no produjo nada, entrego. Se escribe el
+    // saldo que le queda para que su stock quede descontado en la nube.
+    guardarEnNube('Producción', {
+      Fecha: hoyLocal(),
+      CarnesProducidas: 0,
+      StockResultante: fabricaNuevo.listas,
+      CamaraResultante: fabricaNuevo.camara,
+      Quien: quien,
+      Movimiento: 'Envío al local',
+      Cantidad: c,
+      Destino: 'Turno de ' + T.quien,
+      Detalle: 'Recibido por ' + quien + ' a las ' + hora()
+    });
+    FABRICA.listas = fabricaNuevo.listas;
+    FABRICA.camara = fabricaNuevo.camara;
+    FABRICA.sabido = true;
+    pintarFabrica(null, FABRICA);
+  }
+
+  guardarTurno();
+  pintarKPIs(); pintarMovs();
+  mostrar('pTurno');
+}
+
+/* ---------------------- retiro de caja ---------------------- */
+
+/**
+ * HU11: gastos cargados A MANO hoy en Finanzas. Si alguien ya cargó ahí el
+ * mismo pago, sacarlo de la caja lo registraría dos veces (pasó el 11-09:
+ * $1.650.000 de carne y $330.000 de pan). null = todavía no llegó la nube.
+ */
+var GASTOS_HOY = null;
+function esGastoManualDeHoy(g){
+  var c = String(g.Categoria || '').trim();
+  return String(g.Fecha || '').slice(0,10) === hoyLocal() &&
+         c !== 'Retiro de caja' && !/^anulad/i.test(c) && !/fondo/i.test(c);
+}
+function gastoManualIgual(c){
+  return (GASTOS_HOY || []).filter(function(g){ return num(g.Monto) === c; })[0];
+}
+/** Pide al MENSAJERO (V16) que anule un gasto: no lo borra, lo marca ANULADO. */
+function anularGastoEnNube(g, motivo){
+  try{
+    fetch(NUBE, {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify({accion:'anularGasto',
+        gasto:{Categoria:g.Categoria, Monto:num(g.Monto), Detalle:String(g.Detalle || '')},
+        quien: usuarioActivo() || (T && T.quien) || '', motivo: motivo})});
+  }catch(e){}
+}
+
+function abrirRetiro(){
+  ponerNumero('rCuanto', 0);
+  $('avisoRetiro').innerHTML = '';
+  GASTOS_HOY = null;
+  $('btnGuardarRetiro').classList.remove('oculto');
+  traer('Gastos', function(r){
+    GASTOS_HOY = (r && r.ok && r.datos) ? r.datos.filter(esGastoManualDeHoy) : [];
+  });
+  $('infoCaja').textContent = 'En la caja hay ' + pesos(T.caja) + '. Arrancaste con ' + pesos(T.ini.caja) + ' de cambio.';
+  mostrar('pRetiro');
+}
+
+function guardarRetiro(modo){   // modo: undefined | 'mismo' | 'otro'
+  var c = ent($('rCuanto').value);
+  if (c <= 0){ $('avisoRetiro').innerHTML = '<div class="aviso rojo">Poné cuánto sacás.</div>'; return; }
+  if (c > T.caja){ $('avisoRetiro').innerHTML = '<div class="aviso rojo">No hay tanta plata en la caja. Hay ' + pesos(T.caja) + '.</div>'; return; }
+  if (!$('rMotivo').value.trim()){ $('avisoRetiro').innerHTML = '<div class="aviso rojo">Escribí para qué la sacás.</div>'; return; }
+
+  // HU11 · escenario 3: el mismo pago no se registra dos veces.
+  var dup = gastoManualIgual(c);
+  if (dup && modo !== 'mismo' && modo !== 'otro'){
+    var partes = String(dup.Detalle || '').split('\u00b7');
+    var cuando = partes.length > 1 ? partes[partes.length - 1].trim() : '';
+    $('avisoRetiro').innerHTML =
+      '<div class="aviso ambar"><b>Este pago ya está cargado en Finanzas:</b> ' + dup.Categoria + ' por ' + pesos(c) +
+      ' (' + (dup.Quien || '—') + (cuando ? ' · ' + cuando : '') + ')<br><i>' + partes[0].trim() + '</i><br>' +
+      'Un pago en efectivo de la caja se registra una sola vez, como Retiro de caja.</div>' +
+      '<div class="botonera" style="margin-top:8px;grid-template-columns:1fr">' +
+      '<button class="btn chico" id="btnRetiroMismo">Es el mismo pago: sacar y anular el de Finanzas</button>' +
+      '<button class="btn gris chico" id="btnRetiroOtro">Es otro pago distinto</button></div>';
+    $('btnRetiroMismo').addEventListener('click', function(){ guardarRetiro('mismo'); });
+    $('btnRetiroOtro').addEventListener('click', function(){ guardarRetiro('otro'); });
+    // Mientras decide, el botón de siempre se esconde: son dos caminos, no tres.
+    $('btnGuardarRetiro').classList.add('oculto');
+    return;
+  }
+
+  T.caja -= c; T.retiros += c;
+  // Un retiro es plata que sale: va a la hoja Gastos para que Finanzas y el
+  // Tablero lo vean, con su motivo y quien lo hizo.
+  guardarEnNube('Gastos', {
+    Fecha: hoyLocal(), Categoria: 'Retiro de caja', Monto: c,
+    Quien: $('rQuien').value, Detalle: $('rMotivo').value.trim() + ' · turno de ' + T.quien + ' · ' + hora()
+  });
+  anotar('Sacaron plata de la caja', $('rMotivo').value.trim() + ' · ' + $('rQuien').value, '- ' + pesos(c));
+  if (modo === 'mismo' && dup){
+    // El retiro queda como ÚNICO registro; el gasto manual se anula (no se borra).
+    anularGastoEnNube(dup, 'mismo pago que el Retiro de caja de las ' + hora());
+    GASTOS_HOY = (GASTOS_HOY || []).filter(function(g){ return g !== dup; });
+    anotar('Se anuló el gasto duplicado en Finanzas', dup.Categoria + ' · ' + pesos(c), '');
+  }
+  guardarTurno();
+  pintarKPIs(); pintarMovs();
+  mostrar('pTurno');
+}
+
+/* ---------------------- cobrar una deuda ----------------------
+ * Alguien que quedo debiendo vuelve a pagar, capaz otro dia y a otra persona.
+ * El cobro entra a la caja del turno que lo recibe, pero NO se suma a "se
+ * vendio": esa venta ya se conto el dia que se hizo. Sumarla de nuevo seria
+ * facturar dos veces la misma mercaderia.
+ */
+
+var deudaEnCurso = null;
+
+function abrirCobroDeuda(id){
+  if (!T || !T.abierto){
+    alert('Para cobrar una deuda tiene que haber un turno abierto: la plata entra a esa caja.');
+    return;
+  }
+  var d = leerDeudas().filter(function(x){ return x.id === id; })[0];
+  if (!d) return;
+  deudaEnCurso = d;
+
+  var desde = (d.fecha === hoyLocal()) ? ('hoy a las ' + d.hora) : ('el ' + diaCorto(d.fecha));
+  var quienAnoto = d.turno ? (' · se lo anotó ' + d.turno) : '';
+  $('deudaQuien').innerHTML = '<b>' + d.quien + '</b> debe <b>' + pesos(d.saldo) + '</b><br>' +
+    '<span class="nota">Quedó debiendo ' + desde + quienAnoto +
+    (d.nota ? ' · ' + d.nota : '') + '</span>';
+
+  ponerNumero('dcMonto', d.saldo);
+  $('dcVia').value = 'efe';
+  $('dcQuien').value = T.quien;
+  $('avisoCobroDeuda').innerHTML = '';
+  notaMontoDeuda();
+  pintarHistorialDeuda(d);
+  mostrar('pCobrarDeuda');
+}
+
+function notaMontoDeuda(){
+  if (!deudaEnCurso) return;
+  var m = ent($('dcMonto').value), saldo = num(deudaEnCurso.saldo);
+  var el = $('dcNotaMonto');
+  if (m <= 0){ el.textContent = 'Poné cuánto te está pagando.'; el.style.color = ''; return; }
+  if (m > saldo){ el.textContent = 'Es más de lo que debe. Debe ' + pesos(saldo) + '.'; el.style.color = '#f2a6a4'; return; }
+  if (m === saldo){ el.textContent = 'Paga todo y queda saldado.'; el.style.color = '#96d9b5'; return; }
+  el.textContent = 'Pago parcial: le van a quedar debiendo ' + pesos(saldo - m) + '.';
+  el.style.color = '#f0cf94';
+}
+
+function pintarHistorialDeuda(d){
+  if (!d.cobros || !d.cobros.length){ $('dcHistorial').innerHTML = ''; return; }
+  var nombres = {efe:'efectivo', tra:'transferencia', mp:'Mercado Pago'};
+  var h = '<div class="hr"></div><div class="nota" style="margin-bottom:6px">Ya había pagado:</div>';
+  d.cobros.forEach(function(c){
+    h += '<div class="item"><div class="izq"><div class="t2">' +
+         diaCorto(c.fecha) + ' ' + c.hora + ' · ' + (nombres[c.via] || c.via) +
+         ' · lo cobró ' + c.quien + '</div></div>' +
+         '<div class="der"><div class="monto">' + pesos(c.monto) + '</div></div></div>';
+  });
+  $('dcHistorial').innerHTML = h;
+}
+
+function guardarCobroDeuda(){
+  if (!deudaEnCurso) return;
+  var m = ent($('dcMonto').value);
+  var saldo = num(deudaEnCurso.saldo);
+  var via = $('dcVia').value;
+  var quien = $('dcQuien').value;
+
+  if (m <= 0){
+    $('avisoCobroDeuda').innerHTML = '<div class="aviso rojo">Poné cuánto te está pagando.</div>';
+    return;
+  }
+  if (m > saldo){
+    $('avisoCobroDeuda').innerHTML = '<div class="aviso rojo">No puede pagar más de lo que debe. Debe ' +
+      pesos(saldo) + '.</div>';
+    return;
+  }
+
+  // 1) Se descuenta del libro de deudas y queda el registro de quien cobro.
+  var lista = leerDeudas();
+  for (var i = 0; i < lista.length; i++){
+    if (lista[i].id !== deudaEnCurso.id) continue;
+    lista[i].saldo = num(lista[i].saldo) - m;
+    lista[i].cobros = lista[i].cobros || [];
+    lista[i].cobros.push({monto:m, via:via, quien:quien, fecha:hoyLocal(), hora:hora(), turno:T.quien});
+    break;
+  }
+  guardarDeudas(lista);
+
+  // 2) Entra a la caja del turno que lo cobra. Solo el efectivo toca la caja
+  //    fisica; transferencia y Mercado Pago se registran aparte.
+  T.cobrosDeuda = T.cobrosDeuda || {efe:0, tra:0, mp:0};
+  T.cobrosDeuda[via] += m;
+  if (via === 'efe') T.caja += m;
+
+  var nombres = {efe:'efectivo', tra:'transferencia', mp:'Mercado Pago'};
+  var queda = saldo - m;
+  // El cobro tambien baja el saldo del cliente en la nube.
+  guardarEnNube('Deudas', {
+    Fecha: hoyLocal(), Cliente: deudaEnCurso.quien, Movimiento: 'Cobro',
+    Monto: m, Via: nombres[via] || via, Quien: quien,
+    Nota: 'lo cobró ' + quien + ' a las ' + hora() + ' · turno de ' + T.quien
+  });
+  anotar('Cobró una deuda · ' + deudaEnCurso.quien,
+         nombres[via] + ' · lo cobró ' + quien +
+         (queda > 0 ? ' · le queda debiendo ' + pesos(queda) : ' · quedó saldado'),
+         pesos(m));
+
+  guardarTurno();
+  deudaEnCurso = null;
+  pintarKPIs(); pintarMovs(); pintarDeudas();
+  mostrar('pTurno');
+}
+
+/* ---------------------- cierre ---------------------- */
+
+var PASOS = [
+  'Conté las carnes',
+  'Conté los panes de Julio',
+  'Conté los panes de José',
+  'Conté las barras de cheddar',
+  'Conté los packs de cheddar',
+  'Conté la plata de la caja',
+  'Dejé el local en orden'
+];
+
+function abrirCierre(){
+  $('checklist').innerHTML = PASOS.map(function(p,i){
+    return '<label class="check"><input type="checkbox" data-chk="' + i + '"><span>' + p + '</span></label>';
+  }).join('');
+  Array.prototype.forEach.call($('checklist').querySelectorAll('[data-chk]'), function(c){
+    c.addEventListener('change', chequearPasos);
+  });
+  ['zCarne','zPanJ','zPanS','zChe','zPack','zCaja'].forEach(function(id){ $(id).value = ''; });
+  ver('cajaResultado', false);
+  espejoCierre();
+  chequearPasos();
+  mostrar('pCierre');
+}
+
+function chequearPasos(){
+  var todos = Array.prototype.every.call($('checklist').querySelectorAll('[data-chk]'), function(c){ return c.checked; });
+  $('btnComparar').disabled = !todos;
+  $('cajaConteo').style.opacity = todos ? '1' : '.5';
+}
+
+function esperado(){
+  return {
+    carne: T.ini.carne + T.entr.carne - T.vend.carne,
+    panJ:  T.ini.panJ  + T.entr.panJ  - T.vend.panJ,
+    panS:  T.ini.panS  + T.entr.panS  - T.vend.panS,
+    che:   T.ini.che   + T.entr.che   - T.vend.che,
+    pack:  T.ini.pack  + T.entr.pack  - T.vend.pack,
+    // La cobranza de deudas viejas tambien esta fisicamente en la caja.
+    caja:  T.ini.caja  + T.cobros.efe + (T.cobrosDeuda ? T.cobrosDeuda.efe : 0) - T.retiros
+  };
+}
+
+function linea(nombre, contado, esp, esPlata, tipo){
+  var dif = contado - esp;
+  // Plata con $, cantidades sin $, pero las dos con separador de miles: acá se
+  // comparan dos números parecidos de cuatro o cinco cifras y hay que ver la
+  // diferencia de un vistazo.
+  var fmt = esPlata ? pesos : miles;
+  var txt = dif === 0 ? 'Coincide'
+          : (dif > 0 ? 'Sobra ' + fmt(dif) : 'Falta ' + fmt(-dif));
+  if (!esPlata && dif !== 0 && tipo){
+    var b = enBolsas(Math.abs(dif), tipo);
+    if (b) txt += ' (' + b + ')';
+  }
+  var cls = dif === 0 ? 'ok' : 'deuda';
+  var detalle = 'Contaste ' + fmt(contado) + ' · tendría que haber ' + fmt(esp);
+  if (!esPlata && tipo){
+    var bc = enBolsas(contado, tipo), be = enBolsas(esp, tipo);
+    if (bc) detalle = 'Contaste ' + miles(contado) + ' (' + bc + ') · tendría que haber ' + miles(esp) + ' (' + be + ')';
+  }
+  return '<div class="item"><div class="izq"><div class="t1">' + nombre + '</div>' +
+         '<div class="t2">' + detalle + '</div></div>' +
+         '<div class="der"><span class="pill ' + cls + '">' + txt + '</span></div></div>';
+}
+
+function comparar(){
+  // HU-04 · escenario 2: los dos montos declarados son obligatorios. Sin ellos
+  // no se puede comparar contra nada, así que no se avanza.
+  var faltan = [];
+  if ($('zCaja').value.trim() === '') faltan.push('la plata contada en la caja');
+  if ($('zMp').value.trim() === '')   faltan.push('lo cobrado por MP');
+  if (faltan.length){
+    $('avisoConteo').innerHTML = '<div class="aviso rojo">Falta ' + faltan.join(' y ') + '.</div>';
+    return;
+  }
+  $('avisoConteo').innerHTML = '';
+
+  var e = esperado();
+  var c = {
+    carne: ent($('zCarne').value), panJ: ent($('zPanJ').value),
+    panS:  ent($('zPanS').value),  che:  ent($('zChe').value),
+    pack:  ent($('zPack').value),
+    caja:  ent($('zCaja').value),
+    mp:    ent($('zMp').value)
+  };
+  e.mp = T.cobros.tra + T.cobros.mp + ((T.cobrosDeuda ? T.cobrosDeuda.tra + T.cobrosDeuda.mp : 0));
+
+  var h = '';
+  h += '<div class="aviso info">Lo esperado sale de: <b>lo que había al abrir</b> + <b>lo que llegó en el turno</b> − <b>lo que se vendió</b>.</div>';
+  h += linea('Carnes', c.carne, e.carne, false, 'carne');
+  h += linea('Panes de Julio', c.panJ, e.panJ, false, 'panJ');
+  h += linea('Panes de José', c.panS, e.panS, false, 'panS');
+  h += linea('Barras de cheddar', c.che, e.che, false);
+  h += linea('Packs de cheddar', c.pack, e.pack, false);
+  h += linea('Plata en la caja', c.caja, e.caja, true);
+  h += linea('Cobrado por Mercado Pago', c.mp, e.mp, true);   // HU-04
+
+  h += '<div class="hr"></div>';
+  h += '<div class="item"><div class="izq"><div class="t1">Se vendió en el turno</div>' +
+       '<div class="t2">Efectivo ' + pesos(T.cobros.efe) +
+       ' · Mercado Pago ' + pesos(T.cobros.tra + T.cobros.mp) +
+       ' · Quedó debiendo ' + pesos(T.cobros.deb) + '</div></div>' +
+       '<div class="der"><div class="monto">' + pesos(T.ventas) + '</div></div></div>';
+
+  if (T.entr.carne + T.entr.panJ + T.entr.panS + T.entr.che + T.entr.pack > 0){
+    h += '<div class="item"><div class="izq"><div class="t1">Entró durante el turno</div>' +
+         '<div class="t2">' + T.entr.carne + ' carnes · ' + T.entr.panJ + ' pan Julio · ' +
+         T.entr.panS + ' pan José · ' + T.entr.che + ' barras · ' +
+         T.entr.pack + ' packs</div></div></div>';
+  }
+  // La cobranza de deudas viejas se muestra aparte de las ventas: entra a la
+  // caja pero no es facturacion de este turno.
+  var cd = T.cobrosDeuda || {efe:0, tra:0, mp:0};
+  var totalCd = cd.efe + cd.tra + cd.mp;
+  if (totalCd > 0){
+    h += '<div class="item"><div class="izq"><div class="t1">Se cobraron deudas viejas</div>' +
+         '<div class="t2">Efectivo ' + pesos(cd.efe) +
+         ' \u00b7 Mercado Pago ' + pesos(cd.tra + cd.mp) +
+         ' \u00b7 no cuenta como venta de hoy</div></div>' +
+         '<div class="der"><div class="monto">' + pesos(totalCd) + '</div></div></div>';
+  }
+
+  if (T.retiros > 0){
+    h += '<div class="item"><div class="izq"><div class="t1">Se sacó de la caja</div>' +
+         '<div class="t2">Durante el turno</div></div><div class="der"><div class="monto">- ' + pesos(T.retiros) + '</div></div></div>';
+  }
+
+  // HU-07: qué difiere entre lo contado y lo esperado. Se guarda para que el
+  // botón de confirmar sepa si la observación es obligatoria.
+  T.diferencias = [];
+  [['Carnes','carne'],['Panes de Julio','panJ'],['Panes de José','panS'],
+   ['Barras de cheddar','che'],['Packs de cheddar','pack'],['Plata en la caja','caja'],
+   ['Cobrado por Mercado Pago','mp']]
+    .forEach(function(p){ if(c[p[1]] !== e[p[1]]) T.diferencias.push(p[0]); });
+  // HU-04 y HU-03: lo declarado viaja al cierre. El stock contado ya lo cuentan
+  // los chicos al cerrar; hasta ahora se quedaba en la pantalla.
+  T.contado = {caja:c.caja, mp:c.mp, carne:c.carne, panJ:c.panJ, panS:c.panS, che:c.che, pack:c.pack};
+  guardarTurno();
+
+  $('resultado').innerHTML = h;
+  pintarObs();
+  ver('cajaResultado', true);
+  try{ $('cajaResultado').scrollIntoView({behavior:'smooth', block:'start'}); }catch(e){}
+}
+
+/**
+ * HU8: cuántas veces pasó algo en el turno, contado desde los movimientos.
+ * Se cuenta ahí y no con un contador nuevo para que un turno que ya estaba
+ * abierto antes del cambio también dé bien.
+ */
+/* ===== HU-07 · observación obligatoria cuando hay diferencias =====
+   Toda la validación es del lado del navegador: el front escribe con
+   mode:'no-cors' y nunca recibe una respuesta del servidor que pueda frenar
+   nada. Si no se bloquea acá, no se bloquea en ningún lado. */
+function hayDiferencias(){ return (T.diferencias || []).length > 0; }
+function pintarObs(){
+  var dif = hayDiferencias();
+  $('lblObs').textContent = dif ? 'Observaciones (obligatorio)' : 'Observaciones';
+  $('notaObs').textContent = dif
+    ? 'No coincide: ' + T.diferencias.join(' · ') + '. Contá qué pasó para poder cerrar.'
+    : 'Todo coincide. Podés dejarlo vacío.';
+  $('notaObs').style.color = dif ? 'var(--amarillo, #f2c14e)' : '';
+  $('avisoObs').innerHTML = '';
+}
+function obsValida(){
+  return !hayDiferencias() || ($('zObs').value || '').trim().length > 0;
+}
+
+function contarMovs(prefijo){
+  return (T.movs || []).filter(function(m){ return String(m.titulo || '').indexOf(prefijo) === 0; }).length;
+}
+
+function confirmarCierre(){
+  // HU-07 · escenario 2: con diferencias y sin observación, el cierre se frena.
+  if (!obsValida()){
+    $('avisoObs').innerHTML = '<div class="aviso deuda">Hay una diferencia entre lo contado y lo esperado (' +
+      T.diferencias.join(' · ') + '). Detallá el motivo en Observaciones para poder cerrar el turno.</div>';
+    try{ $('zObs').focus(); }catch(e){}
+    return;
+  }
+  // HU5: ya no se cobra por transferencia. La columna `Transferencia` de la
+  // hoja Ventas se sigue MANDANDO EN CERO —no se saca— porque el MENSAJERO
+  // escribe POR POSICIÓN: sin esa clave, MercadoPago y QuienCerro se correrían
+  // una columna a la izquierda y quedarían mal en silencio.
+  // Todo lo digital viaja junto en MercadoPago. Se suma `tra` por si el turno
+  // se abrió con la versión anterior y la migración no llegó a correr.
+  guardarEnNube('Ventas', {
+    Fecha: hoyLocal(),
+    Total: T.ventas,
+    Efectivo: T.cobros.efe,
+    Transferencia: 0,
+    MercadoPago: T.cobros.tra + T.cobros.mp,
+    QuienCerro: T.quien,
+    // HU8/HU10 (MENSAJERO V15): van AL FINAL de la hoja, después de QuienCerro.
+    Debe: T.cobros.deb,
+    ventas_cantidad: contarMovs('Venta en el Negocio'),
+    entregas_pedidos_cantidad: contarMovs('Entregó pedido'),
+    // Columnas nuevas AL FINAL de la hoja Ventas (MENSAJERO V19):
+    Observacion: ($('zObs') ? ($('zObs').value || '').trim() : ''),          // HU-07
+    EfectivoContado: (T.contado ? T.contado.caja : ''),                       // HU-04
+    MPContado: (T.contado ? T.contado.mp : ''),                               // HU-04
+    PagadoresMP: (T.pagadoresMP || []).join(' · '),                           // HU-05
+    // HU-03 (MENSAJERO V20): la hora y el conteo ya existían dentro del turno
+    // —`T.desde` al abrir y lo que se cuenta al cerrar— pero se perdían al
+    // cerrar la pantalla. Ahora viajan al Cuaderno para poder hacer el reporte.
+    HoraApertura: T.desde || '',
+    HoraCierre: hora(),
+    AperturaCarne: T.ini.carne, AperturaPanJ: T.ini.panJ, AperturaPanS: T.ini.panS,
+    AperturaChe: T.ini.che, AperturaPack: T.ini.pack, AperturaCaja: T.ini.caja,
+    CierreCarne: (T.contado ? T.contado.carne : ''), CierrePanJ: (T.contado ? T.contado.panJ : ''),
+    CierrePanS: (T.contado ? T.contado.panS : ''), CierreChe: (T.contado ? T.contado.che : ''),
+    CierrePack: (T.contado ? T.contado.pack : '')
+  });
+
+  var h = '<div class="aviso verde">Turno de <b>' + T.quien + '</b> cerrado. Se mandó el resumen al Cuaderno.</div>';
+  h += '<div class="item"><div class="izq"><div class="t1">Se vendió</div></div><div class="der"><div class="monto">' + pesos(T.ventas) + '</div></div></div>';
+  h += '<div class="item"><div class="izq"><div class="t1">Efectivo en caja</div></div><div class="der"><div class="monto">' + pesos(T.caja) + '</div></div></div>';
+  var abiertas = deudasAbiertas();
+  h += '<div class="item"><div class="izq"><div class="t1">Queda por cobrar</div><div class="t2">' +
+       abiertas.length + ' persona(s) \u00b7 incluye deudas de turnos anteriores</div></div>' +
+       '<div class="der"><div class="monto">' + pesos(totalPorCobrar()) + '</div></div></div>';
+  $('resumenFinal').innerHTML = h;
+
+  T.abierto = false;
+  guardarTurno();
+  mostrar('pCerrado');
+}
+
+/* ---------------------- arranque ---------------------- */
+
+function llenarGente(sels){
+  sels.forEach(function(id){
+    $(id).innerHTML = GENTE.map(function(g){ return '<option>' + g + '</option>'; }).join('');
+  });
+}
+
+function abrirTurno(){
+  T = turnoNuevo();
+  T.quien = $('aQuien').value;
+  T.desde = hora();
+  T.abierto = true;
+  T.ini = {
+    carne: ent($('aCarne').value), panJ: ent($('aPanJ').value),
+    panS:  ent($('aPanS').value),  che:  ent($('aChe').value),
+    pack:  ent($('aPack').value),
+    caja:  ent($('aCaja').value)
+  };
+  T.stock = {carne:T.ini.carne, panJ:T.ini.panJ, panS:T.ini.panS, che:T.ini.che, pack:T.ini.pack};
+  T.caja = T.ini.caja;
+  anotar('Se abrió el turno', T.quien + ' · caja con ' + pesos(T.ini.caja), '');
+  guardarTurno();
+  entrarAlTurno();
+}
+
+/**
+ * Las deudas del turno que ya estaba abierto se pasan al libro.
+ * Antes vivian solo dentro del turno y desaparecian al cerrarlo. Esto corre
+ * una sola vez por turno y no duplica: se compara por nombre, monto y hora.
+ */
+function migrarDeudasDelTurno(){
+  if (!T || !T.deudas || !T.deudas.length) return;
+  var libro = leerDeudas();
+  var nuevas = 0;
+  T.deudas.forEach(function(d){
+    var yaEsta = libro.some(function(x){
+      return x.quien === d.quien && num(x.original) === num(d.monto) && x.hora === d.hora;
+    });
+    if (yaEsta) return;
+    libro.push({
+      id: 'd' + Date.now() + Math.floor(Math.random()*100000),
+      quien: d.quien || 'Sin nombre',
+      original: num(d.monto), saldo: num(d.monto),
+      nota: d.nota || '',
+      fecha: hoyLocal(), hora: d.hora || hora(),
+      usuario: d.usuario || T.quien || '',
+      turno: T.quien || '',
+      cobros: []
+    });
+    nuevas++;
+  });
+  if (nuevas) guardarDeudas(libro);
+}
+
+function entrarAlTurno(){
+  if (!T.cobrosDeuda) T.cobrosDeuda = {efe:0, tra:0, mp:0};
+  migrarDeudasDelTurno();
+  $('tQuien').textContent = T.quien;
+  $('tDesde').textContent = 'desde las ' + T.desde;
+  $('subtitulo').textContent = 'Turno de ' + T.quien;
+  pintarKPIs(); pintarMovs(); pintarDeudas();
+  traerPedidos();
+  traerFabrica();
+  sincronizarDeudas();
+  mostrar('pTurno');
+}
+
+function iniciar(){
+  cargarPrecios();
+  llenarGente(['aQuien','iQuien','rQuien','pfQuien','dcQuien']);
+  pintarProductos();
+
+  var t = cargarTurno();
+  if (t){ T = t; entrarAlTurno(); }
+  else { mostrar('pApertura'); traerFabrica(); }
+
+  ['aCarne','aPanJ','aPanS'].forEach(function(id){ $(id).addEventListener('input', espejoApertura); });
+  ['zCarne','zPanJ','zPanS'].forEach(function(id){ $(id).addEventListener('input', espejoCierre); });
+  espejoApertura();
+
+  // Refresco suave del panel: stock de fabrica y deudores, cada 2 minutos.
+  // Solo pinta paneles de lectura: no toca ningun formulario a medio llenar.
+  setInterval(function(){
+    if (T && T.abierto){ traerFabrica(); sincronizarDeudas(); }
+  }, 120000);
+
+  $('btnAbrir').addEventListener('click', abrirTurno);
+  $('btnNueva').addEventListener('click', nuevaVenta);
+  $('btnIngreso').addEventListener('click', abrirIngreso);
+  $('btnRetiro').addEventListener('click', abrirRetiro);
+  $('btnCerrar').addEventListener('click', abrirCierre);
+
+  $('btnRefrescarFabrica').addEventListener('click', traerFabrica);
+  $('btnCargarFabrica').addEventListener('click', function(){
+    var abierto = !$('cajaCargarFabrica').classList.contains('oculto');
+    ver('cajaCargarFabrica', !abierto);
+    $('btnCargarFabrica').textContent = abierto ? 'Cargar el stock de fábrica' : 'Cancelar';
+  });
+  $('pfCarnes').addEventListener('input', function(){
+    var n = ent($('pfCarnes').value);
+    $('pfBolsas').innerHTML = n > 0 ? 'Son <b>' + enBolsas(n,'carne') + '</b>' : '';
+  });
+  $('btnGuardarParte').addEventListener('click', guardarParteFabrica);
+  $('btnCalendario').addEventListener('click', abrirCalendario);
+  $('btnCerrarCalendario').addEventListener('click', function(){ mostrar('pTurno'); });
+  $('mesAnt').addEventListener('click', function(){
+    mesVista.m--; if (mesVista.m < 0){ mesVista.m = 11; mesVista.a--; } pintarMes();
+  });
+  $('mesSig').addEventListener('click', function(){
+    mesVista.m++; if (mesVista.m > 11){ mesVista.m = 0; mesVista.a++; } pintarMes();
+  });
+
+  // La clase 'negocio' es la que cambia el layout a dos columnas parejas:
+  // este flujo tiene una caja menos que la entrega de pedido.
+  $('btnTipoLocal').addEventListener('click', function(){
+    venta.tipo = 'local'; ver('cajaElegirPedido', false); ver('cajaProductos', true);
+    $('pVenta').classList.add('negocio');
+  });
+  $('btnTipoPedido').addEventListener('click', function(){
+    venta.tipo = 'pedido'; ver('cajaProductos', false); ver('cajaElegirPedido', true); pintarListaPedidos();
+    $('pVenta').classList.remove('negocio');
+  });
+
+  $('vCant').addEventListener('input', recalcular);
+  $('vProv').addEventListener('change', function(){ avisarStock(ent($('vCant').value)); });
+  $('btnAgregar').addEventListener('click', agregarItem);
+  $('btnOtroMas').addEventListener('click', function(){
+    ver('cajaProductos', true);
+    $('cajaProductos').scrollIntoView ? $('cajaProductos').scrollIntoView({block:'center'}) : 0;
+  });
+  $('btnCancelarVenta').addEventListener('click', function(){ venta = null; mostrar('pTurno'); });
+  $('btnFinalizar').addEventListener('click', finalizarVenta);
+
+  // Importes y cantidades comparten la misma máscara: "3000 carnes" se lee
+  // igual de mal que "$3000". Todos pasan a texto con inputmode numérico, así
+  // el celular sigue abriendo el teclado de números.
+  activarCamposDeDinero([
+    'aCaja','vPrecio','pTotal','cEfe','cMp','cDeb','rCuanto','zCaja',
+    'aCarne','aChe','aPack','aPanJ','aPanS','pfCarnes','vCant',
+    'sCarne','sChe','sPack','sPanJ','sPanS','iCant','dcMonto',
+    'zCarne','zChe','zPack','zPanJ','zPanS'
+  ]);
+
+  ['cEfe','cMp','cDeb'].forEach(function(id){
+    $(id).addEventListener('input', chequearCobro);
+  });
+  $('dQuien').addEventListener('input', function(){
+    if ($('dQuien').value.trim()) marcarDeudorFaltante(false);
+  });
+  ['sCarne','sPanJ','sPanS','sChe','sPack'].forEach(function(id){
+    $(id).addEventListener('input', avisarStockPedido);
+  });
+  $('pTotal').addEventListener('input', function(){
+    $('totalVenta').textContent = pesos(totalTodo());
+    chequearCobro();
+  });
+
+  $('iCant').addEventListener('input', espejoIngreso);
+  $('iQue').addEventListener('change', espejoIngreso);
+  $('iDe').addEventListener('change', espejoIngreso);
+  $('btnGuardarIngreso').addEventListener('click', guardarIngreso);
+  $('btnCancelarIngreso').addEventListener('click', function(){ mostrar('pTurno'); });
+  $('btnGuardarRetiro').addEventListener('click', function(){ guardarRetiro(); });
+  // HU11: si cambia el monto, la duda del duplicado ya no aplica.
+  $('rCuanto').addEventListener('input', function(){
+    if ($('btnGuardarRetiro').classList.contains('oculto')){
+      $('avisoRetiro').innerHTML = ''; $('btnGuardarRetiro').classList.remove('oculto');
+    }
+  });
+  $('btnCancelarRetiro').addEventListener('click', function(){ mostrar('pTurno'); });
+
+  $('dcMonto').addEventListener('input', notaMontoDeuda);
+  $('btnPagaTodo').addEventListener('click', function(){
+    if (deudaEnCurso){ ponerNumero('dcMonto', deudaEnCurso.saldo); notaMontoDeuda(); }
+  });
+  $('btnPagaMitad').addEventListener('click', function(){
+    if (deudaEnCurso){ ponerNumero('dcMonto', Math.round(num(deudaEnCurso.saldo)/2)); notaMontoDeuda(); }
+  });
+  $('btnGuardarCobroDeuda').addEventListener('click', guardarCobroDeuda);
+  $('btnCancelarCobroDeuda').addEventListener('click', function(){ deudaEnCurso = null; mostrar('pTurno'); });
+
+  $('btnComparar').addEventListener('click', comparar);
+  $('btnConfirmarCierre').addEventListener('click', confirmarCierre);
+  // HU-07: al escribir el motivo se limpia el aviso, sin esperar a reintentar.
+  $('zObs').addEventListener('input', function(){ if(obsValida()) $('avisoObs').innerHTML = ''; });
+  $('btnCancelarCierre').addEventListener('click', function(){ mostrar('pTurno'); });
+  $('btnNuevoTurno').addEventListener('click', function(){
+    try{ localStorage.removeItem(K_TURNO); }catch(e){}
+    T = null; location.reload();
+  });
+}
+
+iniciar();
+</script>
+<script>
+/* PWA: registro del service worker (red primero, no cachea HTML viejo) */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('/sw.js').catch(function () {});
+  });
+}
+</script>
+</body>
+</html>

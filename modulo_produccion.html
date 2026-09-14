@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- PWA · Familia de Hamburguesa · instalable como app -->
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icons/favicon.ico" sizes="32x32">
+<link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FDH">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="application-name" content="Familia de Hamburguesa">
+<!-- /PWA -->
+<title>Producción · Familia de Hamburguesa</title>
+<style>
+:root{--rojo:#c8102e;--rojo-osc:#7a0a1c;--negro:#0d0d0f;--carbon:#1a1a1f;--dorado:#e8b54a;--crema:#fff4e3;--verde:#3ec46d;--celeste:#5bb8e8;--coral:#ff7d6e;--amarillo:#f2c14e;--gris:#9b9ba6;--frio:#79c9f0}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',system-ui,sans-serif}
+body{background:linear-gradient(160deg,var(--negro) 0%,#26060d 60%,var(--rojo-osc) 130%);color:var(--crema);min-height:100vh;padding:18px}
+header{display:flex;align-items:center;gap:14px;margin-bottom:8px;flex-wrap:wrap}
+header .logowrap{background:#000;border-radius:50%;padding:4px;box-shadow:0 0 0 2px rgba(232,181,74,.5)}
+header .logowrap img{width:58px;height:58px;border-radius:50%;display:block}
+h1{font-size:1.45rem;color:var(--dorado);letter-spacing:.5px}
+.sub{color:var(--gris);font-size:.85rem}
+.hdr-btns{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.bubble{display:flex;align-items:center;gap:12px;background:var(--crema);color:#3a2410;border-radius:14px;padding:10px 16px;font-weight:600;font-size:.93rem;margin:0 0 14px;border-left:5px solid var(--dorado)}
+.bubble .burgy-mini{width:36px;height:36px;border-radius:50%;flex-shrink:0}
+.panel{background:var(--carbon);border:1px solid #2c2c34;border-radius:14px;padding:16px;margin-bottom:14px}
+.panel h2{font-size:1.02rem;color:var(--dorado);margin-bottom:3px;display:flex;align-items:center;gap:8px}
+.panel .ayuda{font-size:.8rem;color:var(--gris);margin-bottom:12px}
+label{display:block;font-size:.76rem;color:var(--gris);margin-bottom:5px;margin-top:10px}
+input,select{background:#101014;border:1px solid #34343e;color:var(--crema);border-radius:8px;padding:9px 11px;font-size:.95rem;width:100%}
+input:focus,select:focus{outline:2px solid var(--dorado);border-color:var(--dorado)}
+input[type=time]{color-scheme:dark}
+.campo{flex:1;min-width:110px}.campo.chico{max-width:160px}
+.fila{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+button{background:var(--rojo);color:#fff;border:none;border-radius:9px;padding:10px 16px;font-weight:700;cursor:pointer;font-size:.92rem}
+button:hover{background:#e01432}
+button.dorado{background:var(--dorado);color:#3a2410}button.dorado:hover{background:#f5c75e}
+button.sec{background:#2c2c34}button.sec:hover{background:#3a3a46}
+input.edn{width:64px;padding:6px 4px;text-align:center;background:#17171d;border:1px solid #3a3a46;border-radius:8px;color:#fff;font-weight:700;font-size:1rem}
+input.edn:focus{border-color:var(--amarillo);outline:none}
+.fz-cam{border:1px dashed #4a6a7a}
+.fz-nota{font-size:.72rem;color:#9aa3ad;margin-top:4px}
+button.frio{background:var(--frio);color:#0d2233}button.frio:hover{background:#93d6f5}
+button.mini{padding:5px 10px;font-size:.8rem;border-radius:7px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.chip{background:#101014;border:2px solid #34343e;border-radius:9px;padding:8px 14px;cursor:pointer;font-weight:700;font-size:.88rem;transition:.12s;color:var(--crema)}
+.chip:hover{border-color:var(--dorado)}
+.chip.sel{border-color:var(--dorado);background:rgba(232,181,74,.14);color:var(--dorado)}
+.chip.si.sel{border-color:var(--verde);background:rgba(62,196,109,.16);color:var(--verde)}
+.chip.no.sel{border-color:var(--coral);background:rgba(255,125,110,.16);color:var(--coral)}
+.oculto{display:none!important}
+
+#alertas{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.alerta-pill{display:inline-flex;align-items:center;gap:7px;font-size:.82rem;font-weight:700;padding:7px 14px;border-radius:20px;cursor:pointer}
+.alerta-pill.alta{background:rgba(255,125,110,.16);color:var(--coral);border:1px solid var(--coral);animation:sirena 1s ease-in-out infinite}
+.alerta-pill.media{background:rgba(242,193,78,.13);color:var(--amarillo);border:1px solid var(--amarillo)}
+.alerta-pill.ok{background:rgba(62,196,109,.12);color:var(--verde);border:1px solid var(--verde);cursor:default}
+.alerta-pill.frio{background:rgba(121,201,240,.13);color:var(--frio);border:1px solid var(--frio)}
+@keyframes sirena{0%,100%{box-shadow:0 0 0 0 rgba(255,125,110,.55)}50%{box-shadow:0 0 0 7px rgba(255,125,110,0)}}
+
+#panelTurno{border-width:2px}
+#panelTurno.et-abrir{border-color:var(--verde)}
+#panelTurno.et-camara{border-color:var(--frio)}
+#panelTurno.et-cerrar{border-color:var(--celeste)}
+#panelTurno.et-listo{border-color:#2c2c34}
+.turno-estado{font-size:.85rem;color:var(--gris);margin-bottom:10px}
+.turno-estado b{color:var(--crema)}
+.btn-etapa{width:100%;padding:15px;font-size:1.05rem;border-radius:12px}
+.btn-etapa.abrir{background:var(--verde);color:#0d2916}.btn-etapa.abrir:hover{background:#55d584}
+.btn-etapa.camara{background:var(--frio);color:#0d2233}.btn-etapa.camara:hover{background:#93d6f5}
+.btn-etapa.cerrar{background:var(--celeste);color:#0d2233}.btn-etapa.cerrar:hover{background:#79c9f0}
+.form-etapa{background:#101014;border:1px solid #34343e;border-radius:12px;padding:14px;margin-top:12px}
+.form-etapa .ft{font-weight:800;color:var(--dorado);font-size:.95rem;margin-bottom:2px}
+.equiv{margin-top:8px;font-size:.85rem;color:var(--celeste);background:rgba(91,184,232,.09);border:1px dashed var(--celeste);border-radius:8px;padding:7px 11px}
+.equiv.merma-mal{color:var(--coral);border-color:var(--coral);background:rgba(255,125,110,.08)}
+.jresumen{font-size:.84rem;color:var(--gris);margin-top:8px;line-height:1.6}
+.jresumen b{color:var(--crema)}
+.linkcito{background:none;border:none;color:var(--celeste);text-decoration:underline;cursor:pointer;font-size:.8rem;padding:4px 0;font-weight:600}
+
+.reparto{margin-top:10px}
+.reparto .rp{display:flex;align-items:center;gap:9px;margin:6px 0}
+.reparto .rp .fn{min-width:86px;font-size:.84rem;font-weight:700}
+.reparto .rp input{max-width:90px;text-align:center}
+.reparto .rp .libre{font-size:.75rem;color:var(--gris)}
+.rep-check{font-size:.84rem;font-weight:700;margin-top:8px}
+.rep-check.ok{color:var(--verde)}.rep-check.mal{color:var(--coral)}
+
+.triple{display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:14px;margin-bottom:14px}
+.triple .panel{margin-bottom:0;display:flex;flex-direction:column}
+.stock-total{border-radius:12px;padding:14px;text-align:center;border:1px solid var(--celeste);background:rgba(91,184,232,.1);color:var(--celeste);margin-bottom:10px}
+.stock-total .big{font-size:2.05rem;font-weight:800;line-height:1}
+.stock-total .lbl{font-size:.78rem;margin-top:4px}
+.stock-total .estado-pill{display:inline-block;margin-top:8px;font-size:.74rem;font-weight:700;padding:3px 11px;border-radius:13px}
+.sp-verde{background:rgba(62,196,109,.2);color:var(--verde)}
+.sp-amarillo{background:rgba(242,193,78,.2);color:var(--amarillo)}
+.sp-rojo{background:rgba(255,125,110,.22);color:var(--coral)}
+.stock-unidades{display:flex;justify-content:center;gap:14px;font-size:.8rem;color:var(--gris);margin-bottom:10px;flex-wrap:wrap}
+.stock-unidades b{color:var(--celeste)}
+.camara-box{border-radius:12px;padding:11px 13px;border:1px solid var(--frio);background:rgba(121,201,240,.08);color:var(--frio);margin-bottom:10px;text-align:center}
+.camara-box .cb-n{font-size:1.3rem;font-weight:800}
+.camara-box .cb-l{font-size:.75rem;margin-top:2px}
+.camara-box .cb-aviso{font-size:.74rem;font-weight:700;margin-top:5px;color:var(--amarillo)}
+.freezers-titulo{font-size:.78rem;color:var(--dorado);font-weight:700;margin:6px 0 7px;display:flex;justify-content:space-between;align-items:center}
+.freezers-mini{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}
+.fz{background:#101014;border:1px solid #34343e;border-radius:9px;padding:8px}
+.fz .fn{font-size:.76rem;color:var(--crema);font-weight:700;margin-bottom:4px;display:flex;justify-content:space-between}
+.fz .fn .pct{color:var(--gris);font-weight:600}
+.fz .barra{height:7px;background:#2c2c34;border-radius:5px;overflow:hidden;margin:4px 0}
+.fz .relleno{height:100%;transition:.25s}
+.fz .cnt{display:flex;align-items:center;justify-content:space-between;gap:5px;margin-top:5px}
+.fz .cnt .v{font-size:.8rem;font-weight:800}
+.fz .cnt .v small{color:var(--gris);font-weight:600}
+.fz .cnt button{width:26px;height:26px;padding:0;font-size:.95rem;border-radius:6px}
+.sueltas-nota{font-size:.76rem;color:var(--gris);margin-top:7px}
+.sueltas-nota b{color:var(--crema)}
+
+.mini-lista{margin-top:4px;font-size:.8rem;color:var(--gris);max-height:340px;overflow:auto;flex:1}
+.mini-lista .reg{padding:7px 0;border-bottom:1px solid #2c2c34;line-height:1.45}
+.mini-lista .reg b{color:var(--crema)}
+.mini-lista .reg .mas{color:var(--verde);font-weight:800}
+.mini-lista .reg .menos{color:var(--coral);font-weight:800}
+.mini-lista .reg .igual{color:var(--amarillo);font-weight:800}
+.mini-lista .reg .frio{color:var(--frio);font-weight:800}
+.vacio{color:var(--gris);font-size:.82rem;font-style:italic;padding:6px 2px}
+.nube-estado{font-size:.78rem;font-weight:700;padding:5px 12px;border-radius:16px;display:inline-flex;align-items:center;gap:6px}
+.nube-estado.cargando{background:rgba(91,184,232,.13);color:var(--celeste)}
+.nube-estado.ok{background:rgba(62,196,109,.13);color:var(--verde)}
+.nube-estado.error{background:rgba(242,193,78,.13);color:var(--amarillo)}
+
+.ins-resumen{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+.res-card{border-radius:12px;padding:13px;text-align:center;border:1px solid}
+.res-card .big{font-size:1.8rem;font-weight:800;line-height:1}
+.res-card .lbl{font-size:.76rem;margin-top:3px}
+.res-ok{background:rgba(62,196,109,.12);border-color:var(--verde);color:var(--verde)}
+.res-med{background:rgba(242,193,78,.12);border-color:var(--amarillo);color:var(--amarillo)}
+.res-alt{background:rgba(255,125,110,.14);border-color:var(--coral);color:var(--coral)}
+.res-alt.crit{animation:sirena 1s ease-in-out infinite}
+.seg-tit{font-size:.9rem;color:var(--dorado);margin:14px 0 8px;padding-bottom:4px;border-bottom:1px solid #2c2c34}
+.ins-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:9px}
+.ins-card{background:#101014;border:1px solid #34343e;border-left:4px solid var(--verde);border-radius:10px;padding:10px}
+.ins-card.medio{border-left-color:var(--amarillo)}
+.ins-card.alto{border-left-color:var(--coral);background:rgba(255,125,110,.07)}
+.ins-card .top{display:flex;justify-content:space-between;align-items:flex-start;gap:6px}
+.ins-card .nom{font-weight:700;font-size:.9rem;color:var(--crema)}
+.ins-card .tag{font-size:.65rem;padding:2px 7px;border-radius:10px;font-weight:700;white-space:nowrap}
+.tag.ok{background:rgba(62,196,109,.16);color:var(--verde)}
+.tag.med{background:rgba(242,193,78,.2);color:var(--amarillo)}
+.tag.alt{background:rgba(255,125,110,.2);color:var(--coral)}
+.ins-card .ctrl{display:flex;align-items:center;gap:6px;margin-top:8px;justify-content:space-between}
+.ins-card .pm{display:flex;align-items:center;gap:5px}
+.ins-card .pm button{width:28px;height:28px;padding:0;font-size:1rem;border-radius:7px}
+.ins-card .pm .v{font-weight:800;min-width:26px;text-align:center}
+.ins-card .impacto{font-size:.7rem;color:#ffb3a8;margin-top:6px;line-height:1.3}
+.ins-card .x{background:none;border:none;color:var(--gris);cursor:pointer;font-size:.85rem;padding:2px 4px}
+.ins-card .x:hover{color:var(--coral)}
+
+.aviso{border-radius:9px;padding:9px 13px;font-size:.85rem;font-weight:600;margin-top:9px}
+.aviso.rojo{background:rgba(255,125,110,.12);color:var(--coral);border:1px solid var(--coral)}
+.aviso.verde{background:rgba(62,196,109,.12);color:var(--verde);border:1px solid var(--verde)}
+.aviso.info{background:rgba(91,184,232,.1);color:var(--celeste);border:1px solid var(--celeste)}
+
+footer{text-align:center;color:var(--dorado);font-size:.85rem;margin-top:22px;padding:14px;border-top:1px solid #3a1018}
+@media(max-width:900px){.triple{grid-template-columns:1fr}.ins-resumen{grid-template-columns:1fr}}
+.btn-volver-home{display:inline-flex;align-items:center;gap:6px;position:sticky;top:0;z-index:40;background:var(--dorado);color:#2a1800;font-weight:800;text-decoration:none;padding:9px 16px;border-radius:0 0 12px 0;font-size:.88rem;box-shadow:0 2px 10px rgba(0,0,0,.4);margin-bottom:8px}
+.btn-volver-home:hover{background:#f5c75e}
+.btn-cero{background:rgba(255,125,110,.15);color:var(--coral);border:1px solid var(--coral);font-weight:700;padding:8px 14px;border-radius:10px;cursor:pointer;font-size:.82rem;white-space:nowrap}
+.btn-cero:hover{background:rgba(255,125,110,.28)}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Oswald:wght@400;500;600&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#0c0a07">
+<style id="marca">
+/* ============================================================
+   CAPA DE MARCA · negro + dorado · 20-ago-2026 (validado con Samu)
+   La identidad la definen las piezas de publicidad: fondo ahumado,
+   dorado de linea fina, mayusculas condensadas, estrella. El rojo
+   queda reservado para alertas y acciones de riesgo.
+   ============================================================ */
+:root{--dorado:#d6ac5a;--negro:#0c0a07;--carbon:#171310;--crema:#fff4e3;--rojo-osc:#1d150c}
+body{background:radial-gradient(1100px 520px at 75% -8%,rgba(214,172,90,.10),transparent 60%),linear-gradient(170deg,#0c0a07 0%,#131008 60%,#1d150c 130%)}
+h1{font-family:'Oswald','Segoe UI',sans-serif;text-transform:uppercase;letter-spacing:2px;font-weight:500}
+.panel{background:#171310;border-color:rgba(214,172,90,.22);box-shadow:inset 0 1px 0 rgba(255,244,227,.05)}
+.panel h2{font-family:'Oswald','Segoe UI',sans-serif;text-transform:uppercase;letter-spacing:1.3px;font-weight:500;padding-bottom:9px;border-bottom:1px solid rgba(214,172,90,.25)}
+button{background:linear-gradient(180deg,#e6c276,#c69838);color:#241a08}
+button:hover{background:linear-gradient(180deg,#efcf8d,#d2a748)}
+header .logowrap{background:transparent;box-shadow:none;padding:0;border-radius:0}
+.divisor-marca{display:block;text-align:center;color:rgba(214,172,90,.9);font-size:10px;line-height:0;margin:4px 0 16px;background:linear-gradient(90deg,transparent,rgba(214,172,90,.4) 18%,rgba(214,172,90,.4) 82%,transparent) center/100% 1px no-repeat}
+footer{color:var(--dorado);border-top:1px solid rgba(214,172,90,.25)}
+footer .lema{display:block;font-family:'Oswald','Segoe UI',sans-serif;letter-spacing:2.6px;font-size:.72rem;color:rgba(214,172,90,.95);margin-bottom:6px}
+
+/* --- Legibilidad total (requisito no negociable, 20-ago-2026):
+   blanco puro #FFFFFF sobre fondos oscuros · negro sobre dorado. --- */
+body{color:#fff}
+label{color:#fff}
+input,select,textarea{color:#fff}
+input::placeholder,textarea::placeholder{color:#a89c8b}
+button.sec{background:#241d12;color:#fff;border:1px solid rgba(214,172,90,.6)}
+button.sec:hover{background:#33291a;color:#fff}
+.sub,.panel .ayuda,.vacio{color:#d8cdb9}
+.fz .fn .pct,.fz .cnt .v small,.reparto .rp .libre,.fz-nota{color:#d8cdb9}
+</style>
+</head>
+<body>
+<a href="home_familia_hamburguesa.html" class="btn-volver-home" title="Volver al inicio">← Volver al inicio</a>
+
+<header>
+  <div class="logowrap"><svg class="emblema" width="64" height="64" viewBox="0 0 120 120" role="img" aria-label="Familia de Hamburguesa"><circle cx="60" cy="60" r="57" fill="#0d0b08" stroke="#d6ac5a" stroke-width="2.4"/><circle cx="60" cy="60" r="51" fill="none" stroke="#d6ac5a" stroke-width="0.8" opacity=".8"/><path d="M44 36 a16 10 0 0 1 32 0 z" fill="#d6ac5a"/><line x1="44" y1="41" x2="76" y2="41" stroke="#d6ac5a" stroke-width="2.6" stroke-linecap="round"/><line x1="46" y1="46.5" x2="74" y2="46.5" stroke="#d6ac5a" stroke-width="4.6" stroke-linecap="round"/><text x="60" y="69" text-anchor="middle" font-family="'Dancing Script',cursive" font-weight="700" font-size="27" fill="#fff4e3">Familia</text><text x="60" y="77.5" text-anchor="middle" font-family="'Oswald','Segoe UI',sans-serif" font-size="6" letter-spacing="3" fill="#d6ac5a">— DE —</text><text x="60" y="89" text-anchor="middle" font-family="'Oswald','Segoe UI',sans-serif" font-weight="600" font-size="10" letter-spacing="0.8" fill="#fff4e3" textLength="58" lengthAdjust="spacingAndGlyphs">HAMBURGUESA</text><rect x="37.5" y="92.5" width="45" height="7" rx="2" fill="#d6ac5a"/><text x="60" y="97.4" text-anchor="middle" font-family="'Oswald','Segoe UI',sans-serif" font-weight="600" font-size="3.7" letter-spacing="0.4" fill="#1a1208" textLength="40" lengthAdjust="spacingAndGlyphs">CASERAS · RICAS · DE VERDAD</text><text x="60" y="107.5" text-anchor="middle" font-size="6.5" fill="#d6ac5a">★</text></svg></div>
+  <div>
+    <h1>🏭 Producción · Familia de Hamburguesa</h1>
+    <div class="sub" id="fechaHoy"></div>
+  </div>
+  <div class="hdr-btns">
+    <span class="nube-estado cargando" id="nubeEstado">☁️ Consultando la nube…</span>
+    <button class="sec" id="btnInventario" onclick="verInventario()">🧰 Inventario</button>
+    <button onclick="empezarDeCero()" class="btn-cero" title="Borra los datos de prueba de este navegador">🧹 Empezar de cero</button>
+  </div>
+</header>
+<div class="divisor-marca">★</div>
+<div class="bubble"><img class="burgy-mini" src="data:image/jpeg;base64,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" alt="Burgy"><span id="burgyDice">¡Hola, fábrica! Un paso a la vez: la pantalla te va mostrando lo que toca. 🍔</span></div>
+
+<div id="alertas"></div>
+
+<div id="vistaTablero">
+
+<!-- TURNO: un solo boton que muta -->
+<div class="panel" id="panelTurno">
+  <h2>🔑 Turno de producción</h2>
+  <div class="turno-estado" id="turnoEstado"></div>
+  <button class="btn-etapa" id="btnEtapa" onclick="abrirFormEtapa()"></button>
+
+  <!-- Form APERTURA -->
+  <div class="form-etapa oculto" id="formAbrir">
+    <div class="ft">🌅 Iniciar turno</div>
+    <div class="fila">
+      <div class="campo chico"><label>Hora de inicio</label><input type="time" id="apHora"></div>
+      <div class="campo"><label>¿La fábrica está limpia y en condiciones?</label><div class="chips" id="apLimpia"></div></div>
+    </div>
+    <label>¿Quién abre?</label><div class="chips" id="apQuien"></div>
+    <div id="avisoAbrir"></div>
+    <div class="fila" style="margin-top:12px">
+      <button class="dorado" style="flex:1" onclick="guardarApertura()">Registrar inicio</button>
+      <button class="sec" onclick="cerrarForms()">Cancelar</button>
+    </div>
+  </div>
+
+  <!-- Form ENTRADA A CAMARA (fin del turno de produccion) -->
+  <div class="form-etapa oculto" id="formCamara">
+    <div class="ft">🧊 Terminar turno: entrada a la Cámara de Frío</div>
+    <div class="ayuda" style="margin-top:2px">La producción del día entra a la cámara a congelarse, en canastos (cada canasto = 1 bolsa de 50 + 10 sueltas = 60 carnes). Mañana se embolsa y pasa a los freezers.</div>
+    <div class="fila">
+      <div class="campo chico"><label>Canastos que entraron</label><input type="number" id="camCanastos" min="0" value=""></div>
+      <div class="campo chico"><label>Carnes sueltas (si hay)</label><input type="number" id="camSueltas" min="0" value=""></div>
+      <div class="campo chico"><label>Hora de fin</label><input type="time" id="camHora"></div>
+    </div>
+    <div class="equiv" id="camEquiv">Poné los canastos y te muestro el total.</div>
+    <label>¿Quién informa?</label><div class="chips" id="camQuien"></div>
+    <div id="avisoCamara"></div>
+    <div class="fila" style="margin-top:12px">
+      <button class="frio" style="flex:1" id="btnGuardarCamara" onclick="guardarEntradaCamara()">Registrar entrada a cámara</button>
+      <button class="sec" onclick="cerrarForms()">Cancelar</button>
+    </div>
+  </div>
+
+  <!-- Form CIERRE -->
+  <div class="form-etapa oculto" id="formCerrar">
+    <div class="ft">🌙 Cerrar la jornada</div>
+    <div class="fila">
+      <div class="campo chico"><label>Hora de cierre</label><input type="time" id="ciHora"></div>
+      <div class="campo"><label>¿Se limpió todo?</label><div class="chips" id="ciLimpia"></div></div>
+      <div class="campo"><label>¿Se contabilizó y embolsó todo?</label><div class="chips" id="ciConteo"></div></div>
+    </div>
+    <label>¿Quién cierra?</label><div class="chips" id="ciQuien"></div>
+    <label>🔢 Conteo físico (opcional — solo si algún número real no coincide con el de arriba)</label>
+    <div class="fila">
+      <div class="campo chico"><label style="margin-top:0">Bolsas en freezers</label><input type="number" id="ciFrz" min="0" placeholder="bolsas contadas"></div>
+      <div class="campo chico"><label style="margin-top:0">Canastos en cámara</label><input type="number" id="ciCam" min="0" placeholder="canastos contados"></div>
+    </div>
+    <div id="avisoCerrar"></div>
+    <div class="fila" style="margin-top:12px">
+      <button class="dorado" style="flex:1" onclick="guardarCierre()">Registrar cierre</button>
+      <button class="sec" onclick="cerrarForms()">Cancelar</button>
+    </div>
+  </div>
+
+  <div class="jresumen" id="jResumen"></div>
+</div>
+
+<!-- EMBOLSADO: el paso del dia siguiente. Vive fuera del turno. -->
+<div class="panel" id="panelEmbolsado" style="border:2px solid var(--frio)">
+  <h2>🧊→👜 Embolsado: de la cámara a los freezers</h2>
+  <div class="ayuda">Cuando lo de la cámara está congelado, se embolsa definitivo y pasa a los freezers. Recién ahí queda disponible para el local.</div>
+  <div id="embResumen"></div>
+  <button class="frio oculto" id="btnEmbolsar" style="width:100%;margin-top:4px" onclick="abrirEmbolsado()">👜 Embolsar y pasar a freezers</button>
+
+  <div class="form-etapa oculto" id="formEmbolsar">
+    <div class="fila">
+      <div class="campo chico"><label>Canastos a embolsar</label><input type="number" id="embCanastos" min="0" value=""></div>
+      <div class="campo chico"><label>Bolsas REALES que salieron</label><input type="number" id="embBolsas" min="0" value=""></div>
+    </div>
+    <div class="equiv" id="embEquiv">Poné los canastos y te muestro las bolsas esperadas.</div>
+    <label>¿Quién embolsó?</label><div class="chips" id="embQuien"></div>
+    <div class="reparto oculto" id="cajaRepartoEmb">
+      <label style="margin-top:14px">📍 ¿A qué freezers van? (propuesta — corregila si en la realidad fue distinto)</label>
+      <div id="repartoEmb"></div>
+      <div class="rep-check" id="repCheckEmb"></div>
+    </div>
+    <div id="avisoEmb"></div>
+    <div class="fila" style="margin-top:12px">
+      <button class="frio" style="flex:1" id="btnGuardarEmb" onclick="guardarEmbolsado()">Registrar embolsado</button>
+      <button class="sec" onclick="cerrarEmbolsado()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div class="triple">
+  <!-- STOCK -->
+  <div class="panel">
+    <h2>❄️ Stock de fábrica <span style="margin-left:auto"><button class="mini sec" onclick="cargarNube()">Actualizar</button></span></h2>
+    <div class="ayuda">Vive en la nube: es lo mismo que ve el módulo de Ventas.</div>
+    <div class="stock-total" id="stockTotal"><div class="vacio">Consultando la nube…</div></div>
+    <div class="stock-unidades" id="stockUnidades"></div>
+    <div class="camara-box" id="camaraBox"></div>
+    <div class="freezers-titulo"><span>📍 Mapa: freezers + cámara (tope base 38, editable en Corregir stock)</span></div>
+    <div class="freezers-mini" id="freezers"></div>
+    <div class="sueltas-nota" id="sueltasNota"></div>
+    <button class="linkcito" onclick="mostrarCorreccion()">¿Los números físicos no coinciden? Corregir stock</button>
+    <div class="oculto" id="cajaCorreccion">
+      <div class="fila">
+        <div class="campo chico"><label>Bolsas embolsadas (freezers + cámara)</label><input type="number" id="corFrz" min="0" placeholder="contadas"></div>
+        <div class="campo chico"><label>Canastos en cámara</label><input type="number" id="corCam" min="0" placeholder="contados"></div>
+        <button class="sec" onclick="corregirStock()">Ajustar</button>
+      </div>
+      <div class="ayuda" style="margin-top:6px">Queda registrado como Ajuste en la nube, con las diferencias y quién contó.</div>
+      <div class="fila" id="capsFila" style="margin-top:8px;flex-wrap:wrap"></div>
+      <div class="ayuda">Capacidad de cada freezer: base 38 bolsas. Si alguno rinde menos (p. ej. 34), fijalo acá.</div>
+    </div>
+  </div>
+
+  <!-- MOVIMIENTOS -->
+  <div class="panel">
+    <h2>📒 Movimientos</h2>
+    <div class="ayuda">Entradas a cámara, embolsados, envíos al local y ajustes. Todo junto, leído de la nube.</div>
+    <div class="mini-lista" id="movsNube"><div class="vacio">Consultando la nube…</div></div>
+  </div>
+
+  <!-- CONTINGENCIAS -->
+  <div class="panel">
+    <h2>⚠️ Contingencias</h2>
+    <div class="ayuda">Algo que afectó la producción. Queda con responsable.</div>
+    <label style="margin-top:0">¿Qué pasó?</label>
+    <select id="conTipo"><option>Falta de materia prima</option><option>Corte de luz</option><option>Máquina parada</option><option>Falta de insumo</option><option>Problema de personal</option><option>Llegada tarde</option><option>Otro</option></select>
+    <label>Detalle</label>
+    <input id="conDetalle" placeholder="Ej: sin pastillas, no se bajó el pedido grande">
+    <label>¿Quién se ocupa?</label>
+    <div class="chips" id="conQuien"></div>
+    <button style="margin-top:10px;width:100%" onclick="cargarContingencia()">Registrar</button>
+    <div class="mini-lista" id="listaContingencias"></div>
+  </div>
+</div>
+</div><!-- /vistaTablero -->
+
+<!-- VISTA INVENTARIO -->
+<div id="vistaInventario" class="oculto">
+<div class="panel">
+  <h2>🧰 Inventario de insumos <span style="margin-left:auto"><button class="mini sec" onclick="verTablero()">← Volver al tablero</button></span></h2>
+  <div class="ayuda">Escribí la cantidad directo en el número, o tocá − cuando se usa y + cuando llega. Verde OK · Amarillo media · Rojo alta (con sirena).</div>
+  <div class="ins-resumen" id="insResumen"></div>
+  <div class="seg-tit">🥩 Producción</div>
+  <div class="ins-grid" id="insProd"></div>
+  <div class="seg-tit">🧼 Higiene y limpieza</div>
+  <div class="ins-grid" id="insHig"></div>
+  <div class="fila" style="margin-top:14px">
+    <div class="campo"><label>Agregar insumo</label><input id="insNombre" placeholder="Ej: Papel film"></div>
+    <div class="campo chico"><label>Categoría</label><select id="insCat"><option value="prod">Producción</option><option value="higiene">Higiene</option></select></div>
+    <div class="campo chico"><label>Cantidad</label><input type="number" id="insCant" min="0" value="0"></div>
+    <div class="campo chico"><label>Media bajo de</label><input type="number" id="insMin" min="0" value="6"></div>
+    <button class="sec" onclick="agregarInsumo()">Agregar</button>
+  </div>
+</div>
+</div><!-- /vistaInventario -->
+
+<footer><span class="lema">CASERAS · RICAS · DE VERDAD · EST. 2024</span>Con el favor y la guía de Dios, vivamos y alcancemos la Visión 🙏🚀 · Familia de Hamburguesa · Plan de Transformación 2026</footer>
+
+<script>
+/* ============================================================================
+   PRODUCCIÓN v5 — el flujo físico real, validado con Samu el 19/08:
+     1) La producción del día entra a la CÁMARA DE FRÍO en canastos
+        (1 canasto = 1 bolsa de 50 + 10 sueltas = 60 carnes). NO disponible.
+     2) Al día siguiente se EMBOLSA definitivo y pasa a los FREEZERS
+        (base 38 bolsas por freezer, tope editable · el excedente queda embolsado en la cámara). Disponible.
+     3) El local retira: sale de freezers primero y, si hace falta, de la
+        cámara (embolsado a día vencido). Lo registra EL QUE RECIBE en Ventas.
+   Los saldos viven en la nube (hoja Producción) y los calcula el MENSAJERO
+   V12 en el servidor, con candado. Este navegador solo muestra y pide.
+   ============================================================================ */
+var CANASTO = 60, BOLSA = 50, CAP_FREEZER = 38, VENTA_DIA = 4500;
+var $ = function(id){ return document.getElementById(id); };
+var NUBE_URL='https://script.google.com/macros/s/AKfycbxfraGEgAFUeypW4D9wsEct90sH4DRZjOJsQiky-WZtF41qPOaul9HDlgSjynwHAjpk/exec';
+
+var KJ='fdh_jornada_v3', KFZ='fdh_freezers_v6', KCB='fdh_cambolsas_v1', KI='fdh_insumos_v2', KC='fdh_conting_v1';
+
+function num(v){ var n=Number(String(v==null?'':v).replace(/\./g,'').replace(',','.')); return isNaN(n)?0:n; }
+function ent(v){ return Math.max(0, Math.round(num(v))); }
+function miles(n){ return Number(n||0).toLocaleString('es-AR'); }
+function hoyLocal(){ var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function ahora(){ return new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}); }
+function burgy(m){ $('burgyDice').textContent=m; }
+
+/* ===== Nube ===== */
+var cbN=0;
+function traer(hoja, ok){
+  var nombre='fdhprod'+(++cbN), listo=false;
+  window[nombre]=function(r){ listo=true; try{ ok(r); }catch(e){} limpiar(); };
+  var s=document.createElement('script');
+  s.src=NUBE_URL+'?hoja='+encodeURIComponent(hoja)+'&callback='+nombre;
+  s.onerror=function(){ if(!listo){ ok(null); limpiar(); } };
+  document.head.appendChild(s);
+  setTimeout(function(){ if(!listo){ ok(null); limpiar(); } },12000);
+  function limpiar(){ try{ delete window[nombre]; }catch(e){} if(s.parentNode) s.parentNode.removeChild(s); }
+}
+function subirNube(fila){
+  try{
+    fetch(NUBE_URL,{method:'POST',mode:'no-cors',keepalive:true,
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({hoja:'Producción',fila:fila})});
+  }catch(e){}
+}
+function nubeEstado(cls,txt){ var e=$('nubeEstado'); e.className='nube-estado '+cls; e.textContent=txt; }
+
+/* frz = carnes LISTAS en freezers · cam = carnes en la camara */
+var NUBE={frz:0, cam:0, sabido:false, movs:[], fechaCam:''};
+function cargarNube(){
+  nubeEstado('cargando','☁️ Consultando la nube…');
+  traer('Producción', function(r){
+    if(!r || !r.ok || !r.datos){ NUBE.sabido=false; nubeEstado('error','⚠️ Sin conexión con la nube'); render(); return; }
+    var d=r.datos;
+    if(d.length){
+      var u=d[d.length-1];
+      NUBE.frz=num(u.StockResultante!==''&&u.StockResultante!=null?u.StockResultante:u.CarnesProducidas);
+      NUBE.cam=num(u.CamaraResultante||0);
+    } else { NUBE.frz=0; NUBE.cam=0; }
+    /* fecha de la ultima entrada a camara, para avisar si quedo de ayer */
+    NUBE.fechaCam='';
+    for(var i=d.length-1;i>=0;i--){
+      if(/c[aá]mara/i.test(String(d[i].Movimiento||''))){ NUBE.fechaCam=String(d[i].Fecha||'').slice(0,10); break; }
+    }
+    NUBE.sabido=true;
+    NUBE.movs=d.slice(-10).reverse();
+    nubeEstado('ok','☁️ Nube al día');
+    reconciliarFreezers();
+    render();
+  });
+}
+
+/* ===== Freezers: mapa en BOLSAS. Capacidad base 38, editable por freezer.
+   camBolsas = bolsas YA embolsadas guardadas en la camara (excedente cuando
+   los freezers estan llenos). Cuentan como stock listo igual. ===== */
+var freezers=JSON.parse(localStorage.getItem(KFZ)||'null');
+if(!freezers){
+  var _v5=JSON.parse(localStorage.getItem('fdh_freezers_v5')||'null');
+  if(_v5){ freezers=_v5.map(function(f){ f.cap=(!f.cap||f.cap===34)?CAP_FREEZER:f.cap; return f; }); }
+}
+freezers=freezers||[1,2,3,4,5,6].map(function(i){
+  return {id:'f'+i, nombre:'Freezer '+i, cap:CAP_FREEZER, ocup:0};   // en BOLSAS
+});
+var camBolsas=ent(localStorage.getItem(KCB)||0);
+function mapaBolsas(){ return freezers.reduce(function(s,f){ return s+f.ocup; },0); }
+function capTotal(){ return freezers.reduce(function(s,f){ return s+f.cap; },0); }
+function lugarLibre(){ return freezers.reduce(function(s,f){ return s+Math.max(0,f.cap-f.ocup); },0); }
+function sueltasFrz(){ return NUBE.sabido ? NUBE.frz - (mapaBolsas()+camBolsas)*BOLSA : 0; }
+
+/* El mapa nunca puede decir MAS que la nube. Si Ventas registro un envio,
+   la nube bajo: aca se descuenta solo, del freezer mas lleno primero
+   (tiende a dejar freezers vacios que se pueden apagar). */
+function reconciliarFreezers(){
+  if(!NUBE.sabido) return;
+  var cambio=false;
+  while((mapaBolsas()+camBolsas)*BOLSA > NUBE.frz){
+    if(camBolsas>0){ camBolsas--; cambio=true; continue; }
+    var lleno=freezers.slice().sort(function(a,b){ return b.ocup-a.ocup; })[0];
+    if(!lleno || lleno.ocup<=0) break;
+    lleno.ocup--; cambio=true;
+  }
+  if(cambio) guardarLocal();
+}
+
+/* Propuesta de reparto en bolsas: llena F1→F6 hasta el tope de cada uno;
+   lo que no entra queda embolsado en la camara (fila siempre visible). */
+function proponerReparto(bolsas){
+  var resto=bolsas;
+  return freezers.map(function(f){
+    var libre=Math.max(0, f.cap-f.ocup);
+    var pone=Math.min(resto, libre); resto-=pone;
+    return {id:f.id, nombre:f.nombre, pone:pone, libre:libre};
+  }).concat([{id:'_cam', nombre:'Cámara de frío', pone:resto, libre:null}]);
+}
+function ajustarFreezer(id,d){
+  var f=freezers.find(function(x){ return x.id===id; });
+  fijarFreezerValor(f, f.ocup+d);
+}
+function fijarFreezer(id,el){
+  var f=freezers.find(function(x){ return x.id===id; });
+  if(!fijarFreezerValor(f, ent(el.value))) el.value=f.ocup;
+}
+function fijarFreezerValor(f,nuevo){
+  if(nuevo<0) nuevo=0;
+  var delta=nuevo-f.ocup;
+  if(delta===0){ render(); return true; }
+  if(nuevo>f.cap){ burgy(f.nombre+' está a tope: '+f.cap+' bolsas. El resto va a la cámara de frío o a otro freezer.'); render(); return false; }
+  if(delta>0 && sueltasFrz() < delta*BOLSA){ burgy('El total de la nube no respalda '+delta+' bolsa'+(delta>1?'s':'')+' más en '+f.nombre+'. El mapa no puede decir más que el total.'); render(); return false; }
+  f.ocup=nuevo; guardarLocal(); render(); return true;
+}
+function ajustarCamB(d){ fijarCamBValor(camBolsas+d); }
+function fijarCamB(el){ if(!fijarCamBValor(ent(el.value))) el.value=camBolsas; }
+function fijarCamBValor(nuevo){
+  if(nuevo<0) nuevo=0;
+  var delta=nuevo-camBolsas;
+  if(delta===0){ render(); return true; }
+  if(delta>0 && sueltasFrz() < delta*BOLSA){ burgy('El total de la nube no respalda '+delta+' bolsa'+(delta>1?'s':'')+' más en la cámara. El mapa no puede decir más que el total.'); render(); return false; }
+  camBolsas=nuevo; guardarLocal(); render(); return true;
+}
+function fijarCap(id,el){
+  var f=freezers.find(function(x){ return x.id===id; });
+  f.cap=Math.max(1,ent(el.value));
+  if(f.ocup>f.cap) burgy('Ojo: '+f.nombre+' tiene '+f.ocup+' bolsas y el tope nuevo es '+f.cap+'. Mové el resto a la cámara u otro freezer.');
+  guardarLocal(); render();
+}
+function guardarLocal(){
+  localStorage.setItem(KFZ,JSON.stringify(freezers));
+  localStorage.setItem(KCB,String(camBolsas));
+  localStorage.setItem(KI,JSON.stringify(insumos));
+  localStorage.setItem(KJ,JSON.stringify(jornada));
+  localStorage.setItem(KC,JSON.stringify(contingencias));
+}
+
+/* ===== Chips ===== */
+var PERSONAS=['Pablo','Yami','Cielo','Paula','Mara','Soporte'];
+var seleccion={};
+function chipGroup(cont,opciones,grupo,tipo){
+  seleccion[grupo]=null;
+  $(cont).innerHTML=opciones.map(function(o){
+    var cls=tipo==='sino'?(o==='Sí'?'chip si':'chip no'):'chip';
+    return '<div class="'+cls+'" data-g="'+grupo+'" data-v="'+o+'" onclick="pickChip(this)">'+o+'</div>';
+  }).join('');
+}
+function pickChip(el){
+  var g=el.dataset.g;
+  document.querySelectorAll('[data-g="'+g+'"]').forEach(function(e){ e.classList.remove('sel'); });
+  el.classList.add('sel'); seleccion[g]=el.dataset.v;
+}
+
+/* ===== Jornada: un boton que muta ===== */
+var jornada=JSON.parse(localStorage.getItem(KJ)||'{}');
+function j(){ jornada[hoyLocal()]=jornada[hoyLocal()]||{}; return jornada[hoyLocal()]; }
+function etapa(){
+  var x=j();
+  if(!x.apertura) return 'abrir';
+  if(!x.camara) return 'camara';
+  if(!x.cierre) return 'cerrar';
+  return 'listo';
+}
+function cerrarForms(){ ['formAbrir','formCamara','formCerrar'].forEach(function(f){ $(f).classList.add('oculto'); }); $('btnEtapa').classList.remove('oculto'); pintarTurno(); }
+function abrirFormEtapa(){
+  var e=etapa(); if(e==='listo') return;
+  $('btnEtapa').classList.add('oculto');
+  var hhmm=new Date().toTimeString().slice(0,5);
+  if(e==='abrir'){ $('apHora').value=hhmm; $('formAbrir').classList.remove('oculto'); }
+  if(e==='camara'){ $('camHora').value=hhmm; $('formCamara').classList.remove('oculto'); espejoCamara(); }
+  if(e==='cerrar'){ $('ciHora').value=hhmm; $('formCerrar').classList.remove('oculto'); }
+}
+function pintarTurno(){
+  var e=etapa(), x=j(), b=$('btnEtapa'), p=$('panelTurno');
+  p.className='panel et-'+e;
+  b.className='btn-etapa '+e; b.classList.remove('oculto');
+  if(e==='abrir'){ b.textContent='🌅 INICIAR TURNO'; $('turnoEstado').innerHTML='Todavía no se abrió el turno de hoy.'; }
+  if(e==='camara'){ b.textContent='🧊 TERMINAR TURNO: ENTRADA A CÁMARA'; $('turnoEstado').innerHTML='Turno abierto por <b>'+x.apertura.quien+'</b> a las <b>'+x.apertura.hora+'</b> · limpia: '+x.apertura.limpia; }
+  if(e==='cerrar'){ b.textContent='🌙 CERRAR JORNADA'; $('turnoEstado').innerHTML='A la cámara entraron <b>'+miles(x.camara.carnes)+' carnes</b> ('+x.camara.canastos+' canastos) · '+x.camara.quien+' '+x.camara.hora+'.'; }
+  if(e==='listo'){ b.classList.add('oculto'); $('turnoEstado').innerHTML='✅ Jornada de hoy cerrada.'; }
+
+  var r=[];
+  if(x.apertura) r.push('🌅 Abrió <b>'+x.apertura.quien+'</b> '+x.apertura.hora+' · limpia: '+x.apertura.limpia);
+  if(x.camara) r.push('🧊 A cámara: <b>'+x.camara.canastos+' canastos</b>'+(x.camara.sueltas?' + '+x.camara.sueltas+' sueltas':'')+' = <b>'+miles(x.camara.carnes)+'</b> carnes · '+x.camara.quien+' '+x.camara.hora);
+  if(x.cierre) r.push('🌙 Cerró <b>'+x.cierre.quien+'</b> '+x.cierre.hora+' · limpió: '+x.cierre.limpia+' · contó: '+x.cierre.conteo);
+  if(x.camara && etapa()==='cerrar') r.push('<button class="linkcito" onclick="camaraExtra()">¿Hubo otra tanda? Cargar otra entrada a cámara</button>');
+  $('jResumen').innerHTML=r.join('<br>');
+}
+function camaraExtra(){
+  delete j().cierre;
+  var p=j().camara; j()._anteriores=(j()._anteriores||[]); if(p) j()._anteriores.push(p);
+  delete j().camara;
+  guardarLocal(); pintarTurno(); abrirFormEtapa();
+}
+
+function guardarApertura(){
+  if(!$('apHora').value){ burgy('Poné la hora de inicio. 🕐'); return; }
+  if(!seleccion.apLimpia){ burgy('Decinos si la fábrica está en condiciones. Es obligatorio. ✅'); return; }
+  if(!seleccion.apQuien){ burgy('Tocá quién abre. 🙋'); return; }
+  j().apertura={hora:$('apHora').value, limpia:seleccion.apLimpia, quien:seleccion.apQuien};
+  guardarLocal(); cerrarForms();
+  burgy(seleccion.apLimpia==='Sí' ? '¡Arrancamos en condiciones, '+seleccion.apQuien+'! A producir. 🌅'
+                                  : 'Inicio registrado. La fábrica NO estaba en condiciones — queda anotado. ⚠️');
+}
+
+/* ===== Entrada a camara (fin del turno de produccion) ===== */
+function espejoCamara(){
+  var c=ent($('camCanastos').value), s=ent($('camSueltas').value);
+  var total=c*CANASTO+s;
+  $('camEquiv').innerHTML = total>0
+    ? '<b>'+miles(total)+' carnes</b> a la cámara · cuando se embolsen van a ser ~'+miles(Math.floor(total/BOLSA))+' bolsas de '+BOLSA
+    : 'Poné los canastos y te muestro el total.';
+}
+function guardarEntradaCamara(){
+  var c=ent($('camCanastos').value), s=ent($('camSueltas').value);
+  var total=c*CANASTO+s;
+  if(total<=0){ burgy('Poné cuántos canastos entraron a la cámara. 🧊'); return; }
+  if(!$('camHora').value){ burgy('Poné la hora de fin del turno. 🕐'); return; }
+  if(!seleccion.camQuien){ burgy('Tocá quién informa. 🙋'); return; }
+
+  var salvedad=NUBE.sabido?'':' · ⚠ la nube no respondió al cargar: el saldo puede necesitar ajuste';
+  j().camara={canastos:c, sueltas:s, carnes:total, quien:seleccion.camQuien, hora:$('camHora').value};
+  subirNube({
+    Fecha:hoyLocal(), CarnesProducidas:total, Quien:seleccion.camQuien,
+    Movimiento:'Entrada a cámara', Cantidad:total, Destino:'Cámara de frío',
+    Detalle:c+' canastos'+(s?' + '+s+' sueltas':'')+' · fin de turno '+$('camHora').value+salvedad
+  });
+  NUBE.cam=(NUBE.sabido?NUBE.cam:0)+total; NUBE.sabido=true; NUBE.fechaCam=hoyLocal();
+  NUBE.movs.unshift({Fecha:hoyLocal(),Movimiento:'Entrada a cámara',Cantidad:total,Quien:seleccion.camQuien,StockResultante:NUBE.frz,CamaraResultante:NUBE.cam,Detalle:c+' canastos'});
+  guardarLocal(); cerrarForms(); render();
+  burgy('¡'+c+' canastos a la cámara, '+seleccion.camQuien+'! Mañana, cuando estén congelados, tocá "Embolsar y pasar a freezers". 🧊');
+}
+
+/* ===== Embolsado: de la camara a los freezers ===== */
+function abrirEmbolsado(){
+  $('btnEmbolsar').classList.add('oculto');
+  $('formEmbolsar').classList.remove('oculto');
+  var can=Math.floor(NUBE.cam/CANASTO);
+  $('embCanastos').value=can>0?can:'';
+  $('embBolsas').value='';
+  espejoEmbolsado();
+}
+function cerrarEmbolsado(){ $('formEmbolsar').classList.add('oculto'); render(); }
+function espejoEmbolsado(){
+  var c=ent($('embCanastos').value);
+  var carnes=c*CANASTO;
+  var esperadas=Math.floor(carnes/BOLSA);
+  var reales=$('embBolsas').value===''?null:ent($('embBolsas').value);
+  var el=$('embEquiv');
+  if(c<=0){ el.className='equiv'; el.innerHTML='Poné los canastos y te muestro las bolsas esperadas.'; $('cajaRepartoEmb').classList.add('oculto'); return; }
+  var txt=miles(c)+' canastos = <b>'+miles(carnes)+' carnes</b> → se esperan <b>'+miles(esperadas)+' bolsas</b> de '+BOLSA;
+  if(reales!==null){
+    var merma=carnes-reales*BOLSA;
+    if(merma===0){ txt+=' · salieron '+miles(reales)+' ✓ justo'; el.className='equiv'; }
+    else if(merma>0){ txt+=' · salieron '+miles(reales)+' → <b>faltan '+miles(merma)+' carnes</b> ('+(esperadas-reales)+' bolsas): queda anotado'; el.className='equiv merma-mal'; }
+    else { txt+=' · salieron '+miles(reales)+' → <b>sobran '+miles(-merma)+' carnes</b>: queda anotado'; el.className='equiv merma-mal'; }
+  } else el.className='equiv';
+  el.innerHTML=txt;
+  var bolsasARepartir=reales!==null?reales:esperadas;
+  if(bolsasARepartir>0){
+    $('cajaRepartoEmb').classList.remove('oculto');
+    var prop=proponerReparto(bolsasARepartir);
+    $('repartoEmb').innerHTML=prop.map(function(p){
+      if(p.id==='_cam') return '<div class="rp"><span class="fn">🧊 '+p.nombre+'</span>'+
+        '<input type="number" min="0" id="remb__cam" value="'+p.pone+'" oninput="chequearRepartoEmb()">'+
+        '<span class="libre">quedan embolsadas en la cámara · disponibles igual</span></div>';
+      return '<div class="rp"><span class="fn">❄️ '+p.nombre+'</span>'+
+        '<input type="number" min="0" id="remb_'+p.id+'" value="'+p.pone+'" oninput="chequearRepartoEmb()">'+
+        '<span class="libre">lugar libre: '+p.libre+'</span></div>';
+    }).join('');
+    chequearRepartoEmb();
+  } else $('cajaRepartoEmb').classList.add('oculto');
+}
+function chequearRepartoEmb(){
+  var reales=$('embBolsas').value===''?Math.floor(ent($('embCanastos').value)*CANASTO/BOLSA):ent($('embBolsas').value);
+  var pasado=null;
+  var suma=freezers.reduce(function(s,f){
+    var i=$('remb_'+f.id); if(!i) return s;
+    var v=ent(i.value);
+    if(!pasado && f.ocup+v>f.cap) pasado=f.nombre+' quedaría en '+(f.ocup+v)+'/'+f.cap;
+    return s+v;
+  },0);
+  var ic=$('remb__cam'); if(ic) suma+=ent(ic.value);
+  var el=$('repCheckEmb');
+  if(pasado){ el.className='rep-check mal'; el.textContent='⚠ '+pasado+' bolsas: no entra. Pasá el resto a la cámara de frío.'; return false; }
+  if(suma===reales){ el.className='rep-check ok'; el.textContent='✓ Repartidas '+suma+' de '+reales+' bolsas.'; }
+  else { el.className='rep-check mal'; el.textContent='Repartiste '+suma+' de '+reales+' bolsas — corregí para que coincida.'; }
+  return suma===reales;
+}
+function guardarEmbolsado(){
+  var c=ent($('embCanastos').value);
+  if(c<=0){ burgy('Poné cuántos canastos se embolsaron. 👜'); return; }
+  if($('embBolsas').value===''){ burgy('Contá las bolsas que salieron de verdad y ponelas. Es el número que manda. 🔢'); return; }
+  var reales=ent($('embBolsas').value);
+  if(!seleccion.embQuien){ burgy('Tocá quién embolsó. 🙋'); return; }
+  var sacado=c*CANASTO;
+  if(NUBE.sabido && sacado>NUBE.cam){ $('avisoEmb').innerHTML='<div class="aviso rojo">En la cámara hay '+miles(NUBE.cam)+' carnes ('+Math.floor(NUBE.cam/CANASTO)+' canastos) y estás embolsando '+miles(sacado)+'. Corregí los canastos.</div>'; return; }
+  if(reales>0 && !chequearRepartoEmb()){ burgy('El reparto en freezers no coincide con las bolsas. Corregilo. 📍'); return; }
+
+  var esperadas=Math.floor(sacado/BOLSA);
+  var merma=sacado-reales*BOLSA;
+  freezers.forEach(function(f){ var i=$('remb_'+f.id); if(i) f.ocup+=ent(i.value); });
+  var aCamara=$('remb__cam')?ent($('remb__cam').value):0;
+  camBolsas+=aCamara;
+
+  subirNube({
+    Fecha:hoyLocal(), CarnesProducidas:0, Quien:seleccion.embQuien,
+    Movimiento:'Embolsado', Cantidad:reales*BOLSA, SacadoDeCamara:sacado, Destino:'Freezers',
+    Detalle:c+' canastos → se esperaban '+esperadas+' bolsas, salieron '+reales+
+      (merma!==0?' · '+(merma>0?'faltan ':'sobran ')+miles(Math.abs(merma))+' carnes':' · justo')+
+      ' · embolsó '+seleccion.embQuien+' a las '+ahora()+(aCamara>0?' · '+aCamara+' bolsas quedaron en cámara':'')
+  });
+  NUBE.frz=(NUBE.sabido?NUBE.frz:0)+reales*BOLSA;
+  NUBE.cam=Math.max(0,(NUBE.sabido?NUBE.cam:0)-sacado);
+  NUBE.sabido=true;
+  NUBE.movs.unshift({Fecha:hoyLocal(),Movimiento:'Embolsado',Cantidad:reales*BOLSA,Quien:seleccion.embQuien,StockResultante:NUBE.frz,CamaraResultante:NUBE.cam,Detalle:reales+' bolsas'+(merma>0?' · faltan '+miles(merma):'')});
+  guardarLocal(); $('formEmbolsar').classList.add('oculto'); render();
+  burgy(merma===0 ? '¡'+reales+' bolsas a los freezers, '+seleccion.embQuien+'! El local ya las ve disponibles. 👜'
+                  : 'Embolsado registrado: '+reales+' bolsas. La diferencia de '+miles(Math.abs(merma))+' carnes quedó anotada. 👜');
+}
+
+/* ===== Cierre + ajustes ===== */
+function guardarCierre(){
+  if(!$('ciHora').value){ burgy('Poné la hora de cierre. 🕐'); return; }
+  if(!seleccion.ciLimpia){ burgy('Decinos si se limpió todo. Es obligatorio. 🧼'); return; }
+  if(!seleccion.ciConteo){ burgy('Decinos si se contabilizó y embolsó todo. Es obligatorio. 📦'); return; }
+  if(!seleccion.ciQuien){ burgy('Tocá quién cierra. 🙋'); return; }
+  j().cierre={hora:$('ciHora').value, limpia:seleccion.ciLimpia, conteo:seleccion.ciConteo, quien:seleccion.ciQuien};
+  if($('ciFrz').value!=='' || $('ciCam').value!==''){
+    var frzReal=$('ciFrz').value===''?NUBE.frz:ent($('ciFrz').value)*BOLSA;
+    var camReal=$('ciCam').value===''?NUBE.cam:ent($('ciCam').value)*CANASTO;
+    escribirAjuste(frzReal, camReal, seleccion.ciQuien, 'conteo de cierre');
+  }
+  guardarLocal(); cerrarForms(); render();
+  var bien=seleccion.ciLimpia==='Sí'&&seleccion.ciConteo==='Sí';
+  burgy(bien?'🌙 ¡Cierre redondo, '+seleccion.ciQuien+'! Todo limpio, contado y embolsado.':'Cierre registrado. Quedó anotado lo que faltó. 💪');
+}
+function mostrarCorreccion(){ $('cajaCorreccion').classList.toggle('oculto'); }
+function corregirStock(){
+  if($('corFrz').value==='' && $('corCam').value===''){ burgy('Poné al menos un número contado de verdad. 🔢'); return; }
+  var quien=seleccion.embQuien||seleccion.camQuien||seleccion.apQuien||seleccion.ciQuien||'—';
+  var frzReal=$('corFrz').value===''?NUBE.frz:ent($('corFrz').value)*BOLSA;
+  var camReal=$('corCam').value===''?NUBE.cam:ent($('corCam').value)*CANASTO;
+  escribirAjuste(frzReal, camReal, quien, 'corrección manual');
+  $('corFrz').value=''; $('corCam').value=''; $('cajaCorreccion').classList.add('oculto');
+  render();
+}
+function escribirAjuste(frzReal, camReal, quien, motivo){
+  var antesF=NUBE.sabido?NUBE.frz:0, antesC=NUBE.sabido?NUBE.cam:0;
+  subirNube({
+    Fecha:hoyLocal(), CarnesProducidas:0, StockResultante:frzReal, CamaraResultante:camReal, Quien:quien,
+    Movimiento:'Ajuste de conteo', Cantidad:frzReal-antesF, Destino:'',
+    Detalle:motivo+' · freezers: '+miles(antesF)+' → '+miles(frzReal)+' · cámara: '+miles(antesC)+' → '+miles(camReal)
+  });
+  NUBE.frz=frzReal; NUBE.cam=camReal; NUBE.sabido=true;
+  NUBE.movs.unshift({Fecha:hoyLocal(),Movimiento:'Ajuste de conteo',Cantidad:frzReal-antesF,Quien:quien,StockResultante:frzReal,CamaraResultante:camReal,Detalle:motivo});
+  reconciliarFreezers(); guardarLocal();
+  burgy('🔢 Ajuste registrado: freezers '+miles(frzReal)+' · cámara '+miles(camReal)+'. Las diferencias quedaron anotadas.');
+}
+
+/* ===== Render ===== */
+function renderStock(){
+  if(!NUBE.sabido){
+    $('stockTotal').innerHTML='<div class="vacio">Sin conexión con la nube. Tocá Actualizar.</div>';
+    $('stockUnidades').innerHTML=''; $('camaraBox').innerHTML='';
+  } else {
+    var bolsasListas=Math.floor(NUBE.frz/BOLSA);
+    var dias=NUBE.frz/VENTA_DIA; var pill='sp-verde', msg='Cubre '+dias.toFixed(1)+' días de venta';
+    if(dias<1){ pill='sp-rojo'; msg='Menos de 1 día de venta'+(NUBE.cam>0?' — embolsar la cámara':' — producir'); }
+    else if(dias<2){ pill='sp-amarillo'; msg='Cubre '+dias.toFixed(1)+' días de venta — justo'; }
+    $('stockTotal').innerHTML='<div class="big">'+miles(bolsasListas)+'</div><div class="lbl">👜 bolsas LISTAS en freezers ('+miles(NUBE.frz)+' carnes)</div><div class="estado-pill '+pill+'">'+msg+'</div>';
+    $('stockUnidades').innerHTML='<span>📦 Freezers: <b>'+Math.round(mapaBolsas()/capTotal()*100)+'%</b> de '+capTotal()+' bolsas</span><span>🕳 Lugar libre: <b>'+miles(lugarLibre())+'</b> bolsas</span>';
+    var canCam=Math.floor(NUBE.cam/CANASTO);
+    var pendiente=NUBE.cam>0 && NUBE.fechaCam && NUBE.fechaCam<hoyLocal();
+    $('camaraBox').innerHTML='<div class="cb-n">🧊 '+miles(canCam)+' canastos</div><div class="cb-l">en la Cámara de Frío ('+miles(NUBE.cam)+' carnes congelándose · no disponibles todavía)</div>'+
+      (camBolsas>0?'<div class="cb-l">👜 + <b>'+camBolsas+' bolsas ya embolsadas</b> guardadas acá (disponibles para el local)</div>':'')+
+      (pendiente?'<div class="cb-aviso">⏳ Esperando embolsado desde '+NUBE.fechaCam.split('-').reverse().slice(0,2).join('/')+'</div>':'');
+    try{ localStorage.setItem('fdh_stock_actual',JSON.stringify({carnes:NUBE.frz+NUBE.cam,bolsas:Math.round(NUBE.frz/BOLSA),fecha:hoyLocal()})); }catch(e){}
+  }
+  $('freezers').innerHTML=freezers.map(function(f){
+    var pct=Math.min(100,Math.round(f.ocup/f.cap*100));
+    var col=pct===0?'#555':pct<40?'var(--coral)':pct<75?'var(--amarillo)':'var(--verde)';
+    return '<div class="fz"><div class="fn"><span>❄️ '+f.nombre+'</span><span class="pct">'+pct+'%</span></div>'+
+      '<div class="barra"><div class="relleno" style="width:'+pct+'%;background:'+col+'"></div></div>'+
+      '<div class="cnt"><button class="sec" onclick="ajustarFreezer(\''+f.id+'\',-1)">−</button>'+
+      '<span class="v"><input class="edn" type="number" min="0" value="'+f.ocup+'" onchange="fijarFreezer(\''+f.id+'\',this)"> <small>/ '+f.cap+' bolsas</small></span>'+
+      '<button class="sec" onclick="ajustarFreezer(\''+f.id+'\',1)">+</button></div></div>';
+  }).join('')+
+  '<div class="fz fz-cam"><div class="fn"><span>🧊 Cámara (bolsas embolsadas)</span></div>'+
+    '<div class="cnt"><button class="sec" onclick="ajustarCamB(-1)">−</button>'+
+    '<span class="v"><input class="edn" type="number" min="0" value="'+camBolsas+'" onchange="fijarCamB(this)"> <small>bolsas</small></span>'+
+    '<button class="sec" onclick="ajustarCamB(1)">+</button></div>'+
+    '<div class="fz-nota">excedente cuando los freezers están llenos · disponibles igual</div></div>';
+  var cf=$('capsFila'); if(cf) cf.innerHTML=freezers.map(function(f){
+    return '<div class="campo chico"><label>'+f.nombre+' (tope)</label><input class="edn" type="number" min="1" value="'+f.cap+'" onchange="fijarCap(\''+f.id+'\',this)"></div>';
+  }).join('');
+  var s=sueltasFrz();
+  $('sueltasNota').innerHTML=NUBE.sabido
+    ? (s>0?'Fuera del mapa: <b>'+miles(s)+' carnes</b> ('+(s>=BOLSA?Math.floor(s/BOLSA)+' bolsas sin ubicar':'sueltas')+'). Anotalas escribiendo el número en el freezer o la cámara donde estén.':'✓ El mapa coincide con el total de la nube.')
+    : '';
+  /* embolsado */
+  var hayCam=NUBE.sabido && NUBE.cam>0;
+  $('embResumen').innerHTML=NUBE.sabido
+    ? (hayCam?'<div class="aviso info" style="margin-top:0">🧊 En la cámara hay <b>'+miles(Math.floor(NUBE.cam/CANASTO))+' canastos</b> ('+miles(NUBE.cam)+' carnes). Lugar libre en freezers: <b>'+miles(lugarLibre())+'</b> bolsas.</div>'
+             :'<div class="vacio">La cámara está vacía. Cuando termine un turno de producción, lo que entre va a aparecer acá para embolsar.</div>')
+    : '<div class="vacio">Sin conexión con la nube.</div>';
+  if(hayCam && $('formEmbolsar').classList.contains('oculto')) $('btnEmbolsar').classList.remove('oculto');
+  else $('btnEmbolsar').classList.add('oculto');
+}
+function renderMovs(){
+  if(!NUBE.sabido && !NUBE.movs.length){ $('movsNube').innerHTML='<div class="vacio">Sin conexión con la nube.</div>'; return; }
+  $('movsNube').innerHTML=NUBE.movs.map(function(m){
+    var tipo=m.Movimiento||'Parte de producción';
+    var cant=num(m.Cantidad!==''&&m.Cantidad!=null?m.Cantidad:m.CarnesProducidas);
+    var signo, cls;
+    if(/env[ií]o|salida/i.test(tipo)){ signo='−'; cls='menos'; }
+    else if(/ajuste/i.test(tipo)){ signo=(cant>=0?'+':'−'); cls='igual'; cant=Math.abs(cant); }
+    else if(/c[aá]mara/i.test(tipo)){ signo='+'; cls='frio'; }
+    else if(/embols/i.test(tipo)){ signo='→'; cls='frio'; }
+    else { signo='+'; cls='mas'; }
+    var fecha=String(m.Fecha||'').slice(0,10);
+    var saldos=[];
+    if(m.StockResultante!==''&&m.StockResultante!=null) saldos.push('listas '+miles(num(m.StockResultante)));
+    if(m.CamaraResultante!==''&&m.CamaraResultante!=null&&num(m.CamaraResultante)>0) saldos.push('cámara '+miles(num(m.CamaraResultante)));
+    return '<div class="reg"><b>'+tipo+'</b> <span class="'+cls+'">'+signo+miles(cant)+'</span>'+
+      (saldos.length?' → '+saldos.join(' · '):'')+
+      '<br>'+fecha+(m.Quien?' · '+m.Quien:'')+(m.Destino?' · '+m.Destino:'')+(m.Detalle?'<br><span style="font-size:.74rem">'+m.Detalle+'</span>':'')+'</div>';
+  }).join('')||'<div class="vacio">Sin movimientos todavía.</div>';
+}
+
+/* ===== Insumos ===== */
+var insumos=JSON.parse(localStorage.getItem(KI)||'null')||[
+ {id:'i1',nombre:'Pastillas de carne',cant:20,minMedio:10,minAlto:5,cat:'prod',impacto:'Sin pastillas no hay producción: impacta directo en ventas y pedidos.'},
+ {id:'i2',nombre:'Bolsas para embolsar',cant:12,minMedio:6,minAlto:3,cat:'prod',impacto:'Sin bolsas no se puede embolsar lo producido.'},
+ {id:'i3',nombre:'Pan rallado',cant:8,minMedio:4,minAlto:2,cat:'prod',impacto:'Afecta la receta.'},
+ {id:'i4',nombre:'Folex',cant:6,minMedio:3,minAlto:1,cat:'prod',impacto:'Insumo de producción.'},
+ {id:'i5',nombre:'Cheddar',cant:8,minMedio:4,minAlto:2,cat:'prod',impacto:'Sin cheddar no se arman los combos.'},
+ {id:'h1',nombre:'Desengrasante',cant:4,minMedio:2,minAlto:1,cat:'higiene',impacto:'Higiene de máquinas. Riesgo de plagas 🐀🪳 si falta.'},
+ {id:'h2',nombre:'Lavandina',cant:4,minMedio:3,minAlto:2,cat:'higiene',impacto:'Si la fábrica no queda limpia: alta probabilidad de plagas 🐀🪳'},
+ {id:'h3',nombre:'Desodorante de ambiente',cant:3,minMedio:2,minAlto:1,cat:'higiene',impacto:'Ambiente del local.'},
+ {id:'h4',nombre:'Vinagre de limpieza',cant:3,minMedio:2,minAlto:1,cat:'higiene',impacto:'Limpieza profunda.'},
+ {id:'h5',nombre:'Quitasarro',cant:2,minMedio:1,minAlto:1,cat:'higiene',impacto:'Mantenimiento.'},
+ {id:'h6',nombre:'Detergente',cant:4,minMedio:2,minAlto:1,cat:'higiene',impacto:'Higiene de superficies.'},
+ {id:'h7',nombre:'Alcohol',cant:5,minMedio:2,minAlto:1,cat:'higiene',impacto:'Desinfección.'},
+ {id:'h8',nombre:'Guantes de cirugía',cant:6,minMedio:3,minAlto:2,cat:'higiene',impacto:'Manipulación segura de alimentos.'},
+ {id:'h9',nombre:'Lysoform',cant:3,minMedio:2,minAlto:1,cat:'higiene',impacto:'Desinfección de ambientes.'},
+ {id:'h10',nombre:'Papel higiénico',cant:8,minMedio:4,minAlto:2,cat:'higiene',impacto:'Insumo básico.'},
+ {id:'h11',nombre:'Bolsas de residuos',cant:6,minMedio:3,minAlto:1,cat:'higiene',impacto:'Manejo de residuos.'},
+ {id:'h12',nombre:'Bolsas de consorcio',cant:5,minMedio:2,minAlto:1,cat:'higiene',impacto:'Residuos grandes.'},
+ {id:'h13',nombre:'Rejillas',cant:6,minMedio:3,minAlto:2,cat:'higiene',impacto:'Limpieza diaria.'},
+ {id:'h14',nombre:'Trapos de piso',cant:5,minMedio:2,minAlto:1,cat:'higiene',impacto:'Limpieza de pisos.'},
+ {id:'h15',nombre:'Esponjas',cant:6,minMedio:3,minAlto:2,cat:'higiene',impacto:'Limpieza de utensilios.'},
+ {id:'h16',nombre:'Cepillos',cant:4,minMedio:2,minAlto:1,cat:'higiene',impacto:'Limpieza profunda.'}
+];
+function nivel(i){ if(i.cant<=i.minAlto) return 'alto'; if(i.cant<=i.minMedio) return 'medio'; return 'ok'; }
+function ajInsumo(id,d){
+  var i=insumos.find(function(x){ return x.id===id; });
+  i.cant=Math.max(0,i.cant+d); var n=nivel(i);
+  if(n==='alto') burgy('🚨 CRITICIDAD ALTA: '+i.nombre+'. '+(i.impacto||'')+' ¡Reponer ya!');
+  else if(n==='medio') burgy('⚠️ Criticidad media: '+i.nombre+'. Conviene reponer.');
+  guardarLocal(); render();
+}
+function fijarInsumo(id,el){
+  var i=insumos.find(function(x){ return x.id===id; });
+  i.cant=ent(el.value); var n=nivel(i);
+  if(n==='alto') burgy('🚨 CRITICIDAD ALTA: '+i.nombre+'. '+(i.impacto||'')+' ¡Reponer ya!');
+  else if(n==='medio') burgy('⚠️ Criticidad media: '+i.nombre+'. Conviene reponer.');
+  guardarLocal(); render();
+}
+function quitarInsumo(id){ insumos=insumos.filter(function(x){ return x.id!==id; }); guardarLocal(); render(); }
+function agregarInsumo(){
+  var n=$('insNombre').value.trim(); if(!n){ burgy('Escribí el nombre. ✍️'); return; }
+  var med=Number($('insMin').value||0);
+  insumos.push({id:'x'+Date.now(),nombre:n,cant:Number($('insCant').value||0),minMedio:med,minAlto:Math.max(1,Math.floor(med/2)),cat:$('insCat').value,impacto:''});
+  $('insNombre').value=''; $('insCant').value=0; $('insMin').value=6;
+  burgy('¡"'+n+'" agregado! 🧰'); guardarLocal(); render();
+}
+function insCard(i){
+  var n=nivel(i);
+  var tag=n==='ok'?'<span class="tag ok">✓ OK</span>':n==='medio'?'<span class="tag med">⚠️ Media</span>':'<span class="tag alt">🚨 Alta</span>';
+  return '<div class="ins-card '+(n==='alto'?'alto':n==='medio'?'medio':'')+'"><div class="top"><span class="nom">'+i.nombre+'</span>'+tag+'</div>'+
+    '<div class="ctrl"><div class="pm"><button class="sec" onclick="ajInsumo(\''+i.id+'\',-1)">−</button><input class="edn" type="number" min="0" value="'+i.cant+'" onchange="fijarInsumo(\''+i.id+'\',this)"><button class="sec" onclick="ajInsumo(\''+i.id+'\',1)">+</button></div><button class="x" onclick="quitarInsumo(\''+i.id+'\')" title="Quitar">✕</button></div>'+
+    (n!=='ok'&&i.impacto?'<div class="impacto">📉 '+i.impacto+'</div>':'')+'</div>';
+}
+function renderInsumos(){
+  var prod=insumos.filter(function(i){ return i.cat!=='higiene'; }), hig=insumos.filter(function(i){ return i.cat==='higiene'; });
+  var ok=insumos.filter(function(i){ return nivel(i)==='ok'; }).length;
+  var med=insumos.filter(function(i){ return nivel(i)==='medio'; }).length;
+  var alt=insumos.filter(function(i){ return nivel(i)==='alto'; }).length;
+  $('insResumen').innerHTML=
+    '<div class="res-card res-ok"><div class="big">'+ok+'</div><div class="lbl">✓ Con stock OK</div></div>'+
+    '<div class="res-card res-med"><div class="big">'+med+'</div><div class="lbl">⚠️ Criticidad media</div></div>'+
+    '<div class="res-card res-alt'+(alt>0?' crit':'')+'"><div class="big">'+alt+'</div><div class="lbl">🚨 Criticidad alta</div></div>';
+  $('insProd').innerHTML=prod.map(insCard).join('')||'<div class="vacio">Sin insumos.</div>';
+  $('insHig').innerHTML=hig.map(insCard).join('')||'<div class="vacio">Sin insumos.</div>';
+  var malos=insumos.filter(function(i){ return nivel(i)!=='ok'; })
+    .sort(function(a,b){ return (nivel(a)==='alto'?0:1)-(nivel(b)==='alto'?0:1); });
+  var pills=malos.length
+    ? malos.map(function(i){ var n=nivel(i);
+        return '<span class="alerta-pill '+(n==='alto'?'alta':'media')+'" onclick="verInventario()">'+(n==='alto'?'🚨':'⚠️')+' '+i.nombre+' ('+i.cant+')</span>'; }).join('')
+      +'<span class="alerta-pill media" style="animation:none;cursor:pointer" onclick="verInventario()">Ver inventario →</span>'
+    : '<span class="alerta-pill ok">✓ Insumos en orden</span>';
+  /* alerta de camara pendiente tambien en la franja */
+  if(NUBE.sabido && NUBE.cam>0 && NUBE.fechaCam && NUBE.fechaCam<hoyLocal()){
+    pills='<span class="alerta-pill frio">⏳ Hay '+miles(Math.floor(NUBE.cam/CANASTO))+' canastos en cámara esperando embolsado</span>'+pills;
+  }
+  $('alertas').innerHTML=pills;
+}
+
+/* ===== Contingencias ===== */
+var contingencias=JSON.parse(localStorage.getItem(KC)||'[]');
+function cargarContingencia(){
+  var det=$('conDetalle').value.trim();
+  if(!det){ burgy('Contanos qué pasó. ✍️'); return; }
+  if(!seleccion.conQuien){ burgy('Tocá quién se ocupa. 🙋'); return; }
+  contingencias.unshift({id:Date.now(),fecha:hoyLocal(),hora:ahora(),tipo:$('conTipo').value,detalle:det,quien:seleccion.conQuien});
+  guardarLocal();
+  burgy('Contingencia asignada a '+seleccion.conQuien+'. Queda en el reporte. 📋');
+  $('conDetalle').value='';
+  document.querySelectorAll('[data-g="conQuien"]').forEach(function(e){ e.classList.remove('sel'); });
+  seleccion.conQuien=null; renderContingencias();
+}
+function renderContingencias(){
+  $('listaContingencias').innerHTML=contingencias.slice(0,6).map(function(c){
+    return '<div class="reg"><b>'+c.tipo+'</b> · '+c.quien+' '+c.hora+'<br>'+c.detalle+'</div>';
+  }).join('')||'<div class="vacio">Sin contingencias. ¡Ojalá siga así! 🙌</div>';
+}
+
+/* ===== Vistas ===== */
+function verInventario(){ $('vistaTablero').classList.add('oculto'); $('vistaInventario').classList.remove('oculto'); }
+function verTablero(){ $('vistaInventario').classList.add('oculto'); $('vistaTablero').classList.remove('oculto'); }
+
+function empezarDeCero(){
+  if(!confirm('¿Seguro que querés empezar de cero?\n\nEsto borra los datos de PRUEBA de este navegador (mapa de freezers, jornadas, insumos, contingencias).\n\nNo borra nada de la nube: el stock y los movimientos del Cuaderno quedan como están.')) return;
+  [KJ,KFZ,KCB,KI,KC,'fdh_freezers_v3','fdh_freezers_v4','fdh_freezers_v5','fdh_jornada_v2','fdh_produccion_v2','fdh_stockbase_v1','fdh_stock_actual','fdh_jornada_v1'].forEach(function(k){ localStorage.removeItem(k); });
+  alert('✓ Listo. Todo limpio. La página se recarga.');
+  location.reload();
+}
+
+function render(){ renderStock(); renderMovs(); renderInsumos(); pintarTurno(); }
+
+/* ===== Arranque ===== */
+$('fechaHoy').textContent=new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+chipGroup('apLimpia',['Sí','No'],'apLimpia','sino'); chipGroup('apQuien',PERSONAS,'apQuien');
+chipGroup('camQuien',PERSONAS,'camQuien');
+chipGroup('embQuien',PERSONAS,'embQuien');
+chipGroup('ciLimpia',['Sí','No'],'ciLimpia','sino'); chipGroup('ciConteo',['Sí','No'],'ciConteo','sino'); chipGroup('ciQuien',PERSONAS,'ciQuien');
+chipGroup('conQuien',PERSONAS,'conQuien');
+$('camCanastos').addEventListener('input',espejoCamara);
+$('camSueltas').addEventListener('input',espejoCamara);
+$('embCanastos').addEventListener('input',espejoEmbolsado);
+$('embBolsas').addEventListener('input',espejoEmbolsado);
+render(); renderContingencias();
+cargarNube();
+/* refresco suave: si Ventas registro un envio, aca se ve solo */
+setInterval(cargarNube, 90000);
+</script>
+<script>
+/* PWA: registro del service worker (red primero, no cachea HTML viejo) */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('/sw.js').catch(function () {});
+  });
+}
+</script>
+</body>
+</html>

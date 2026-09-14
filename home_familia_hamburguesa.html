@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- PWA · Familia de Hamburguesa · instalable como app -->
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icons/favicon.ico" sizes="32x32">
+<link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FDH">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="application-name" content="Familia de Hamburguesa">
+<!-- /PWA -->
+<title>Familia de Hamburguesa</title>
+<style>
+  :root{
+    --fondo:#17110e; --panel:#221913; --borde:#3a2b21; --texto:#f6efe9;
+    --suave:#b3a294; --marca:#e0752c; --marca2:#c25a16;
+    --verde:#3f9e6a; --rojo:#d9534f;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    margin:0;background:var(--fondo);color:var(--texto);
+    font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    display:flex;flex-direction:column;align-items:center;
+    padding:16px;overflow-x:hidden;
+  }
+
+  /* ---------- PANTALLA 1 · INGRESO ---------- */
+  #ingreso{
+    width:100%;max-width:380px;margin:auto 0;
+    display:flex;flex-direction:column;justify-content:center;
+    min-height:calc(100dvh - 32px);
+  }
+  .logo{text-align:center;margin-bottom:6px}
+  .logo .marca{
+    font-size:26px;font-weight:800;letter-spacing:-.5px;line-height:1.15;
+    color:var(--texto)
+  }
+  .logo .marca em{color:var(--marca);font-style:normal}
+  .versiculo{
+    text-align:center;color:var(--suave);font-size:13px;line-height:1.45;
+    font-style:italic;margin:10px 0 22px;padding:0 8px;
+  }
+  .versiculo b{display:block;font-style:normal;font-size:11px;
+    letter-spacing:1px;text-transform:uppercase;margin-top:6px;color:#7d6d61}
+
+  .campo{margin-bottom:14px}
+  .campo label{
+    display:block;font-size:13px;color:var(--suave);
+    margin-bottom:6px;font-weight:600
+  }
+  .campo input{
+    width:100%;height:52px;padding:0 14px;
+    background:var(--panel);border:1px solid var(--borde);border-radius:12px;
+    color:var(--texto);font-size:16px;font-family:inherit;
+  }
+  .campo input:focus{outline:none;border-color:var(--marca)}
+  .campo input::placeholder{color:#6d5e53}
+  #codigo{letter-spacing:8px;text-align:center;font-size:22px;font-weight:700}
+
+  .btn{
+    width:100%;height:52px;border:none;border-radius:12px;
+    background:var(--marca);color:#fff;font-size:17px;font-weight:700;
+    font-family:inherit;cursor:pointer;margin-top:4px;
+  }
+  .btn:active{background:var(--marca2)}
+  .btn[disabled]{opacity:.5;cursor:default}
+
+  .error{
+    display:none;margin-top:14px;padding:12px 14px;border-radius:10px;
+    background:rgba(217,83,79,.12);border:1px solid rgba(217,83,79,.4);
+    color:#f2a6a4;font-size:14px;text-align:center;
+  }
+  .error.ver{display:block}
+
+  /* ---------- PANTALLA 2 · MÓDULOS ---------- */
+  #panel{display:none;width:100%;max-width:560px;padding-bottom:24px}
+  #panel.ver{display:block}
+
+  .cabecera{
+    display:flex;align-items:center;justify-content:space-between;
+    gap:12px;padding:14px 0 16px;
+  }
+  .quien .nombre{font-size:19px;font-weight:700;line-height:1.2}
+  .quien .rol{font-size:13px;color:var(--suave);margin-top:2px}
+  .salir{
+    flex:none;height:38px;padding:0 16px;border-radius:10px;
+    background:transparent;border:1px solid var(--borde);
+    color:var(--suave);font-size:14px;font-family:inherit;cursor:pointer;
+  }
+  .salir:active{background:var(--panel)}
+
+  .grilla{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:400px){.grilla{grid-template-columns:1fr}}
+
+  .tarjeta{
+    display:flex;flex-direction:column;justify-content:center;
+    min-height:76px;padding:14px 16px;border-radius:14px;
+    background:var(--panel);border:1px solid var(--borde);
+    color:var(--texto);text-decoration:none;
+  }
+  .tarjeta:active{border-color:var(--marca)}
+  .tarjeta .nom{font-size:17px;font-weight:700;line-height:1.25}
+  .tarjeta .pie{
+    display:flex;align-items:center;justify-content:space-between;
+    gap:8px;margin-top:5px;min-height:22px;
+  }
+  .tarjeta .des{font-size:12.5px;color:var(--suave)}
+  .badge{
+    flex:none;font-size:10.5px;font-weight:700;letter-spacing:.5px;
+    text-transform:uppercase;padding:3px 8px;border-radius:20px;
+    background:rgba(179,162,148,.16);color:var(--suave);
+  }
+  .vacio{
+    padding:20px;border-radius:14px;background:var(--panel);
+    border:1px solid var(--borde);color:var(--suave);
+    font-size:14px;text-align:center;
+  }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Oswald:wght@400;500;600&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#0c0a07">
+<style id="marca">
+/* ============================================================
+   CAPA DE MARCA · negro + dorado · 20-ago-2026 (validado con Samu)
+   ============================================================ */
+:root{--fondo:#0e0b07;--panel:#191409;--panel2:#221a0e;--borde:#3b2f1a;--marca:#d6ac5a;--marca2:#b8923f}
+h1{font-family:'Oswald','Segoe UI',sans-serif;text-transform:uppercase;letter-spacing:1.8px;font-weight:500}
+h2{font-family:'Oswald','Segoe UI',sans-serif;text-transform:uppercase;letter-spacing:1.1px;font-weight:500}
+.btn{background:linear-gradient(180deg,#e6c276,#c69838);color:#241a08}
+.btn:active{background:#c69838}
+.btn.gris{background:transparent;color:var(--suave)}
+.btn.verde{background:var(--verde);color:#fff}
+.top{justify-content:flex-start;gap:12px}
+.top .volver{margin-left:auto}
+.divisor-marca{display:block;text-align:center;color:rgba(214,172,90,.9);font-size:10px;line-height:0;margin:2px 0 14px;background:linear-gradient(90deg,transparent,rgba(214,172,90,.4) 18%,rgba(214,172,90,.4) 82%,transparent) center/100% 1px no-repeat}
+.lema-home{font-family:'Oswald','Segoe UI',sans-serif;letter-spacing:2.6px;font-size:11px;color:rgba(214,172,90,.95);margin-top:10px;text-align:center}
+
+/* --- Legibilidad total (requisito no negociable, 20-ago-2026):
+   blanco puro #FFFFFF sobre fondos oscuros · negro sobre dorado. --- */
+:root{--texto:#ffffff;--suave:#ddd2c6;--tenue:#b3a698}
+label{color:#fff}
+.btn.gris{color:#fff;border:1px solid rgba(214,172,90,.55)}
+</style>
+</head>
+<body>
+
+<!-- ===================== INGRESO ===================== -->
+<section id="ingreso">
+  <div class="logo">
+    <svg class="emblema" width="150" height="150" viewBox="0 0 120 120" role="img" aria-label="Familia de Hamburguesa"><circle cx="60" cy="60" r="57" fill="#0d0b08" stroke="#d6ac5a" stroke-width="2.4"/><circle cx="60" cy="60" r="51" fill="none" stroke="#d6ac5a" stroke-width="0.8" opacity=".8"/><path d="M44 36 a16 10 0 0 1 32 0 z" fill="#d6ac5a"/><line x1="44" y1="41" x2="76" y2="41" stroke="#d6ac5a" stroke-width="2.6" stroke-linecap="round"/><line x1="46" y1="46.5" x2="74" y2="46.5" stroke="#d6ac5a" stroke-width="4.6" stroke-linecap="round"/><text x="60" y="69" text-anchor="middle" font-family="'Dancing Script',cursive" font-weight="700" font-size="27" fill="#fff4e3">Familia</text><text x="60" y="77.5" text-anchor="middle" font-family="'Oswald','Segoe UI',sans-serif" font-size="6" letter-spacing="3" fill="#d6ac5a">— DE —</text><text x="60" y="89" text-anchor="middle" font-family="'Oswald','Segoe UI',sans-serif" font-weight="600" font-size="10" letter-spacing="0.8" fill="#fff4e3" textLength="58" lengthAdjust="spacingAndGlyphs">HAMBURGUESA</text><rect x="37.5" y="92.5" width="45" height="7" rx="2" fill="#d6ac5a"/><text x="60" y="97.4" text-anchor="middle" font-family="'Oswald','Segoe UI',sans-serif" font-weight="600" font-size="3.7" letter-spacing="0.4" fill="#1a1208" textLength="40" lengthAdjust="spacingAndGlyphs">CASERAS · RICAS · DE VERDAD</text><text x="60" y="107.5" text-anchor="middle" font-size="6.5" fill="#d6ac5a">★</text></svg>
+    <div class="lema-home">CASERAS · RICAS · DE VERDAD · EST. 2024</div>
+  </div>
+
+  <!-- CAMBIAR POR EL VERSÍCULO QUE USA EL NEGOCIO -->
+  <p class="versiculo" id="versiculo">
+    “Todo lo que hagan, háganlo de corazón, como para el Señor.”
+    <b>Colosenses 3:23</b>
+  </p>
+
+  <form id="form" autocomplete="off">
+    <div class="campo">
+      <label for="correo">Tu correo</label>
+      <input id="correo" type="email" inputmode="email" autocomplete="username"
+             placeholder="nombre@familiadehamburguesa.com">
+    </div>
+
+    <div class="campo">
+      <label for="codigo">Tu código de 4 números</label>
+      <input id="codigo" type="password" inputmode="numeric" maxlength="4"
+             autocomplete="current-password" placeholder="••••">
+    </div>
+
+    <button class="btn" type="submit">Entrar</button>
+  </form>
+
+  <div class="error" id="error">El correo o el código no son correctos.</div>
+</section>
+
+<!-- ===================== PANEL ===================== -->
+<section id="panel">
+  <div class="cabecera">
+    <div class="quien">
+      <div class="nombre" id="pNombre"></div>
+      <div class="rol" id="pRol"></div>
+    </div>
+    <button class="salir" id="btnSalir" type="button">Salir</button>
+  </div>
+  <div class="grilla" id="grilla"></div>
+</section>
+
+<script>
+/* ============================================================
+   PERFILES
+   El código está en el HTML: alcanza para desarrollo, NO para
+   producción. Antes de lanzar hay que mover la validación al
+   Apps Script y cambiar estos códigos.
+   ============================================================ */
+var PERFILES = [
+  {id:'pablo', nombre:'Pablo', rol:'Estrategia · Mayoristas', correo:'pablo.familiadehamburguesa@gmail.com', codigo:'1111'},
+  {id:'paula', nombre:'Paula', rol:'Ventas · Pedidos',        correo:'paula.familiadehamburguesa@gmail.com', codigo:'2222'},
+  {id:'cielo', nombre:'Cielo', rol:'Fábrica',                 correo:'cielo.familiadehamburguesa@gmail.com', codigo:'3333'},
+  {id:'yami',  nombre:'Yami',  rol:'Finanzas · Cierre',       correo:'yami.familiadehamburguesa@gmail.com',  codigo:'4444'},
+  {id:'mara',  nombre:'Mara',  rol:'Producción · Calidad',    correo:'mara.familiadehamburguesa@gmail.com',  codigo:'5555'},
+  {id:'valen', nombre:'Valen', rol:'Mostrador · Apoyo',       correo:'valen.familiadehamburguesa@gmail.com', codigo:'6666'},
+  {id:'soporte', nombre:'Soporte', rol:'Cubre ausencias · con identidad propia en cada movimiento', correo:'soportefamiliadehamburguesa@gmail.com', codigo:'7777', generico:true},
+  {id:'samu', nombre:'Samu', rol:'Desarrollo · superusuario', correo:'samuelsoveron@gmail.com', codigo:'9999'}
+];
+
+/* ============================================================
+   MÓDULOS Y QUIÉN ENTRA A CADA UNO
+   No renombrar los archivos: los módulos se enlazan entre sí
+   por nombre.
+   ============================================================ */
+// "Pedidos" se quitó el 17-ago-2026: los pedidos entran por el formulario
+// de Google, se agendan en Calendar y se entregan desde Ventas.
+// "Mayoristas" se quitó el 19-ago-2026 (validado con Samu): duplicaba el
+// circuito de pedidos. Cuando arranque la venta desde fábrica, la registra
+// el movimiento "Salida directa" del módulo de Producción.
+var MODULOS = [
+  // Accesos definidos por Samu el 20-ago-2026. 'samu' es superusuario: entra
+  // a todo (es quien desarrolla la herramienta).
+  {nom:'Producción',      des:'Lo que se fabrica',      archivo:'modulo_produccion.html', quienes:['pablo','yami','cielo','paula','mara','soporte','samu']},
+  {nom:'Ventas del turno',des:'Mostrador y caja',       archivo:'modulo_ventas.html',     quienes:['pablo','yami','cielo','paula','mara','soporte','valen','samu']},
+  {nom:'Tablero',         des:'Cómo venimos',           archivo:'modulo_tablero.html',    quienes:['pablo','paula','cielo','yami','samu'], soloLectura:true},
+  {nom:'Finanzas y Caja', des:'Plata que entra y sale', archivo:'modulo_finanzas.html',   quienes:['pablo','paula','cielo','yami','samu']}
+];
+
+var K_CORREO = 'fdh_ultimo_correo';   // recuerda el correo, NUNCA el código
+var K_SESION = 'fdh_sesion';          // sessionStorage: dura lo que dura la pestaña
+
+var $ = function(id){ return document.getElementById(id); };
+
+function normalizar(v){ return String(v || '').trim().toLowerCase(); }
+
+function buscarPerfil(correo, codigo){
+  var c = normalizar(correo), k = String(codigo || '').trim();
+  for (var i = 0; i < PERFILES.length; i++){
+    if (normalizar(PERFILES[i].correo) === c && PERFILES[i].codigo === k) return PERFILES[i];
+  }
+  return null;
+}
+
+function dibujarPanel(perfil){
+  $('pNombre').textContent = 'Hola, ' + perfil.nombre;
+  $('pRol').textContent = perfil.rol;
+
+  var grilla = $('grilla');
+  grilla.innerHTML = '';
+  var vistos = 0;
+
+  MODULOS.forEach(function(m){
+    if (m.quienes.indexOf(perfil.id) < 0) return;
+    vistos++;
+
+    var a = document.createElement('a');
+    a.className = 'tarjeta';
+    a.href = m.archivo;
+
+    var nom = document.createElement('div');
+    nom.className = 'nom';
+    nom.textContent = m.nom;
+
+    var pie = document.createElement('div');
+    pie.className = 'pie';
+
+    var des = document.createElement('span');
+    des.className = 'des';
+    des.textContent = m.des;
+    pie.appendChild(des);
+
+    if (m.soloLectura){
+      var b = document.createElement('span');
+      b.className = 'badge';
+      b.textContent = 'Solo ver';
+      pie.appendChild(b);
+    }
+
+    a.appendChild(nom);
+    a.appendChild(pie);
+    grilla.appendChild(a);
+  });
+
+  if (!vistos){
+    grilla.innerHTML = '<div class="vacio">Todavía no tenés módulos asignados. Avisale a Pablo.</div>';
+  }
+
+  $('ingreso').style.display = 'none';
+  $('panel').classList.add('ver');
+}
+
+function entrar(perfil, recordar){
+  if (recordar){
+    try { localStorage.setItem(K_CORREO, perfil.correo); } catch(e){}
+    try { sessionStorage.setItem(K_SESION, perfil.id); } catch(e){}
+  }
+  dibujarPanel(perfil);
+}
+
+function salir(){
+  try { sessionStorage.removeItem(K_SESION); } catch(e){}
+  $('panel').classList.remove('ver');
+  $('ingreso').style.display = '';
+  $('codigo').value = '';
+  $('error').classList.remove('ver');
+  $('codigo').focus();
+}
+
+/* ---------- arranque ---------- */
+(function(){
+  // Si la pestaña ya tenía sesión, no volver a pedir el código.
+  var id = null;
+  try { id = sessionStorage.getItem(K_SESION); } catch(e){}
+  if (id){
+    for (var i = 0; i < PERFILES.length; i++){
+      if (PERFILES[i].id === id){ dibujarPanel(PERFILES[i]); return; }
+    }
+  }
+
+  // Precargar el último correo usado en este dispositivo.
+  var ultimo = null;
+  try { ultimo = localStorage.getItem(K_CORREO); } catch(e){}
+  if (ultimo){
+    $('correo').value = ultimo;
+    $('codigo').focus();
+  } else {
+    $('correo').focus();
+  }
+})();
+
+$('form').addEventListener('submit', function(ev){
+  ev.preventDefault();
+  var perfil = buscarPerfil($('correo').value, $('codigo').value);
+  if (!perfil){
+    // Un solo mensaje: no revela si el correo existe.
+    $('error').classList.add('ver');
+    $('codigo').value = '';
+    $('codigo').focus();
+    return;
+  }
+  $('error').classList.remove('ver');
+  entrar(perfil, true);
+});
+
+$('codigo').addEventListener('input', function(){
+  $('error').classList.remove('ver');
+});
+
+$('btnSalir').addEventListener('click', salir);
+</script>
+<script>
+/* PWA: registro del service worker (red primero, no cachea HTML viejo) */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('/sw.js').catch(function () {});
+  });
+}
+</script>
+</body>
+</html>

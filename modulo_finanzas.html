@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- PWA · Familia de Hamburguesa · instalable como app -->
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icons/favicon.ico" sizes="32x32">
+<link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FDH">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="application-name" content="Familia de Hamburguesa">
+<!-- /PWA -->
+<title>Finanzas · Familia de Hamburguesa</title>
+<style>
+:root{--rojo:#c8102e;--rojo-osc:#7a0a1c;--negro:#0d0d0f;--carbon:#1a1a1f;--dorado:#e8b54a;--crema:#fff4e3;--verde:#3ec46d;--celeste:#5bb8e8;--coral:#ff7d6e;--amarillo:#f2c14e;--gris:#9b9ba6;--violeta:#b58ae8}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',system-ui,sans-serif}
+body{background:linear-gradient(160deg,var(--negro) 0%,#26060d 60%,var(--rojo-osc) 130%);color:var(--crema);min-height:100vh;padding:18px}
+header{display:flex;align-items:center;gap:14px;margin-bottom:8px;flex-wrap:wrap}
+header .logowrap{background:#000;border-radius:50%;padding:4px;box-shadow:0 0 0 2px rgba(232,181,74,.5)}
+header .logowrap img{width:58px;height:58px;border-radius:50%;display:block}
+h1{font-size:1.45rem;color:var(--dorado);letter-spacing:.5px}
+.sub{color:var(--gris);font-size:.85rem}
+.hdr-btns{margin-left:auto;display:flex;gap:8px;align-items:center}
+.bubble{display:flex;align-items:center;gap:12px;background:var(--crema);color:#3a2410;border-radius:14px;padding:10px 16px;font-weight:600;font-size:.93rem;margin:0 0 14px;border-left:5px solid var(--dorado)}
+.bubble .burgy-mini{width:36px;height:36px;border-radius:50%;flex-shrink:0}
+.panel{background:var(--carbon);border:1px solid #2c2c34;border-radius:14px;padding:16px;margin-bottom:14px}
+.panel h2{font-size:1.02rem;color:var(--dorado);margin-bottom:3px;display:flex;align-items:center;gap:8px}
+.panel .ayuda{font-size:.8rem;color:var(--gris);margin-bottom:12px}
+label{display:block;font-size:.76rem;color:var(--gris);margin-bottom:5px;margin-top:10px}
+input,select,textarea{background:#101014;border:1px solid #34343e;color:var(--crema);border-radius:8px;padding:9px 11px;font-size:.95rem;width:100%}
+input:focus,select:focus{outline:2px solid var(--dorado);border-color:var(--dorado)}
+.campo{flex:1;min-width:110px}.campo.chico{max-width:170px}
+.fila{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+button{background:var(--rojo);color:#fff;border:none;border-radius:9px;padding:10px 16px;font-weight:700;cursor:pointer;font-size:.92rem}
+button:hover{background:#e01432}
+button.sec{background:#2c2c34}button.sec:hover{background:#3a3a46}
+button.mini{padding:5px 10px;font-size:.8rem;border-radius:7px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.chip{background:#101014;border:2px solid #34343e;border-radius:9px;padding:8px 14px;cursor:pointer;font-weight:700;font-size:.88rem;color:var(--crema)}
+.chip:hover{border-color:var(--dorado)}
+.chip.sel{border-color:var(--dorado);background:rgba(232,181,74,.14);color:var(--dorado)}
+.oculto{display:none!important}
+.nube-estado{font-size:.78rem;font-weight:700;padding:5px 12px;border-radius:16px;display:inline-flex;align-items:center;gap:6px}
+.nube-estado.cargando{background:rgba(91,184,232,.13);color:var(--celeste)}
+.nube-estado.ok{background:rgba(62,196,109,.13);color:var(--verde)}
+.nube-estado.error{background:rgba(242,193,78,.13);color:var(--amarillo)}
+
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+.kpi{border-radius:12px;padding:13px;text-align:center;border:1px solid}
+.kpi .n{font-size:1.45rem;font-weight:800;line-height:1;white-space:nowrap}
+.kpi .n.largo{font-size:1.15rem}
+.kpi .t{font-size:.74rem;margin-top:4px}
+.kpi .b{font-size:.68rem;margin-top:2px;opacity:.8}
+.k-verde{background:rgba(62,196,109,.1);border-color:var(--verde);color:var(--verde)}
+.k-celeste{background:rgba(91,184,232,.1);border-color:var(--celeste);color:var(--celeste)}
+.k-ambar{background:rgba(242,193,78,.1);border-color:var(--amarillo);color:var(--amarillo)}
+.k-rojo{background:rgba(255,125,110,.1);border-color:var(--coral);color:var(--coral)}
+.k-violeta{background:rgba(181,138,232,.1);border-color:var(--violeta);color:var(--violeta)}
+
+.doble{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.doble .panel{margin-bottom:14px;display:flex;flex-direction:column}
+.mini-lista{font-size:.82rem;color:var(--gris);max-height:330px;overflow:auto;flex:1}
+.item{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid #2c2c34;align-items:center}
+.item .t1{font-weight:700;color:var(--crema);font-size:.88rem}
+.item .t2{font-size:.75rem;color:var(--gris);margin-top:1px;line-height:1.4}
+.item .t3{font-size:.8rem;color:#fff;margin-top:2px;line-height:1.4}
+.item .monto{font-weight:800;font-size:.95rem;white-space:nowrap}
+.monto.verde{color:var(--verde)} .monto.rojo{color:var(--coral)} .monto.ambar{color:var(--amarillo)} .monto.violeta{color:var(--violeta)}
+/* HU8: tarjeta de cierre de turno */
+#listaCierres{max-height:520px}
+/* HU12: totalizador del día */
+.hoy{border:1px solid rgba(214,172,90,.55);border-radius:12px;padding:12px 14px;margin-bottom:12px;background:linear-gradient(180deg,rgba(214,172,90,.10),rgba(214,172,90,.03))}
+.hoy-cab{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;flex-wrap:wrap}
+.hoy-tit{font-family:'Oswald','Segoe UI',sans-serif;text-transform:uppercase;letter-spacing:1.3px;color:var(--dorado);font-size:.95rem}
+.hoy-sub{font-size:.75rem;color:#d8cdb9;margin-top:1px}
+.hoy-total{text-align:right}
+.hoy-et{display:block;font-size:.72rem;color:#fff}
+.hoy-n{color:var(--verde);font-weight:800;font-size:1.6rem;line-height:1.1;white-space:nowrap}
+.hoy-medios{display:grid;grid-template-columns:repeat(3,1fr);margin-top:10px;border-top:1px solid rgba(214,172,90,.25)}
+.hoy-m{display:flex;flex-direction:column;justify-content:space-between;gap:3px;padding:9px 8px 2px;min-width:0}
+.hoy-m+.hoy-m{border-left:1px solid rgba(214,172,90,.25)}
+.hoy-v{font-weight:800;font-size:1.25rem;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hoy-m.efe .c-et::before{background:var(--verde)}
+.hoy-m.mp .c-et::before{background:var(--celeste)}
+.hoy-m.deb .c-et::before{background:var(--gris)}
+.hoy-m.deb.hay .c-et::before{background:var(--amarillo)}
+.hoy-m.deb.hay .hoy-v{color:var(--amarillo)}
+
+.cierre{border:1px solid rgba(214,172,90,.22);border-radius:12px;padding:11px 12px;margin-bottom:10px;background:#120f0b}
+.c-cab{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.c-quien{color:#fff;font-size:.88rem}
+.c-quien b{font-weight:800}
+.c-total{color:var(--verde);font-weight:800;font-size:1.15rem;white-space:nowrap}
+.c-medios{display:grid;grid-template-columns:repeat(3,1fr);margin-top:9px;border-top:1px solid #2c2c34;border-bottom:1px solid #2c2c34}
+.c-medio{display:flex;flex-direction:column;justify-content:space-between;gap:2px;padding:7px 8px;min-width:0}
+.c-medio+.c-medio{border-left:1px solid #2c2c34}
+.c-et{font-size:.72rem;color:#fff;display:flex;align-items:center;gap:5px}
+.c-et::before{content:"";width:7px;height:7px;border-radius:50%;flex:none}
+.c-medio.efe .c-et::before{background:var(--verde)}
+.c-medio.mp .c-et::before{background:var(--celeste)}
+.c-medio.deb .c-et::before{background:var(--gris)}
+.c-medio.deb.hay .c-et::before{background:var(--amarillo)}
+.c-m{font-weight:800;font-size:.95rem;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c-medio.deb.hay .c-m{color:var(--amarillo)}
+.c-ops{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;margin-top:8px;font-size:.8rem;color:#fff}
+.c-op b{font-weight:800}
+.c-op+.c-op{padding-left:14px;border-left:1px solid #2c2c34}
+.c-nota{font-size:.76rem;color:#d8cdb9;font-style:italic}
+.vacio{color:var(--gris);font-size:.82rem;font-style:italic;padding:6px 2px}
+.solo-lectura{display:inline-block;font-size:.68rem;font-weight:800;padding:2px 10px;border-radius:11px;background:rgba(91,184,232,.14);color:var(--celeste);margin-left:6px}
+.aviso{border-radius:9px;padding:9px 13px;font-size:.85rem;font-weight:600;margin-top:9px}
+.aviso.verde{background:rgba(62,196,109,.12);color:var(--verde);border:1px solid var(--verde)}
+.aviso.rojo{background:rgba(255,125,110,.12);color:var(--coral);border:1px solid var(--coral)}
+footer{text-align:center;color:var(--dorado);font-size:.85rem;margin-top:22px;padding:14px;border-top:1px solid #3a1018}
+@media(max-width:880px){.kpis{grid-template-columns:repeat(2,1fr)}.doble{grid-template-columns:1fr}}
+.btn-volver-home{display:inline-flex;align-items:center;gap:6px;position:sticky;top:0;z-index:40;background:var(--dorado);color:#2a1800;font-weight:800;text-decoration:none;padding:9px 16px;border-radius:0 0 12px 0;font-size:.88rem;box-shadow:0 2px 10px rgba(0,0,0,.4);margin-bottom:8px}
+.btn-volver-home:hover{background:#f5c75e}
+/* En celular los montos de millones no entran de a tres: una fila por medio de pago, monto entero. */
+@media(max-width:560px){
+  .hoy-medios,.c-medios{grid-template-columns:1fr}
+  .hoy-m,.c-medio{flex-direction:row;align-items:center;justify-content:space-between;padding:7px 4px}
+  .hoy-m+.hoy-m,.c-medio+.c-medio{border-left:0;border-top:1px solid rgba(214,172,90,.18)}
+  .hoy-v,.c-m{overflow:visible;text-overflow:clip}
+  .hoy-v{font-size:1.15rem}
+}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Oswald:wght@400;500;600&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#0c0a07">
+<style id="marca">
+/* ============================================================
+   CAPA DE MARCA · negro + dorado · 20-ago-2026 (validado con Samu)
+   La identidad la definen las piezas de publicidad: fondo ahumado,
+   dorado de linea fina, mayusculas condensadas, estrella. El rojo
+   queda reservado para alertas y acciones de riesgo.
+   ============================================================ */
+:root{--dorado:#d6ac5a;--negro:#0c0a07;--carbon:#171310;--crema:#fff4e3;--rojo-osc:#1d150c}
+body{background:radial-gradient(1100px 520px at 75% -8%,rgba(214,172,90,.10),transparent 60%),linear-gradient(170deg,#0c0a07 0%,#131008 60%,#1d150c 130%)}
+h1{font-family:'Oswald','Segoe UI',sans-serif;text-transform:uppercase;letter-spacing:2px;font-weight:500}
+.panel{background:#171310;border-color:rgba(214,172,90,.22);box-shadow:inset 0 1px 0 rgba(255,244,227,.05)}
+.panel h2{font-family:'Oswald','Segoe UI',sans-serif;text-transform:uppercase;letter-spacing:1.3px;font-weight:500;padding-bottom:9px;border-bottom:1px solid rgba(214,172,90,.25)}
+button{background:linear-gradient(180deg,#e6c276,#c69838);color:#241a08}
+button:hover{background:linear-gradient(180deg,#efcf8d,#d2a748)}
+header .logowrap{background:transparent;box-shadow:none;padding:0;border-radius:0}
+.divisor-marca{display:block;text-align:center;color:rgba(214,172,90,.9);font-size:10px;line-height:0;margin:4px 0 16px;background:linear-gradient(90deg,transparent,rgba(214,172,90,.4) 18%,rgba(214,172,90,.4) 82%,transparent) center/100% 1px no-repeat}
+footer{color:var(--dorado);border-top:1px solid rgba(214,172,90,.25)}
+footer .lema{display:block;font-family:'Oswald','Segoe UI',sans-serif;letter-spacing:2.6px;font-size:.72rem;color:rgba(214,172,90,.95);margin-bottom:6px}
+
+/* --- Legibilidad total (requisito no negociable, 20-ago-2026):
+   blanco puro #FFFFFF sobre fondos oscuros · negro sobre dorado. --- */
+body{color:#fff}
+label{color:#fff}
+input,select,textarea{color:#fff}
+input::placeholder,textarea::placeholder{color:#a89c8b}
+button.sec{background:#241d12;color:#fff;border:1px solid rgba(214,172,90,.6)}
+button.sec:hover{background:#33291a;color:#fff}
+.sub,.panel .ayuda,.vacio{color:#d8cdb9}
+.fz .fn .pct,.fz .cnt .v small,.reparto .rp .libre,.fz-nota{color:#d8cdb9}
+
+/* ============================================================
+   HU1-HU4 (13-09-2026) · método de pago en Gastos + fondo de
+   inversión con tipo de fondo, aporte/retiro y saldos por canal.
+   ============================================================ */
+.bloque-tit{font-family:'Oswald','Segoe UI',sans-serif;text-transform:uppercase;letter-spacing:1.3px;color:var(--dorado);font-size:.8rem;margin:2px 0 7px}
+.saldos{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.medio-pill{display:inline-block;font-size:.66rem;font-weight:800;padding:2px 8px;border-radius:11px;margin-left:6px;vertical-align:middle;white-space:nowrap}
+.medio-pill.efe{background:rgba(62,196,109,.16);color:var(--verde)}
+.medio-pill.mp{background:rgba(91,184,232,.16);color:var(--celeste)}
+.medio-pill.sin{background:rgba(214,172,90,.16);color:var(--dorado)}
+.medio-pill.caja{background:rgba(155,155,166,.18);color:#c9c9d2}
+.filtros{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:8px}
+.filtros .campo{min-width:118px}
+.filtros label{margin-top:0}
+.parcial{display:flex;justify-content:space-between;gap:8px;font-size:.84rem;font-weight:800;color:var(--dorado);border-top:1px solid rgba(214,172,90,.25);padding-top:8px;margin-top:8px}
+.aviso.ambar{background:rgba(242,193,78,.12);color:var(--amarillo);border:1px solid var(--amarillo)}
+.ref-dia{font-size:.78rem;color:#d8cdb9;background:rgba(91,184,232,.08);border-left:3px solid var(--celeste);border-radius:0 8px 8px 0;padding:8px 11px;margin-top:10px;line-height:1.45}
+.ref-dia b{color:#fff}
+@media(max-width:880px){.saldos{grid-template-columns:1fr}}
+@media(max-width:560px){#campoCat{flex:1 1 100%;max-width:none}}
+</style>
+</head>
+<body>
+<a href="home_familia_hamburguesa.html" class="btn-volver-home">← Volver al inicio</a>
+
+<header>
+  <div class="logowrap"><svg class="emblema" width="64" height="64" viewBox="0 0 120 120" role="img" aria-label="Familia de Hamburguesa"><circle cx="60" cy="60" r="57" fill="#0d0b08" stroke="#d6ac5a" stroke-width="2.4"/><circle cx="60" cy="60" r="51" fill="none" stroke="#d6ac5a" stroke-width="0.8" opacity=".8"/><path d="M44 36 a16 10 0 0 1 32 0 z" fill="#d6ac5a"/><line x1="44" y1="41" x2="76" y2="41" stroke="#d6ac5a" stroke-width="2.6" stroke-linecap="round"/><line x1="46" y1="46.5" x2="74" y2="46.5" stroke="#d6ac5a" stroke-width="4.6" stroke-linecap="round"/><text x="60" y="69" text-anchor="middle" font-family="'Dancing Script',cursive" font-weight="700" font-size="27" fill="#fff4e3">Familia</text><text x="60" y="77.5" text-anchor="middle" font-family="'Oswald','Segoe UI',sans-serif" font-size="6" letter-spacing="3" fill="#d6ac5a">— DE —</text><text x="60" y="89" text-anchor="middle" font-family="'Oswald','Segoe UI',sans-serif" font-weight="600" font-size="10" letter-spacing="0.8" fill="#fff4e3" textLength="58" lengthAdjust="spacingAndGlyphs">HAMBURGUESA</text><rect x="37.5" y="92.5" width="45" height="7" rx="2" fill="#d6ac5a"/><text x="60" y="97.4" text-anchor="middle" font-family="'Oswald','Segoe UI',sans-serif" font-weight="600" font-size="3.7" letter-spacing="0.4" fill="#1a1208" textLength="40" lengthAdjust="spacingAndGlyphs">CASERAS · RICAS · DE VERDAD</text><text x="60" y="107.5" text-anchor="middle" font-size="6.5" fill="#d6ac5a">★</text></svg></div>
+  <div>
+    <h1>💰 Finanzas · Familia de Hamburguesa</h1>
+    <div class="sub" id="fechaHoy"></div>
+  </div>
+  <div class="hdr-btns">
+    <span class="nube-estado cargando" id="nubeEstado">☁️ Consultando…</span>
+    <button class="mini sec" onclick="cargarNube()">Actualizar</button>
+  </div>
+</header>
+<div class="divisor-marca">★</div>
+<div class="bubble"><img class="burgy-mini" src="data:image/jpeg;base64,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" alt="Burgy"><span id="burgyDice">Acá no se carga casi nada: la plata que entra viene sola de los cierres de turno. A mano van los gastos, lo que se guarda en tesorería y los movimientos del fondo. 💰</span></div>
+
+<div class="kpis" id="kpis"></div>
+
+<!-- HU3: saldos por canal (MP - FDH, Inversiones/FDI, Tesorería) -->
+<div class="bloque-tit">Saldos por canal</div>
+<div class="saldos" id="saldos"></div>
+
+<!-- HU-03: reporte de cierres por rango de fechas -->
+<div class="panel">
+  <h2>📄 Reporte de cierres</h2>
+  <div class="ayuda">Todo lo que pasó en un día o en un período: turnos, plata que entró y salió, stock contado y deudores. Se arma con lo que ya cargan los chicos al abrir y cerrar el turno.</div>
+  <div class="filtros">
+    <div class="campo chico"><label>Desde</label><input type="date" id="rDesde" onchange="pintarReporte()"></div>
+    <div class="campo chico"><label>Hasta</label><input type="date" id="rHasta" onchange="pintarReporte()"></div>
+    <div class="campo chico"><label>&nbsp;</label><button class="mini sec" onclick="rangoRapido(0)">Hoy</button></div>
+    <div class="campo chico"><label>&nbsp;</label><button class="mini sec" onclick="rangoRapido(7)">Últimos 7 días</button></div>
+    <div class="campo chico"><label>&nbsp;</label><button class="mini sec" onclick="rangoRapido('mes')">Este mes</button></div>
+  </div>
+  <div id="reporte"></div>
+</div>
+
+<div class="doble">
+  <!-- ENTRA -->
+  <div class="panel">
+    <h2>🟢 Lo que ENTRA <span class="solo-lectura">se escribe solo desde Ventas</span></h2>
+    <div class="ayuda">Cada cierre de turno del local manda su resumen acá: cuánto se vendió, cómo se cobró y cuánto quedó debiendo. No hay nada que cargar: si un cierre no aparece, se cierra el turno en el módulo de Ventas.</div>
+    <div id="totalHoy"></div>
+    <div class="mini-lista" id="listaCierres"><div class="vacio">Consultando…</div></div>
+  </div>
+
+  <!-- DEBE -->
+  <div class="panel">
+    <h2>📌 Por cobrar <span class="solo-lectura">se cobra desde el turno de Ventas</span></h2>
+    <div class="ayuda">El mismo libro de deudores que ve el mostrador, con saldo calculado en la nube. Cada deuda muestra fecha, hora y quién la cargó. Para cobrar: módulo de Ventas → tocar el deudor.</div>
+    <div class="mini-lista" id="listaDeudas"><div class="vacio">Consultando…</div></div>
+  </div>
+
+  <!-- SALE -->
+  <div class="panel">
+    <h2>🔴 Gastos</h2>
+    <div class="ayuda">Acá se anota todo lo que se paga, en <b>Efectivo</b> o con <b>MP - FDH</b>. Los retiros de caja del local llegan solos, con su motivo: <b>si la plata salió de la caja, no la cargues acá.</b></div>
+    <div class="fila">
+      <div class="campo" id="campoCat"><label>Categoría</label>
+        <select id="gCat"></select>
+      </div>
+      <div class="campo chico"><label>Monto</label><input id="gMonto" inputmode="numeric" placeholder="$"></div>
+    </div>
+    <label>¿Con qué se pagó?</label><div class="chips" id="gMedio"></div>
+    <label>¿A quién se le pagó?</label>
+    <input id="gProveedor" list="listaProv" placeholder="Proveedor o a quién — opcional">
+    <datalist id="listaProv"></datalist>
+    <label>Detalle</label><input id="gDetalle" placeholder="Ej: 40 kg de carne">
+    <label>¿Quién lo registra?</label><div class="chips" id="gQuien"></div>
+    <div id="avisoGasto"></div>
+    <button style="width:100%;margin-top:10px" onclick="guardarGasto()">Registrar gasto</button>
+    <div class="mini-lista" id="listaGastos" style="margin-top:12px"><div class="vacio">Consultando…</div></div>
+  </div>
+
+  <!-- TESORERÍA -->
+  <div class="panel">
+    <h2>🏦 Tesorería — efectivo guardado</h2>
+    <div class="ayuda">El efectivo que se retira de los turnos y queda guardado. <b>Todos los días: poné cuánto guardaste, tocá tu nombre y listo.</b> Lo que pagás en efectivo se descuenta solo desde Gastos.</div>
+    <label>Movimiento</label><div class="chips" id="tMov"></div>
+    <label>Canal</label><div class="chips" id="tCanal"></div>
+    <div class="fila">
+      <div class="campo chico"><label>Monto</label><input id="tMonto" inputmode="numeric" placeholder="$"></div>
+      <div class="campo chico"><label>Día que se cierra</label><input type="date" id="tFecha" onchange="pintarRefDia()"></div>
+      <div class="campo"><label>Motivo</label><select id="tMotivo"></select></div>
+    </div>
+    <div id="tRef"></div>
+    <label>Detalle</label><input id="tDetalle" placeholder="Ej: retiro de los 2 turnos del viernes">
+    <label>¿Quién lo registra?</label><div class="chips" id="tQuien"></div>
+    <div id="avisoTeso"></div>
+    <button style="width:100%;margin-top:10px" onclick="guardarTeso()">Registrar movimiento</button>
+    <div class="bloque-tit" style="margin-top:16px">Historial</div>
+    <div class="filtros">
+      <div class="campo chico"><label>Movimiento</label>
+        <select id="tFiltroMov" onchange="render()"><option value="">Todos</option><option value="INGRESO">Ingresos</option><option value="EGRESO">Egresos</option></select>
+      </div>
+      <div class="campo chico"><label>Desde</label><input type="date" id="tDesde" onchange="render()"></div>
+      <div class="campo chico"><label>Hasta</label><input type="date" id="tHasta" onchange="render()"></div>
+    </div>
+    <div class="mini-lista" id="listaTeso"><div class="vacio">Consultando…</div></div>
+    <div id="tesoParcial"></div>
+  </div>
+
+  <!-- GUARDA -->
+  <div class="panel">
+    <h2>🟣 Lo que se guarda - Fondo de Inversión MP - FDH</h2>
+    <div class="ayuda">Plata de <b>Mercado Pago</b> que se pasa a la cuenta que genera rendimiento. El efectivo no va acá: ese queda en Tesorería.</div>
+    <div class="fila">
+      <div class="campo chico"><label>Monto</label><input id="fMonto" inputmode="numeric" placeholder="$"></div>
+      <div class="campo"><label>Detalle</label><input id="fDetalle" placeholder="Ej: apartado de la semana"></div>
+    </div>
+    <label>Tipo de fondo</label><div class="chips" id="fTipo"></div>
+    <label>Movimiento</label><div class="chips" id="fMov"></div>
+    <label>¿Quién lo registra?</label><div class="chips" id="fQuien"></div>
+    <div id="avisoFondo"></div>
+    <button class="sec" style="width:100%;margin-top:10px" onclick="guardarFondo()">Registrar movimiento</button>
+    <div class="bloque-tit" style="margin-top:16px">Historial</div>
+    <div class="filtros">
+      <div class="campo chico"><label>Tipo de fondo</label>
+        <select id="fFiltroTipo" onchange="render()"><option value="">Todos</option><option value="EFECTIVO">Efectivo (Tesorería)</option><option value="MP_FDH">MP - FDH</option></select>
+      </div>
+      <div class="campo chico"><label>Desde</label><input type="date" id="fDesde" onchange="render()"></div>
+      <div class="campo chico"><label>Hasta</label><input type="date" id="fHasta" onchange="render()"></div>
+    </div>
+    <div class="mini-lista" id="listaFondo"><div class="vacio">Consultando…</div></div>
+    <div id="fondoParcial"></div>
+  </div>
+</div>
+
+<footer><span class="lema">CASERAS · RICAS · DE VERDAD · EST. 2024</span>Con el favor y la guía de Dios, vivamos y alcancemos la Visión 🙏🚀 · Familia de Hamburguesa · Plan de Transformación 2026</footer>
+
+<script>
+/* ============================================================================
+   FINANZAS v2 — pantalla de LECTURA (saneamiento del 19/08, validado con Samu)
+   - Ya NO escribe la hoja Ventas: eso lo hace solo el cierre de turno del
+     módulo de Ventas. Acá se mira. (Antes escribían los dos y el Tablero
+     contaba la plata dos veces.)
+   - Deudores: hoja Deudas de la nube, saldo por cliente calculado por el
+     MENSAJERO V13. El mismo número que ve el mostrador.
+   - Única carga manual: gastos (y aportes al fondo, que son un gasto con
+     categoría propia). Los retiros de caja llegan solos desde Ventas.
+   - Rendimiento: pinta primero lo último conocido (cache) y refresca la nube
+     por detrás, con UNA sola consulta que trae todas las hojas.
+   ============================================================================ */
+var $=function(id){ return document.getElementById(id); };
+var NUBE_URL='https://script.google.com/macros/s/AKfycbxfraGEgAFUeypW4D9wsEct90sH4DRZjOJsQiky-WZtF41qPOaul9HDlgSjynwHAjpk/exec';
+var K_CACHE='fdh_fin_cache_v1';
+var PERSONAS=['Pablo','Paula','Cielo','Yami'];
+/* HU2: categorías de gasto ordenadas de la A a la Z. "Fondo de inversión" ya no
+   está acá: los movimientos del fondo se cargan en su propio panel (HU4), para
+   que la misma plata no se pueda anotar dos veces. "Retiro de caja" tampoco:
+   ese lo escribe solo el cierre de turno de Ventas. */
+/* HU-02: "Crédito" entra como CATEGORÍA de gasto (la cuota de un crédito o una
+   compra financiada). Si lo que se quiso decir era "pagado con tarjeta de
+   crédito", eso NO es una categoría: sería un tercer medio de pago junto a
+   Efectivo y MP - FDH, y hay que rehacerlo. */
+var CATEGORIAS=['Alquiler','Crédito','Gastos del día','Insumos','Mantenimiento','Materia prima','Otro','Pan de José','Pan de Julio','Retiros de Socio / Dueño','Servicios','Sueldos y adelantos']
+  .sort(function(a,b){ return a.localeCompare(b,'es'); });
+/* HU1/HU3: los dos canales por los que entra y sale la plata. */
+var MEDIOS=[{v:'EFECTIVO',t:'Efectivo'},{v:'MP_FDH',t:'MP - FDH'}];
+/* HU6: el efectivo NO va al fondo de inversión. Tesorería es dónde vive el
+   efectivo de la empresa (no rinde, se usa para pagos en efectivo); el fondo de
+   inversión se alimenta solo de MP - FDH, que es la plata que sí rinde. */
+var TIPOS_FONDO=[{v:'MP_FDH',t:'MP - FDH'}];
+var MOVIMIENTOS=[{v:'APORTE',t:'Aporte'},{v:'RETIRO',t:'Retiro de fondo'}];
+/* HU5: movimientos del efectivo guardado. */
+var TESO_MOV=[{v:'INGRESO',t:'Ingreso'},{v:'EGRESO',t:'Egreso'}];
+/* El mismo libro sirve para corregir el saldo de MP - FDH: el saldo de MP se
+   calcula desde los cierres y se desvía igual que se desviaba Tesorería. Un
+   movimiento con canal MP_FDH no toca el efectivo, solo corrige ese saldo. */
+var TESO_CANAL=[{v:'EFECTIVO',t:'Efectivo'},{v:'MP_FDH',t:'MP - FDH'}];
+var MOTIVOS_TESO={
+  INGRESO:['Cierre de caja del día','Saldo inicial','Aporte de socio','Ajuste de arqueo','Otro'],
+  EGRESO :['Depósito en banco','Reposición de caja del local','Entrega a socio','Ajuste de arqueo','Otro']
+};
+
+function num(v){ var n=Number(String(v==null?'':v).replace(/\./g,'').replace(',','.')); return isNaN(n)?0:n; }
+function ent(v){ return Math.max(0,Math.round(num(v))); }
+function miles(n){ return Number(n||0).toLocaleString('es-AR'); }
+function pesos(n){ return '$'+miles(n); }
+function hoyLocal(){ var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function mesActual(){ return hoyLocal().slice(0,7); }
+function fery(f){ var p=String(f||'').slice(0,10).split('-'); return p.length===3?(Number(p[2])+'/'+Number(p[1])):String(f||''); }
+function limpiaClave(s){ return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim().toLowerCase(); }
+function burgy(m){ $('burgyDice').textContent=m; }
+/* Hora en 24 h ("15:55"): es la que sabe leer horaDeNota(). Con el formato por
+   defecto de es-AR salía "03:55 p. m." y la hora se perdía al releer la fila. */
+function ahora(){ return new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',hour12:false}); }
+
+/* ===== nube: UNA consulta trae todas las hojas ===== */
+var cbN=0;
+function traerTodo(ok){
+  var nombre='fdhfin'+(++cbN), listo=false;
+  window[nombre]=function(r){ listo=true; try{ ok(r); }catch(e){} limpiar(); };
+  var s=document.createElement('script');
+  s.src=NUBE_URL+'?callback='+nombre;
+  s.onerror=function(){ if(!listo){ ok(null); limpiar(); } };
+  document.head.appendChild(s);
+  setTimeout(function(){ if(!listo){ ok(null); limpiar(); } },15000);
+  function limpiar(){ try{ delete window[nombre]; }catch(e){} if(s.parentNode) s.parentNode.removeChild(s); }
+}
+function subirNube(hoja,fila){
+  try{
+    fetch(NUBE_URL,{method:'POST',mode:'no-cors',keepalive:true,
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({hoja:hoja,fila:fila})});
+  }catch(e){}
+}
+function nubeEstado(cls,txt){ var e=$('nubeEstado'); e.className='nube-estado '+cls; e.textContent=txt; }
+
+var D={ventas:[], deudas:[], gastos:[], fondos:[], tesoreria:[], sabido:false};
+function cargarNube(){
+  nubeEstado('cargando','☁️ Consultando…');
+  traerTodo(function(r){
+    if(!r || !r.ok || !r.datos){ nubeEstado('error','⚠️ Sin conexión — muestro lo último conocido'); return; }
+    D.ventas=r.datos.Ventas||[]; D.deudas=r.datos.Deudas||[]; D.gastos=r.datos.Gastos||[];
+    // HU3/HU4: hoja Fondos (MENSAJERO V17). Si todavía no existe llega vacía y
+    // la pantalla sigue funcionando igual: el fondo viejo se lee de Gastos.
+    D.fondos=r.datos.Fondos||[];
+    // HU5: hoja Tesoreria (MENSAJERO V18) — el libro del efectivo guardado.
+    D.tesoreria=r.datos.Tesoreria||[];
+    D.sabido=true;
+    try{ localStorage.setItem(K_CACHE,JSON.stringify(D)); }catch(e){}
+    nubeEstado('ok','☁️ Nube al día');
+    render();
+  });
+}
+
+/* ===== cuentas ===== */
+function entroHoy(){ return D.ventas.filter(function(v){ return String(v.Fecha||'').slice(0,10)===hoyLocal(); }).reduce(function(t,v){ return t+num(v.Total); },0); }
+function entroMes(){ return D.ventas.filter(function(v){ return String(v.Fecha||'').slice(0,7)===mesActual(); }).reduce(function(t,v){ return t+num(v.Total); },0); }
+/* HU7: la hora viaja al final de la Nota ('Paga después · 13:23'). */
+function horaDeNota(n){
+  var partes=String(n||'').split('\u00b7');
+  for(var i=1;i<partes.length;i++){ var m=partes[i].trim().match(/^(\d{1,2}:\d{2})$/); if(m) return m[1].padStart(5,'0'); }
+  return '';
+}
+function deudoresAbiertos(){
+  var por={};
+  D.deudas.forEach(function(f,i){
+    var k=limpiaClave(f.Cliente); if(!k) return;
+    var e=por[k]||(por[k]={quien:String(f.Cliente),saldo:0,fecha:'',ultimo:'',cargas:[],pagado:0,
+                           ultFecha:'',ultHora:'',fila:-1});
+    // HU-01: para ordenar hace falta el movimiento MÁS RECIENTE del cliente, y
+    // el número de fila como desempate (no hay IDs: la última fila es la última
+    // cargada). La hora no vive en una columna, viaja dentro de la nota.
+    var fThis=String(f.Fecha||'').slice(0,10), hThis=horaDeNota(f.Nota);
+    if(fThis>=e.ultFecha){ if(fThis>e.ultFecha){ e.ultHora=hThis; } else if(hThis>e.ultHora){ e.ultHora=hThis; } e.ultFecha=fThis; }
+    e.fila=i;
+    if(/cobro/i.test(String(f.Movimiento||''))){
+      e.pagado+=num(f.Monto);
+    } else {
+      var fecha=String(f.Fecha||'').slice(0,10);
+      if(!e.fecha) e.fecha=fecha;
+      // HU7: cada deuda con su fecha, hora y quién la cargó.
+      e.cargas.push({fecha:fecha,hora:horaDeNota(f.Nota),usuario:String(f.Quien||''),monto:num(f.Monto)});
+    }
+    e.saldo=num(f.SaldoCliente);
+    e.ultimo=String(f.Movimiento||'');
+    // Saldado: lo anterior ya no es deuda. La próxima arranca de cero.
+    if(e.saldo<=0){ e.fecha=''; e.cargas=[]; e.pagado=0; }
+  });
+  return Object.keys(por).map(function(k){ return por[k]; }).filter(function(d){ return d.saldo>0; });
+}
+/* HU-01 · el más reciente primero. Orden: fecha desc → hora desc (las deudas
+   sin hora quedan al final de su día) → número de fila desc. */
+function ordenPorCobrar(a,b){
+  if(a.ultFecha!==b.ultFecha) return a.ultFecha<b.ultFecha?1:-1;
+  var ha=a.ultHora||'', hb=b.ultHora||'';
+  if(ha!==hb){ if(!ha) return 1; if(!hb) return -1; return ha<hb?1:-1; }
+  return b.fila-a.fila;
+}
+function porCobrar(){ return deudoresAbiertos().reduce(function(t,d){ return t+d.saldo; },0); }
+/* HU11: un gasto anulado queda en la planilla ("ANULADO · <categoria>") para
+   que se sepa qué pasó, pero no suma en ningún lado. */
+function esAnulado(g){ return /^anulad/i.test(String(g.Categoria||'').trim()); }
+function vigentes(){ return D.gastos.filter(function(g){ return !esAnulado(g); }); }
+function esFondo(g){ return /fondo/i.test(String(g.Categoria||'')); }
+function gastosMes(){ return vigentes().filter(function(g){ return String(g.Fecha||'').slice(0,7)===mesActual() && !esFondo(g); }).reduce(function(t,g){ return t+num(g.Monto); },0); }
+/* Fondo viejo: antes de la HU4 un aporte era un gasto con categoría "Fondo de
+   inversión". Esas filas quedan como están y siguen sumando (histórico intacto). */
+function fondoViejo(){ return vigentes().filter(esFondo).reduce(function(t,g){ return t+num(g.Monto); },0); }
+
+/* ===== HU1 · medio de pago de un gasto =====
+   Retrocompatible: los gastos cargados antes de esta mejora no tienen medio.
+   No se inventa ninguno — se muestran como "sin medio" y siguen sumando en el
+   total de gastos, pero no se descuentan de ningún canal.
+   Excepción: "Retiro de caja" lo escribe el cierre de turno de Ventas y siempre
+   es plata que salió de la caja física, así que se imputa a Efectivo. */
+function medioDe(g){
+  var m=limpiaClave(g.Medio);
+  if(/mp|mercado/.test(m)) return 'MP_FDH';
+  if(/efec/.test(m)) return 'EFECTIVO';
+  // HU5: un "Retiro de caja" lo escribe el cierre de turno de Ventas y sale de
+  // la caja del local, NO del efectivo que guarda la administración. Por eso no
+  // descuenta de Tesorería: es plata que ya no estaba ahí.
+  if(limpiaClave(g.Categoria)==='retiro de caja') return 'CAJA';
+  return '';
+}
+function etiquetaMedio(c){
+  return c==='MP_FDH'?'MP - FDH':(c==='EFECTIVO'?'Efectivo':(c==='CAJA'?'caja del local':'sin medio'));
+}
+function claseMedio(c){ return c==='MP_FDH'?'mp':(c==='EFECTIVO'?'efe':(c==='CAJA'?'caja':'sin')); }
+function gastosPorMedio(canal){
+  return vigentes().filter(function(g){ return !esFondo(g) && medioDe(g)===canal; })
+                   .reduce(function(t,g){ return t+num(g.Monto); },0);
+}
+function gastosSinMedio(){ return vigentes().filter(function(g){ return !esFondo(g) && !medioDe(g); }).length; }
+function montoSinMedio(){ return vigentes().filter(function(g){ return !esFondo(g) && !medioDe(g); }).reduce(function(t,g){ return t+num(g.Monto); },0); }
+
+/* ===== HU3/HU4 · hoja Fondos ===== */
+function fTipoDe(f){ return /mp|mercado/.test(limpiaClave(f.TipoFondo))?'MP_FDH':'EFECTIVO'; }
+function fEsRetiro(f){ return /retiro/i.test(String(f.Movimiento||'')); }
+/* Un aporte saca plata del canal y la mete en el fondo; un retiro la devuelve. */
+function fSigno(f){ return fEsRetiro(f)?-1:1; }
+function fondoTotal(){
+  return fondoViejo()+D.fondos.reduce(function(t,f){ return t+fSigno(f)*num(f.Monto); },0);
+}
+/* Cuánto movió el fondo contra un canal (positivo = se le sacó plata al canal). */
+function fondoContra(canal){
+  return D.fondos.filter(function(f){ return fTipoDe(f)===canal; })
+                 .reduce(function(t,f){ return t+fSigno(f)*num(f.Monto); },0);
+}
+/* Lo cobrado por MP en los cierres de turno de Ventas (HU3 · escenario 1):
+   la tarjeta se retroalimenta sola, sin carga manual. */
+function mpDeVentas(){ return D.ventas.reduce(function(t,v){ return t+num(v.MercadoPago)+num(v.Transferencia); },0); }
+function efectivoDeVentas(){ return D.ventas.reduce(function(t,v){ return t+num(v.Efectivo); },0); }
+function saldoCanal(canal){
+  if(canal==='EFECTIVO') return saldoTesoreria();
+  return mpDeVentas()-gastosPorMedio('MP_FDH')-fondoContra('MP_FDH')+ajustesMP();
+}
+
+/* ===== HU5 · Tesorería =====
+   Tesorería NO se estima desde los cierres de turno: se DECLARA. Es el libro
+   del efectivo que la administración retiró de los turnos y tiene guardado.
+   Motivo: lo que se cobró en efectivo en un turno no es lo que quedó guardado
+   (parte queda en la caja del local y parte se paga en el momento), así que
+   calcularlo daba un número que no coincidía con la plata contada. */
+function tesEsEgreso(t){ return /egreso/i.test(String(t.Movimiento||'')); }
+function tesSigno(t){ return tesEsEgreso(t)?-1:1; }
+/* Los movimientos viejos no traen Canal: son todos de efectivo. */
+function tesCanal(t){ return /mp|mercado/.test(limpiaClave(t.Canal))?'MP_FDH':'EFECTIVO'; }
+function tesDeclarado(){
+  return D.tesoreria.filter(function(t){ return tesCanal(t)==='EFECTIVO'; })
+                    .reduce(function(a,t){ return a+tesSigno(t)*num(t.Monto); },0);
+}
+/* Ajustes manuales sobre el saldo de MP - FDH. */
+function ajustesMP(){
+  return D.tesoreria.filter(function(t){ return tesCanal(t)==='MP_FDH'; })
+                    .reduce(function(a,t){ return a+tesSigno(t)*num(t.Monto); },0);
+}
+/* Los gastos con medio Efectivo los paga la administración de lo guardado.
+   Los "Retiro de caja" no entran acá: esos salen de la caja del local. */
+function gastosDeTesoreria(){ return gastosPorMedio('EFECTIVO'); }
+function saldoTesoreria(){ return tesDeclarado()-gastosDeTesoreria(); }
+/* Referencia del día: lo que dicen los turnos, para que quien carga tenga con
+   qué comparar. Nunca completa el monto sola — el número lo pone la persona. */
+function refDelDia(fecha){
+  var r={efectivo:0, retiros:0, turnos:0};
+  D.ventas.forEach(function(v){
+    if(String(v.Fecha||'').slice(0,10)!==fecha) return;
+    r.efectivo+=num(v.Efectivo); r.turnos++;
+  });
+  vigentes().forEach(function(g){
+    if(limpiaClave(g.Categoria)==='retiro de caja' && String(g.Fecha||'').slice(0,10)===fecha) r.retiros+=num(g.Monto);
+  });
+  return r;
+}
+
+/* ===== HU8: desglose de cada cierre ===== */
+function hayDato(v){ return v!==undefined && v!==null && String(v).trim()!==''; }
+/* Debe: si el cierre lo trae (V14) se usa; si es un cierre viejo se deduce.
+   El Total del turno es efectivo + digital + fiado, así que lo que falta es lo fiado. */
+function debeDeCierre(v){
+  if(hayDato(v.Debe)) return num(v.Debe);
+  return Math.max(0, num(v.Total)-num(v.Efectivo)-num(v.Transferencia)-num(v.MercadoPago));
+}
+function tarjetaCierre(v){
+  var efe=num(v.Efectivo), mp=num(v.MercadoPago)+num(v.Transferencia), deb=debeDeCierre(v);
+  // HU9: un cierre es "anterior al conteo" solo si no trae NINGUNO de los dos
+  // datos. Si trae al menos uno es un cierre nuevo, y lo que falte vale 0:
+  // en pantalla nunca aparece un guión.
+  var viejo=!hayDato(v.ventas_cantidad) && !hayDato(v.entregas_pedidos_cantidad);
+  var cant=function(x){ return String(hayDato(x) ? Math.round(num(x)) : 0); };
+  return '<div class="cierre">'+
+    '<div class="c-cab"><div class="c-quien">'+fery(v.Fecha)+' · cerró <b>'+(v.QuienCerro||'—')+'</b></div>'+
+      '<div class="c-total">'+pesos(num(v.Total))+'</div></div>'+
+    '<div class="c-medios">'+
+      '<div class="c-medio efe"><span class="c-et">Efectivo</span><span class="c-m">'+pesos(efe)+'</span></div>'+
+      '<div class="c-medio mp"><span class="c-et">Mercado Pago</span><span class="c-m">'+pesos(mp)+'</span></div>'+
+      '<div class="c-medio deb'+(deb>0?' hay':'')+'"><span class="c-et">Debe</span><span class="c-m">'+pesos(deb)+'</span></div>'+
+    '</div>'+
+    '<div class="c-ops">'+(viejo
+      ? '<span class="c-nota">Ventas y entregas de pedidos: cierre anterior al conteo</span>'
+      : '<span class="c-op">Ventas: <b>'+cant(v.ventas_cantidad)+'</b></span>'+
+        '<span class="c-op">Entregas de pedidos: <b>'+cant(v.entregas_pedidos_cantidad)+'</b></span>')+'</div>'+
+  '</div>';
+}
+
+/* ===== HU12: totalizador del día vigente (solo cierres de HOY) ===== */
+function totalesHoy(){
+  var t={efe:0, mp:0, deb:0, total:0, turnos:0};
+  D.ventas.forEach(function(v){
+    if(String(v.Fecha||'').slice(0,10)!==hoyLocal()) return;
+    t.efe+=num(v.Efectivo); t.mp+=num(v.MercadoPago)+num(v.Transferencia);
+    t.deb+=debeDeCierre(v); t.total+=num(v.Total); t.turnos++;
+  });
+  return t;
+}
+function pintarTotalHoy(){
+  var t=totalesHoy(), p=hoyLocal().split('-');
+  var sub = t.turnos ? t.turnos+(t.turnos===1?' turno cerrado':' turnos cerrados') : 'todavía no cerró ningún turno hoy';
+  $('totalHoy').innerHTML='<div class="hoy">'+
+    '<div class="hoy-cab"><div><div class="hoy-tit">Hoy '+Number(p[2])+'/'+Number(p[1])+'</div><div class="hoy-sub">'+sub+'</div></div>'+
+      '<div class="hoy-total"><span class="hoy-et">Total del día</span><span class="hoy-n">'+pesos(t.total)+'</span></div></div>'+
+    '<div class="hoy-medios">'+
+      '<div class="hoy-m efe"><span class="c-et">Efectivo</span><span class="hoy-v">'+pesos(t.efe)+'</span></div>'+
+      '<div class="hoy-m mp"><span class="c-et">Mercado Pago</span><span class="hoy-v">'+pesos(t.mp)+'</span></div>'+
+      '<div class="hoy-m deb'+(t.deb>0?' hay':'')+'"><span class="c-et">Debe</span><span class="hoy-v">'+pesos(t.deb)+'</span></div>'+
+    '</div></div>';
+}
+
+/* ===== render ===== */
+function kpi(monto,titulo,clase,sub){
+  var txt=pesos(monto);
+  return '<div class="kpi '+clase+'"><div class="n'+(txt.length>=10?' largo':'')+'">'+txt+'</div><div class="t">'+titulo+'</div>'+(sub?'<div class="b">'+sub+'</div>':'')+'</div>';
+}
+function render(){
+  $('kpis').innerHTML=
+    kpi(entroHoy(),'🟢 Entró hoy','k-verde','cierres de turno de Ventas')+
+    kpi(entroMes(),'📅 Entró este mes','k-celeste',D.ventas.filter(function(v){return String(v.Fecha||'').slice(0,7)===mesActual();}).length+' cierres')+
+    kpi(porCobrar(),'📌 Falta cobrar','k-ambar',deudoresAbiertos().length+' deudores · mismo número que el mostrador')+
+    kpi(gastosMes(),'🔴 Salió este mes','k-rojo','gastos + retiros de caja')+
+    '';
+  pintarSaldos();
+  pintarProveedores();
+  pintarReporte();
+  /* cierres */
+  var cs=D.ventas.slice(-14).reverse();
+  pintarTotalHoy();
+  $('listaCierres').innerHTML=cs.map(tarjetaCierre).join('')||'<div class="vacio">Sin cierres todavía. Aparecen solos al cerrar turno en Ventas.</div>';
+  /* deudores */
+  var ds=deudoresAbiertos().sort(ordenPorCobrar);
+  $('listaDeudas').innerHTML=ds.map(function(d){
+    var det=d.cargas.map(function(c){
+      return '<div class="t3">📅 '+fery(c.fecha)+' · 🕒 '+(c.hora||'sin hora')+' · 👤 '+(c.usuario||'sin usuario')+
+             (d.cargas.length>1?' · '+pesos(c.monto):'')+'</div>';
+    }).join('');
+    return '<div class="item"><div><div class="t1">'+d.quien+'</div>'+det+
+      (d.pagado>0?'<div class="t2">ya pagó '+pesos(d.pagado)+'</div>':'')+'</div>'+
+      '<div class="monto ambar">'+pesos(d.saldo)+'</div></div>';
+  }).join('')||'<div class="vacio">Nadie debe nada. 🙌</div>';
+  /* gastos (sin fondo) · HU1: cada gasto muestra con qué se pagó */
+  var gs=vigentes().filter(function(g){ return !esFondo(g); }).slice(-14).reverse();
+  $('listaGastos').innerHTML=gs.map(function(g){
+    var c=medioDe(g);
+    return '<div class="item"><div><div class="t1">'+(g.Categoria||'Gasto')+
+      '<span class="medio-pill '+claseMedio(c)+'">'+etiquetaMedio(c)+'</span></div>'+
+      '<div class="t2">'+fery(g.Fecha)+(g.Quien?' · '+g.Quien:'')+
+      (g.Proveedor?' · <b>'+g.Proveedor+'</b>':'')+(g.Detalle?' · '+g.Detalle:'')+'</div></div>'+
+      '<div class="monto rojo">−'+pesos(num(g.Monto))+'</div></div>';
+  }).join('')||'<div class="vacio">Sin gastos anotados.</div>';
+  /* tesorería · HU5 y fondo · HU4: bitácoras filtrables con total parcial */
+  // La referencia del día se repinta acá: al arrancar la pantalla todavía no
+  // llegaron los datos de la nube y quedaría diciendo que no hay cierres.
+  pintarRefDia();
+  pintarTeso();
+  pintarFondo();
+}
+
+/* ===== HU3 · tarjetas de saldo por canal ===== */
+/* HU-03: el desplegable de proveedores se arma solo con los que ya se cargaron,
+   así no hay que mantener una lista a mano y se evita escribirlos distinto. */
+function proveedoresUsados(){
+  var vistos={}, out=[];
+  vigentes().forEach(function(g){
+    var p=String(g.Proveedor||'').trim(); if(!p) return;
+    var k=limpiaClave(p); if(vistos[k]) return; vistos[k]=1; out.push(p);
+  });
+  return out.sort(function(a,b){ return a.localeCompare(b,'es'); });
+}
+function pintarProveedores(){
+  var d=$('listaProv'); if(!d) return;
+  d.innerHTML=proveedoresUsados().map(function(p){ return '<option value="'+p.replace(/"/g,'&quot;')+'">'; }).join('');
+}
+
+function pintarSaldos(){
+  var sm=gastosSinMedio();
+  var nota=sm?(sm+(sm===1?' gasto sin medio':' gastos sin medio')+' · '+pesos(montoSinMedio())+' sin imputar')
+             :'lo declarado − los gastos en efectivo';
+  $('saldos').innerHTML=
+    kpi(saldoCanal('MP_FDH'),'💳 MP - FDH','k-celeste','cobros por MP de los cierres − gastos y aportes')+
+    kpi(fondoTotal(),'🟣 Inversiones / FDI','k-violeta','solo MP - FDH: aportes − retiros')+
+    kpi(saldoTesoreria(),'🏦 Tesorería (Efectivo)','k-verde',nota);
+}
+
+/* ============================================================================
+   HU-03 · Reporte de cierres por rango de fechas
+   Todo sale de lo que ya se carga: el turno se abre contando el stock y la caja,
+   y se cierra contando de nuevo. Hasta la V20 esos números morían en la pantalla.
+   ============================================================================ */
+function rangoRapido(q){
+  var h=new Date(), d=new Date();
+  if(q==='mes'){ d=new Date(h.getFullYear(), h.getMonth(), 1); }
+  else if(q>0){ d.setDate(d.getDate()-q); }
+  var iso=function(x){ return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0'); };
+  $('rDesde').value=iso(d); $('rHasta').value=iso(h); pintarReporte();
+}
+function enRango(f){
+  var d=($('rDesde')||{}).value||'', h=($('rHasta')||{}).value||'', x=String(f||'').slice(0,10);
+  if(!x) return false;
+  if(d && x<d) return false;
+  if(h && x>h) return false;
+  return true;
+}
+function fila(et,val,sub){
+  return '<div class="item"><div><div class="t1">'+et+'</div>'+(sub?'<div class="t2">'+sub+'</div>':'')+'</div>'+
+         '<div class="monto">'+val+'</div></div>';
+}
+function pintarReporte(){
+  if(!$('rDesde').value && !$('rHasta').value){
+    $('reporte').innerHTML='<div class="vacio">Elegí un rango de fechas o tocá uno de los botones.</div>'; return;
+  }
+  var cierres=D.ventas.filter(function(v){ return enRango(v.Fecha); });
+  var gastos=vigentes().filter(function(g){ return !esFondo(g) && enRango(g.Fecha); });
+  var teso=D.tesoreria.filter(function(t){ return enRango(t.FechaCierre||t.Fecha); });
+  var deudas=D.deudas.filter(function(f){ return enRango(f.Fecha); });
+
+  var h='';
+  if(!cierres.length && !gastos.length && !teso.length && !deudas.length){
+    $('reporte').innerHTML='<div class="vacio">No hay movimientos en ese rango.</div>'; return;
+  }
+
+  /* --- 1. turnos --- */
+  h+='<div class="bloque-tit" style="margin-top:6px">Turnos del período</div>';
+  if(!cierres.length) h+='<div class="vacio">Sin cierres en el rango.</div>';
+  cierres.slice().reverse().forEach(function(v){
+    var ho=String(v.HoraApertura||''), hc=String(v.HoraCierre||'');
+    var rango=(ho||hc) ? (ho||'—')+' a '+(hc||'—') : 'sin horario registrado';
+    var sa=[v.AperturaCarne,v.AperturaPanJ,v.AperturaPanS,v.AperturaChe,v.AperturaPack];
+    var sc=[v.CierreCarne,v.CierrePanJ,v.CierrePanS,v.CierreChe,v.CierrePack];
+    var hayS=sa.some(hayDato)||sc.some(hayDato);
+    h+='<div class="cierre"><div class="c-cab">'+
+       '<div class="c-quien">'+fery(v.Fecha)+' · <b>'+(v.QuienCerro||'—')+'</b> · '+rango+'</div>'+
+       '<div class="c-total">'+pesos(num(v.Total))+'</div></div>'+
+       '<div class="c-medios">'+
+         '<div class="c-medio efe"><span class="c-et">Efectivo</span><span class="c-m">'+pesos(num(v.Efectivo))+'</span></div>'+
+         '<div class="c-medio mp"><span class="c-et">Mercado Pago</span><span class="c-m">'+pesos(num(v.MercadoPago)+num(v.Transferencia))+'</span></div>'+
+         '<div class="c-medio deb'+(debeDeCierre(v)>0?' hay':'')+'"><span class="c-et">Debe</span><span class="c-m">'+pesos(debeDeCierre(v))+'</span></div>'+
+       '</div>';
+    if(hayDato(v.EfectivoContado)||hayDato(v.MPContado)){
+      h+='<div class="c-ops"><span class="c-op">Contó en caja: <b>'+pesos(num(v.EfectivoContado))+'</b></span>'+
+         '<span class="c-op">Contó en MP: <b>'+pesos(num(v.MPContado))+'</b></span></div>';
+    }
+    if(hayS){
+      h+='<div class="c-ops"><span class="c-nota">Stock — abrió: '+sa.map(cant0).join(' / ')+
+         ' · cerró: '+sc.map(cant0).join(' / ')+' <i>(carne / pan Julio / pan José / barras / packs)</i></span></div>';
+    }
+    if(String(v.Observacion||'').trim()){
+      h+='<div class="c-ops"><span class="c-nota">📝 '+v.Observacion+'</span></div>';
+    }
+    if(String(v.PagadoresMP||'').trim()){
+      h+='<div class="c-ops"><span class="c-nota">Pagaron por MP: '+v.PagadoresMP+'</span></div>';
+    }
+    h+='</div>';
+  });
+
+  /* --- 2. plata --- */
+  var entraEfe=cierres.reduce(function(a,v){ return a+num(v.Efectivo); },0);
+  var entraMP=cierres.reduce(function(a,v){ return a+num(v.MercadoPago)+num(v.Transferencia); },0);
+  var fiado=cierres.reduce(function(a,v){ return a+debeDeCierre(v); },0);
+  var sale={EFECTIVO:0, MP_FDH:0, CAJA:0, '':0};
+  gastos.forEach(function(g){ sale[medioDe(g)]=(sale[medioDe(g)]||0)+num(g.Monto); });
+  h+='<div class="bloque-tit" style="margin-top:14px">Entró</div>'+
+     fila('Efectivo', pesos(entraEfe), cierres.length+(cierres.length===1?' turno':' turnos'))+
+     fila('Mercado Pago', pesos(entraMP),'')+
+     fila('Quedó fiado', pesos(fiado),'no entró todavía')+
+     '<div class="parcial"><span>Total vendido</span><span>'+pesos(entraEfe+entraMP+fiado)+'</span></div>';
+  h+='<div class="bloque-tit" style="margin-top:14px">Salió</div>'+
+     fila('En efectivo', pesos(sale.EFECTIVO),'sale de Tesorería')+
+     fila('Por MP - FDH', pesos(sale.MP_FDH),'')+
+     fila('De la caja del local', pesos(sale.CAJA),'retiros del turno')+
+     (sale['']>0?fila('Sin medio asignado', pesos(sale['']),'hay que completarlos'):'')+
+     '<div class="parcial"><span>Total de gastos</span><span>'+pesos(sale.EFECTIVO+sale.MP_FDH+sale.CAJA+sale[''])+'</span></div>';
+
+  /* --- 3. a quién se le pagó --- */
+  var porProv={};
+  gastos.forEach(function(g){
+    var p=String(g.Proveedor||'').trim()||String(g.Categoria||'Sin categoría');
+    porProv[p]=(porProv[p]||0)+num(g.Monto);
+  });
+  var provs=Object.keys(porProv).sort(function(a,b){ return porProv[b]-porProv[a]; });
+  h+='<div class="bloque-tit" style="margin-top:14px">A quién se le pagó</div>';
+  h+=provs.length ? provs.map(function(p){ return fila(p, '−'+pesos(porProv[p]),''); }).join('')
+                  : '<div class="vacio">Sin gastos en el rango.</div>';
+
+  /* --- 4. operaciones --- */
+  var ventasC=cierres.reduce(function(a,v){ return a+(hayDato(v.ventas_cantidad)?num(v.ventas_cantidad):0); },0);
+  var entregasC=cierres.reduce(function(a,v){ return a+(hayDato(v.entregas_pedidos_cantidad)?num(v.entregas_pedidos_cantidad):0); },0);
+  var cobros=deudas.filter(function(f){ return /cobro/i.test(String(f.Movimiento||'')); });
+  var nuevas=deudas.filter(function(f){ return !/cobro/i.test(String(f.Movimiento||'')); });
+  h+='<div class="bloque-tit" style="margin-top:14px">Operaciones</div>'+
+     fila('Ventas en el local', miles(ventasC),'')+
+     fila('Entregas de pedidos', miles(entregasC),'')+
+     fila('Deudas nuevas', miles(nuevas.length), pesos(nuevas.reduce(function(a,f){ return a+num(f.Monto); },0)))+
+     fila('Cobros de deudas', miles(cobros.length), pesos(cobros.reduce(function(a,f){ return a+num(f.Monto); },0)));
+
+  /* --- 5. tesorería --- */
+  if(teso.length){
+    var ing=0, egr=0;
+    teso.forEach(function(t){ if(tesEsEgreso(t)) egr+=num(t.Monto); else ing+=num(t.Monto); });
+    h+='<div class="bloque-tit" style="margin-top:14px">Tesorería y fondos</div>'+
+       fila('Ingresos declarados','+'+pesos(ing), teso.length+(teso.length===1?' movimiento':' movimientos'))+
+       fila('Egresos','−'+pesos(egr),'');
+  }
+
+  $('reporte').innerHTML=h;
+}
+function cant0(x){ return hayDato(x)?miles(Math.round(num(x))):'—'; }
+
+/* ===== HU5 · Tesorería: referencia del día, historial y carga ===== */
+function pintarRefDia(){
+  var f=($('tFecha')||{}).value||'';
+  if(!f){ $('tRef').innerHTML=''; return; }
+  var r=refDelDia(f);
+  if(!r.turnos && !r.retiros){
+    $('tRef').innerHTML='<div class="ref-dia">Ese día no hay cierres de turno cargados.</div>';
+    return;
+  }
+  $('tRef').innerHTML='<div class="ref-dia"><b>Ese día, según los turnos:</b> se cobraron '+pesos(r.efectivo)+
+    ' en efectivo'+(r.turnos?' en '+r.turnos+(r.turnos===1?' turno':' turnos'):'')+
+    ' y se retiraron '+pesos(r.retiros)+' de la caja. <i>Es solo referencia: el monto lo ponés vos, contando la plata.</i></div>';
+}
+function movimientosTeso(){
+  return D.tesoreria.map(function(t){
+    return { carga:String(t.Fecha||'').slice(0,10), hora:String(t.Hora||''),
+             dia:String(t.FechaCierre||'').slice(0,10)||String(t.Fecha||'').slice(0,10),
+             mov:tesEsEgreso(t)?'EGRESO':'INGRESO', motivo:String(t.Motivo||''), canal:tesCanal(t),
+             monto:num(t.Monto), quien:String(t.Quien||''), detalle:String(t.Detalle||'') };
+  }).sort(function(a,b){ return a.dia<b.dia?-1:(a.dia>b.dia?1:0); });
+}
+function tesoFiltrado(){
+  var mv=($('tFiltroMov')||{}).value||'', d=($('tDesde')||{}).value||'', h=($('tHasta')||{}).value||'';
+  return movimientosTeso().filter(function(m){
+    if(mv && m.mov!==mv) return false;
+    if(d && m.dia<d) return false;
+    if(h && m.dia>h) return false;
+    return true;
+  });
+}
+function pintarTeso(){
+  var ms=tesoFiltrado(), ing=0, egr=0;
+  ms.forEach(function(m){ if(m.mov==='EGRESO') egr+=m.monto; else ing+=m.monto; });
+  var gEfe=gastosDeTesoreria();
+  $('listaTeso').innerHTML='<div class="item"><div class="t1">Saldo de Tesorería</div><div class="monto verde">'+pesos(saldoTesoreria())+'</div></div>'+
+    (ms.slice(-30).reverse().map(function(m){
+      var eg=m.mov==='EGRESO';
+      return '<div class="item"><div><div class="t1">'+(m.motivo||(eg?'Egreso':'Ingreso'))+
+        '<span class="medio-pill '+(eg?'sin':'efe')+'">'+(eg?'egreso':'ingreso')+'</span>'+
+        '<span class="medio-pill '+claseMedio(m.canal)+'">'+etiquetaMedio(m.canal)+'</span></div>'+
+        '<div class="t2">día '+fery(m.dia)+(m.hora?' · cargado '+m.hora:'')+(m.quien?' · '+m.quien:'')+(m.detalle?' · '+m.detalle:'')+'</div></div>'+
+        '<div class="monto '+(eg?'rojo':'verde')+'">'+(eg?'−':'+')+pesos(m.monto)+'</div></div>';
+    }).join('')||'<div class="vacio">Sin movimientos para ese filtro.</div>');
+  $('tesoParcial').innerHTML='<div class="parcial"><span>'+ms.length+(ms.length===1?' movimiento':' movimientos')+
+    (gEfe>0?' · gastos en efectivo −'+pesos(gEfe):'')+'</span>'+
+    '<span>+'+pesos(ing)+' / −'+pesos(egr)+'</span></div>';
+}
+
+/* ===== HU4 · historial de fondos (Fondos + los aportes viejos de Gastos) ===== */
+function movimientosFondo(){
+  var l=D.fondos.map(function(f){
+    return { fecha:String(f.Fecha||'').slice(0,10), hora:String(f.Hora||'')||horaDeNota(f.Detalle),
+             tipo:fTipoDe(f), mov:fEsRetiro(f)?'RETIRO':'APORTE', monto:num(f.Monto),
+             quien:String(f.Quien||''), detalle:String(f.Detalle||''), viejo:false };
+  });
+  // Aportes anteriores a la HU4: eran un gasto con categoría "Fondo de inversión".
+  // No tienen tipo de fondo, así que quedan fuera del filtro por tipo.
+  vigentes().filter(esFondo).forEach(function(g){
+    l.push({ fecha:String(g.Fecha||'').slice(0,10), hora:horaDeNota(g.Detalle), tipo:'',
+             mov:'APORTE', monto:num(g.Monto), quien:String(g.Quien||''),
+             detalle:String(g.Detalle||''), viejo:true });
+  });
+  return l.sort(function(a,b){ return a.fecha<b.fecha?-1:(a.fecha>b.fecha?1:0); });
+}
+function filtrosFondo(){
+  return { tipo:($('fFiltroTipo')||{}).value||'', desde:($('fDesde')||{}).value||'', hasta:($('fHasta')||{}).value||'' };
+}
+function fondoFiltrado(){
+  var f=filtrosFondo();
+  return movimientosFondo().filter(function(m){
+    if(f.tipo && m.tipo!==f.tipo) return false;
+    if(f.desde && m.fecha<f.desde) return false;
+    if(f.hasta && m.fecha>f.hasta) return false;
+    return true;
+  });
+}
+function pintarFondo(){
+  var ms=fondoFiltrado(), hayFiltro=!!(filtrosFondo().tipo||filtrosFondo().desde||filtrosFondo().hasta);
+  var ap=0, re=0;
+  ms.forEach(function(m){ if(m.mov==='RETIRO') re+=m.monto; else ap+=m.monto; });
+  $('listaFondo').innerHTML='<div class="item"><div class="t1">Total del fondo</div><div class="monto violeta">'+pesos(fondoTotal())+'</div></div>'+
+    (ms.slice(-30).reverse().map(function(m){
+      var et=m.viejo?'<span class="medio-pill sin">sin tipo</span>':'<span class="medio-pill '+claseMedio(m.tipo)+'">'+etiquetaMedio(m.tipo)+'</span>';
+      var ret=m.mov==='RETIRO';
+      return '<div class="item"><div><div class="t1">'+(ret?'Retiro de fondo':'Aporte')+et+'</div>'+
+        '<div class="t2">'+fery(m.fecha)+(m.hora?' · '+m.hora:'')+(m.quien?' · '+m.quien:'')+(m.detalle?' · '+m.detalle:'')+'</div></div>'+
+        '<div class="monto '+(ret?'ambar':'violeta')+'">'+(ret?'−':'+')+pesos(m.monto)+'</div></div>';
+    }).join('')||'<div class="vacio">Sin movimientos para ese filtro.</div>');
+  $('fondoParcial').innerHTML=ms.length
+    ? '<div class="parcial"><span>'+(hayFiltro?'Total filtrado':'Total del historial')+' · '+ms.length+(ms.length===1?' movimiento':' movimientos')+'</span>'+
+      '<span>+'+pesos(ap)+' / −'+pesos(re)+' = '+pesos(ap-re)+'</span></div>'
+    : '';
+}
+
+/* ===== cargas ===== */
+var seleccion={};
+function chipGroup(cont,grupo,opciones,porDefecto){
+  seleccion[grupo]=porDefecto||null;
+  var ops=(opciones||PERSONAS).map(function(o){ return (typeof o==='string')?{v:o,t:o}:o; });
+  $(cont).innerHTML=ops.map(function(o){
+    return '<div class="chip'+(o.v===porDefecto?' sel':'')+'" data-g="'+grupo+'" data-v="'+o.v+'" onclick="pickChip(this)">'+o.t+'</div>';
+  }).join('');
+}
+function pickChip(el){
+  var g=el.dataset.g;
+  document.querySelectorAll('[data-g="'+g+'"]').forEach(function(e){ e.classList.remove('sel'); });
+  el.classList.add('sel'); seleccion[g]=el.dataset.v;
+  // HU5: los motivos dependen de si es ingreso o egreso.
+  if(g==='tMov') pintarMotivosTeso();
+}
+/* HU5: al elegir Ingreso o Egreso cambia la lista de motivos. */
+function pintarMotivosTeso(){
+  var lista=MOTIVOS_TESO[seleccion.tMov]||[];
+  $('tMotivo').innerHTML=lista.length
+    ? lista.map(function(m){ return '<option>'+m+'</option>'; }).join('')
+    : '<option value="">Elegí primero si es ingreso o egreso</option>';
+}
+/* HU11: ¿ese pago ya salió de la caja del local como Retiro de caja hoy? */
+function retiroIgualHoy(m){
+  return vigentes().filter(function(g){
+    return String(g.Categoria)==='Retiro de caja' && String(g.Fecha||'').slice(0,10)===hoyLocal() && num(g.Monto)===m;
+  })[0];
+}
+function guardarGasto(forzar){
+  var m=ent($('gMonto').value);
+  if(m<=0){ $('avisoGasto').innerHTML='<div class="aviso rojo">Poné el monto.</div>'; return; }
+  // HU1 · escenario 3: el método de pago es obligatorio. Sin él no se guarda:
+  // un gasto sin canal no se puede descontar de ningún lado.
+  if(!seleccion.gMedio){ $('avisoGasto').innerHTML='<div class="aviso rojo">Tocá con qué se pagó: <b>Efectivo</b> o <b>MP - FDH</b>.</div>'; return; }
+  if(!seleccion.gQuien){ $('avisoGasto').innerHTML='<div class="aviso rojo">Tocá quién lo registra.</div>'; return; }
+  // HU11 · escenario 3: un pago en efectivo de la caja se registra UNA vez,
+  // como Retiro de caja desde Ventas. Si ya está, no se carga de nuevo acá.
+  var r = forzar!==true && retiroIgualHoy(m);
+  if(r){
+    var hr=horaDeNota(r.Detalle);
+    $('avisoGasto').innerHTML='<div class="aviso rojo"><b>Este pago ya está registrado.</b> Hoy salió de la caja del local como '+
+      '<b>Retiro de caja</b> por '+pesos(m)+' ('+(r.Quien||'—')+(hr?' · '+hr:'')+'). Un pago en efectivo de la caja se carga una sola vez: no lo registres acá.'+
+      '<div style="margin-top:8px"><button class="sec" onclick="guardarGasto(true)">Es otro pago distinto: registrarlo igual</button></div></div>';
+    return;
+  }
+  var fila={Fecha:hoyLocal(), Categoria:$('gCat').value, Monto:m, Quien:seleccion.gQuien,
+            Detalle:($('gDetalle').value||'').trim()+' · '+ahora(), Medio:seleccion.gMedio,
+            // HU-03: a quién se le pagó. Sirve para agrupar el gasto por proveedor
+            // en el reporte, en vez de tener que leer el detalle a ojo.
+            Proveedor:($('gProveedor').value||'').trim()};
+  subirNube('Gastos', fila);
+  D.gastos.push(fila);
+  try{ localStorage.setItem(K_CACHE,JSON.stringify(D)); }catch(e){}
+  $('gMonto').value=''; $('gDetalle').value=''; $('gProveedor').value='';
+  $('avisoGasto').innerHTML='<div class="aviso verde">Gasto registrado: '+fila.Categoria+' '+pesos(m)+
+    ' · sale de <b>'+etiquetaMedio(seleccion.gMedio)+'</b>.</div>';
+  render();
+}
+
+/* ===== HU5 · movimiento de Tesorería ===== */
+function tesoDelDia(fecha,motivo){
+  return D.tesoreria.filter(function(t){
+    return (String(t.FechaCierre||'').slice(0,10)||String(t.Fecha||'').slice(0,10))===fecha
+        && limpiaClave(t.Motivo)===limpiaClave(motivo) && !tesEsEgreso(t);
+  });
+}
+function guardarTeso(forzar){
+  var m=ent($('tMonto').value), dia=$('tFecha').value, motivo=$('tMotivo').value;
+  var falta=[];
+  if(m<=0) falta.push('el monto');
+  if(!seleccion.tMov) falta.push('si es ingreso o egreso');
+  if(!motivo) falta.push('el motivo');
+  if(!dia) falta.push('el día que se cierra');
+  if(!seleccion.tCanal) falta.push('el canal');
+  if(!seleccion.tQuien) falta.push('quién lo registra');
+  if(falta.length){
+    $('avisoTeso').innerHTML='<div class="aviso rojo">Falta '+falta.join(', ').replace(/,([^,]*)$/,' y$1')+'.</div>';
+    return;
+  }
+  if(forzar!==true){
+    // El saldo inicial se carga una sola vez: si ya existe, es un error de carga.
+    if(motivo==='Saldo inicial' && seleccion.tMov==='INGRESO'){
+      var si=D.tesoreria.filter(function(t){ return limpiaClave(t.Motivo)==='saldo inicial' && !tesEsEgreso(t); })[0];
+      if(si){
+        $('avisoTeso').innerHTML='<div class="aviso ambar"><b>Ya hay un saldo inicial cargado</b> ('+pesos(num(si.Monto))+
+          ', día '+fery(String(si.FechaCierre||si.Fecha).slice(0,10))+'). El saldo inicial va una sola vez: para sumar plata de un día usá <b>Cierre de caja del día</b>.'+
+          '<div style="margin-top:8px"><button class="sec" onclick="guardarTeso(true)">Registrarlo igual</button></div></div>';
+        return;
+      }
+    }
+    // Mismo día ya cargado: puede ser un segundo retiro real o una carga repetida.
+    var ya=tesoDelDia(dia,motivo);
+    if(ya.length && seleccion.tMov==='INGRESO'){
+      var suma=ya.reduce(function(a,t){ return a+num(t.Monto); },0);
+      $('avisoTeso').innerHTML='<div class="aviso ambar"><b>Ese día ya tiene '+pesos(suma)+' cargado</b> como "'+motivo+'" ('+
+        ya.length+(ya.length===1?' movimiento':' movimientos')+'). Si es otro retiro del mismo día está bien; si es el mismo, no lo cargues dos veces.'+
+        '<div style="margin-top:8px"><button class="sec" onclick="guardarTeso(true)">Es otro retiro: sumarlo</button></div></div>';
+      return;
+    }
+    // Egreso mayor a lo que hay: se avisa, no se bloquea (puede faltar cargar algo).
+    if(seleccion.tMov==='EGRESO' && m>saldoCanal(seleccion.tCanal)){
+      $('avisoTeso').innerHTML='<div class="aviso ambar"><b>Estás sacando más de lo que figura.</b> Tesorería tiene '+
+        pesos(saldoCanal(seleccion.tCanal))+' y el egreso es de '+pesos(m)+'. Si el saldo está mal, conviene corregirlo con un <b>Ajuste de arqueo</b>.'+
+        '<div style="margin-top:8px"><button class="sec" onclick="guardarTeso(true)">Registrarlo igual</button></div></div>';
+      return;
+    }
+  }
+  var fila={Fecha:hoyLocal(), Hora:ahora(), FechaCierre:dia, Movimiento:seleccion.tMov,
+            Motivo:motivo, Monto:m, Quien:seleccion.tQuien, Detalle:($('tDetalle').value||'').trim(),
+            Canal:seleccion.tCanal||'EFECTIVO'};
+  subirNube('Tesoreria', fila);
+  D.tesoreria.push(fila);
+  try{ localStorage.setItem(K_CACHE,JSON.stringify(D)); }catch(e){}
+  $('tMonto').value=''; $('tDetalle').value='';
+  var eg=seleccion.tMov==='EGRESO';
+  $('avisoTeso').innerHTML='<div class="aviso verde">'+(eg?'Egreso':'Ingreso')+' registrado: '+pesos(m)+' · '+motivo+
+    '. '+etiquetaMedio(seleccion.tCanal)+' queda en <b>'+pesos(saldoCanal(seleccion.tCanal))+'</b>.</div>';
+  render();
+}
+
+/* ===== HU3/HU4 · movimiento del fondo de inversión ===== */
+function guardarFondo(forzar){
+  var m=ent($('fMonto').value);
+  var falta=[];
+  if(m<=0) falta.push('el monto');
+  if(!seleccion.fTipo) falta.push('el tipo de fondo');
+  if(!seleccion.fMov) falta.push('si es aporte o retiro');
+  if(!seleccion.fQuien) falta.push('quién lo registra');
+  if(falta.length){
+    $('avisoFondo').innerHTML='<div class="aviso rojo">Falta '+falta.join(', ').replace(/,([^,]*)$/,' y$1')+'.</div>';
+    return;
+  }
+  // HU3 · escenario 3: si el aporte supera el saldo del canal, se avisa y se pide
+  // confirmación explícita. No se bloquea: puede haber plata que todavía no se cargó.
+  if(forzar!==true && seleccion.fMov==='APORTE'){
+    var s=saldoCanal(seleccion.fTipo);
+    if(m>s){
+      $('avisoFondo').innerHTML='<div class="aviso ambar"><b>Saldo insuficiente en '+etiquetaMedio(seleccion.fTipo)+'.</b> '+
+        'Hoy figuran '+pesos(s)+' y estás por apartar '+pesos(m)+'. Puede ser que falte cargar algo.'+
+        '<div style="margin-top:8px"><button class="sec" onclick="guardarFondo(true)">Está bien: registrarlo igual</button></div></div>';
+      return;
+    }
+  }
+  // HU3 · escenario 6: la auditoría la arma el sistema, no el usuario.
+  var fila={Fecha:hoyLocal(), Hora:ahora(), TipoFondo:seleccion.fTipo, Movimiento:seleccion.fMov,
+            Monto:m, Quien:seleccion.fQuien, Detalle:($('fDetalle').value||'').trim()};
+  subirNube('Fondos', fila);
+  D.fondos.push(fila);
+  try{ localStorage.setItem(K_CACHE,JSON.stringify(D)); }catch(e){}
+  $('fMonto').value=''; $('fDetalle').value='';
+  var esRet=seleccion.fMov==='RETIRO';
+  $('avisoFondo').innerHTML='<div class="aviso verde">'+(esRet?'Retiro del fondo':'Aporte al fondo')+' registrado: '+pesos(m)+
+    ' · '+(esRet?'vuelve a ':'sale de ')+'<b>'+etiquetaMedio(seleccion.fTipo)+'</b>.</div>';
+  render();
+}
+
+/* ===== arranque: cache primero, nube detrás, refresco cada 90 s ===== */
+$('fechaHoy').textContent=new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+$('gCat').innerHTML=CATEGORIAS.map(function(c){ return '<option>'+c+'</option>'; }).join('');
+chipGroup('gMedio','gMedio',MEDIOS);
+chipGroup('gQuien','gQuien');
+chipGroup('fTipo','fTipo',TIPOS_FONDO);
+chipGroup('fMov','fMov',MOVIMIENTOS);
+chipGroup('fQuien','fQuien');
+// El movimiento de todos los días es el ingreso del cierre: viene elegido.
+// Así la carga diaria es poner el monto, tocar el nombre y guardar.
+chipGroup('tMov','tMov',TESO_MOV,'INGRESO');
+chipGroup('tCanal','tCanal',TESO_CANAL,'EFECTIVO');
+chipGroup('tQuien','tQuien');
+pintarMotivosTeso();
+$('tFecha').value=hoyLocal();
+pintarRefDia();
+rangoRapido(0);   // HU-03: el reporte arranca mostrando hoy
+// El cache puede venir de una versión anterior (sin la hoja Fondos): se completa
+// lo que falte para que la pantalla no se rompa al abrirla la primera vez.
+try{ var c=JSON.parse(localStorage.getItem(K_CACHE)||'null');
+     if(c){ D=c; D.ventas=D.ventas||[]; D.deudas=D.deudas||[]; D.gastos=D.gastos||[]; D.fondos=D.fondos||[]; D.tesoreria=D.tesoreria||[]; render(); } }catch(e){}
+render();
+cargarNube();
+setInterval(cargarNube, 90000);
+// HU12: al volver a la pestaña (o a la app instalada) se trae lo último,
+// así un turno recién cerrado aparece en el total del día sin esperar.
+document.addEventListener('visibilitychange', function(){ if(!document.hidden) cargarNube(); });
+// HU13 · escenario 4: a la medianoche el total del día vuelve a $0 aunque no
+// haya internet. Se recalcula con lo que ya está en memoria, sin pedir nada.
+setInterval(function(){ if(D.sabido) pintarTotalHoy(); }, 60000);
+</script>
+<script>
+/* PWA: registro del service worker (red primero, no cachea HTML viejo) */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('/sw.js').catch(function () {});
+  });
+}
+</script>
+</body>
+</html>
