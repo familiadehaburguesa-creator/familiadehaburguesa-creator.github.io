@@ -590,10 +590,17 @@ function fondoContra(canal){
 /* Lo cobrado por MP en los cierres de turno de Ventas (HU3 · escenario 1):
    la tarjeta se retroalimenta sola, sin carga manual. */
 function mpDeVentas(){ return D.ventas.reduce(function(t,v){ return t+num(v.MercadoPago)+num(v.Transferencia); },0); }
+/* v21 · lo que entró por Mercado Pago en un turno y NO fue una venta: cobros de
+   deudas viejas y señas. Es plata que llegó de verdad a la cuenta, así que tiene
+   que mover el saldo de MP. El efectivo equivalente NO se suma acá a propósito:
+   la Tesorería se declara a mano desde el conteo real, que ya lo incluye, y
+   sumarlo otra vez lo contaría dos veces. */
+function otrosIngresosMP(){ return D.ventas.reduce(function(t,v){ return t+num(v.OtrosIngresosMP); },0); }
+function otrosIngresosEfe(){ return D.ventas.reduce(function(t,v){ return t+num(v.OtrosIngresosEfe); },0); }
 function efectivoDeVentas(){ return D.ventas.reduce(function(t,v){ return t+num(v.Efectivo); },0); }
 function saldoCanal(canal){
   if(canal==='EFECTIVO') return saldoTesoreria();
-  return mpDeVentas()-gastosPorMedio('MP_FDH')-fondoContra('MP_FDH')+ajustesMP();
+  return mpDeVentas()+otrosIngresosMP()-gastosPorMedio('MP_FDH')-fondoContra('MP_FDH')+ajustesMP();
 }
 
 /* ===== HU5 · Tesorería =====

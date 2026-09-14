@@ -418,6 +418,23 @@ label{color:#fff}
 /* v19 · filtros de fecha y botones de rango: alto cómodo para el dedo */
 input[type=date],select{min-height:44px}
 .rango button,.chips>*{min-height:44px}
+
+/* v20 · tarjeta de stock del turno */
+.tabla-stock{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+.linea-stock{display:grid;grid-template-columns:1.4fr .8fr .9fr .9fr;gap:8px;align-items:baseline;
+  padding:8px 10px;border-radius:9px;background:rgba(255,255,255,.03);border:1px solid #2c2c34}
+.linea-stock .et{font-weight:700}
+.linea-stock .nu{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+.linea-stock .nu small{display:block;font-weight:400;font-size:10.5px;opacity:.6}
+.linea-stock .comp{color:var(--amarillo,#e0b74a)}
+.linea-stock .libre{color:var(--verde,#4ad07e)}
+.linea-stock.falta{border-color:#7a2b2b;background:rgba(200,60,60,.10)}
+.linea-stock.falta .libre{color:var(--coral,#ff6b6b)}
+@media(max-width:560px){
+  .linea-stock{grid-template-columns:1fr .7fr .8fr .8fr;padding:8px;gap:6px}
+  .linea-stock .et{font-size:13px}
+  .linea-stock .nu{font-size:13px}
+}
 </style>
 </head>
 <body>
@@ -517,6 +534,7 @@ input[type=date],select{min-height:44px}
       <div class="botonera">
         <button class="btn gris chico" id="btnIngreso">Ingresó mercadería</button>
         <button class="btn gris chico" id="btnRetiro">Retirar plata</button>
+        <button class="btn gris chico" id="btnIngPlata">Entró plata</button>
       </div>
     </div>
 
@@ -524,6 +542,12 @@ input[type=date],select{min-height:44px}
       <h2>Para retirar hoy</h2>
       <div id="pedidos" class="vacio">Consultando…</div>
       <button class="btn gris chico" id="btnCalendario" style="margin-top:12px">Ver el calendario de pedidos</button>
+    </div>
+
+    <div class="caja">
+      <h2>Stock del turno</h2>
+      <div class="ayuda">Lo que hay, lo que ya está comprometido por los pedidos de hoy sin entregar, y lo que queda realmente libre para vender en el mostrador.</div>
+      <div id="stockTurno" class="vacio">Consultando…</div>
     </div>
 
     </div>
@@ -732,6 +756,33 @@ input[type=date],select{min-height:44px}
       <div id="avisoRetiro"></div>
       <button class="btn" id="btnGuardarRetiro">Sacar de la caja</button>
       <button class="btn gris chico" id="btnCancelarRetiro" style="margin-top:10px">Cancelar</button>
+    </div>
+  </section>
+
+  <!-- ================= ENTRÓ PLATA ================= -->
+  <section id="pIngresoPlata" class="oculto">
+    <div class="caja">
+      <h2>Entró plata a la caja</h2>
+      <div class="aviso info">Para la plata que entra y <b>no es una venta de este turno</b>: una seña, el cobro de un pedido que no estaba cargado, una devolución. <b>No mueve stock ni suma a las ventas.</b></div>
+      <div class="fila">
+        <div><label for="ipMonto">¿Cuánto entró?</label><div class="conpeso"><span>$</span><input id="ipMonto" value="0"></div></div>
+        <div><label for="ipQuien">¿Quién lo registra?</label><select id="ipQuien"></select></div>
+      </div>
+      <div class="campo">
+        <label for="ipVia">¿Cómo entró?</label>
+        <select id="ipVia"></select>
+      </div>
+      <div class="campo">
+        <label for="ipMotivo">¿De qué es?</label>
+        <select id="ipMotivo"></select>
+      </div>
+      <div class="campo">
+        <label for="ipDetalle">Detalle</label>
+        <input id="ipDetalle" type="text" placeholder="Ej: seña del pedido de Leandro">
+      </div>
+      <div id="avisoIngPlata"></div>
+      <button class="btn" id="btnGuardarIngPlata">Registrar el ingreso</button>
+      <button class="btn gris chico" id="btnCancelarIngPlata" style="margin-top:10px">Cancelar</button>
     </div>
   </section>
 
@@ -1112,6 +1163,7 @@ function turnoNuevo(){
     // Cobranza de deudas de otros turnos. Va aparte de `cobros` porque entra a
     // la caja pero no es venta de este turno.
     cobrosDeuda:{efe:0, tra:0, mp:0},
+    otrosIng:{efe:0, mp:0},   // plata que entró y NO es venta de este turno
     retiros:0,
     movs:[], deudas:[], entregados:[]
   };
@@ -1182,7 +1234,7 @@ function completarPacks(t){
  * aparece bajo ninguna etiqueta de la pantalla.
  */
 function fusionarTransferencias(t){
-  ['cobros','cobrosDeuda'].forEach(function(k){
+  ['cobros','cobrosDeuda','otrosIng'].forEach(function(k){
     var o = t[k];
     if (o && o.tra > 0){ o.mp = (o.mp || 0) + o.tra; o.tra = 0; }
   });
@@ -1348,7 +1400,10 @@ function pintarKPIs(){
   $('kpiVentas').innerHTML =
     kpi(pesos(T.ventas), 'Total ventas', 'total plata', 'sin el efectivo de inicio') +
     kpi(pesos(c.efe), 'Cobrado en efectivo') +
-    kpi(pesos(c.tra + c.mp), 'Cobrado por Mercado Pago') +
+    // El efectivo de arriba ya suma los cobros de deuda: el MP tiene que hacer
+    // lo mismo o el panel se contradice consigo mismo.
+    kpi(pesos(c.tra + c.mp), 'Cobrado por Mercado Pago', '', 'solo ventas') +
+    kpi(pesos(otrosMP() + otrosEfe()), 'Entró sin ser venta', '', 'señas, cobros de deuda') +
     // Lo que falta cobrar es el saldo de TODAS las deudas abiertas, no solo
     // las que nacieron en este turno: si ayer alguien quedo debiendo, hoy se
     // le sigue debiendo a la caja.
@@ -1542,7 +1597,7 @@ function traerPedidos(){
         PEDIDOS_HOY.push(f);
       });
     }
-    pintarPedidos();
+    pintarPedidos(); pintarStockTurno();
     if (!$('pCalendario').classList.contains('oculto')) pintarMes();
   });
 }
@@ -1747,6 +1802,77 @@ function pendientesHoy(){
   return PEDIDOS_HOY.filter(function(f){ return !yaEntregado(f); });
 }
 
+
+/* ===== v20 · reserva implícita =====
+   Un pedido de hoy sin entregar ya tiene la mercadería comprometida aunque
+   nadie la haya apartado físicamente. Se calcula en vivo desde los pedidos:
+   no hay tabla de reservas ni estado que mantener sincronizado, así que no
+   puede quedar una reserva colgada si alguien cierra la app a mitad de camino.
+   Solo alcanza a los pedidos que se retiran HOY: uno del 18 no compromete el
+   stock de este turno, y está bien que no lo haga. */
+function comprometidoHoy(excluir){
+  var r = {carne:0, panJ:0, che:0, pack:0, dudosos:0, pedidos:0};
+  if (typeof PEDIDOS_HOY === 'undefined') return r;
+  pendientesHoy().forEach(function(f){
+    if (excluir && f === excluir) return;
+    var d = desglosarPedido(f);
+    if (d.dudoso) r.dudosos++;
+    r.pedidos++;
+    r.carne += d.carnes;
+    // El desglose no distingue pan de Julio y de José: al entregar, el módulo
+    // los carga todos como pan de Julio. Se compromete contra el mismo.
+    r.panJ  += d.panes;
+    r.che   += d.cheddar;
+    r.pack  += d.packs;
+  });
+  return r;
+}
+/** Lo que queda de verdad para vender en el mostrador. */
+function libreEnTurno(excluir){
+  var c = comprometidoHoy(excluir);
+  if (!T || !T.stock) return {carne:0, panJ:0, panS:0, che:0, pack:0, comp:c};
+  return {
+    carne: T.stock.carne - c.carne,
+    panJ:  T.stock.panJ  - c.panJ,
+    panS:  T.stock.panS,
+    che:   T.stock.che   - c.che,
+    pack:  T.stock.pack  - c.pack,
+    comp:  c
+  };
+}
+var INSUMOS = [
+  {k:'carne', hay:'carne', et:'Carnes'},
+  {k:'panJ',  hay:'panJ',  et:'Pan de Julio'},
+  {k:'panS',  hay:'panS',  et:'Pan de José'},
+  {k:'che',   hay:'che',   et:'Barras de cheddar'},
+  {k:'pack',  hay:'pack',  et:'Packs de fetas'}
+];
+function pintarStockTurno(){
+  var el = $('stockTurno');
+  if (!el) return;
+  if (!T || !T.abierto){ el.className='vacio'; el.textContent='Abrí el turno para ver el stock.'; return; }
+  var l = libreEnTurno(), c = l.comp;
+  var filas = INSUMOS.map(function(i){
+    var hay = T.stock[i.hay], comp = (i.k==='panS') ? 0 : (c[i.k]||0), libre = l[i.k];
+    var rojo = libre < 0;
+    return '<div class="linea-stock'+(rojo?' falta':'')+'">'+
+      '<span class="et">'+i.et+'</span>'+
+      '<span class="nu">'+miles(hay)+'<small> hay</small></span>'+
+      '<span class="nu comp">'+(comp?('−'+miles(comp)):'—')+'<small> pedidos</small></span>'+
+      '<span class="nu libre">'+miles(libre)+'<small> libre</small></span></div>';
+  }).join('');
+  var faltan = INSUMOS.filter(function(i){ return l[i.k] < 0; });
+  var cab = faltan.length
+    ? '<div class="aviso rojo"><b>El stock no cubre los pedidos de hoy.</b> Falta '+
+      faltan.map(function(i){ return i.et.toLowerCase()+' ('+miles(Math.abs(l[i.k]))+')'; }).join(' y ')+
+      '. Conseguí mercadería o avisale al cliente antes de seguir vendiendo.</div>'
+    : (c.pedidos ? '<div class="aviso verde">El stock cubre los '+c.pedidos+' pedido(s) de hoy.</div>'
+                 : '<div class="aviso info">No hay pedidos pendientes para hoy: todo el stock está libre.</div>');
+  var dud = c.dudosos ? '<div class="nota">'+c.dudosos+' pedido(s) con cantidades que no pude leer: no están contados acá. Revisalos a mano.</div>' : '';
+  el.className = '';
+  el.innerHTML = cab + '<div class="tabla-stock">' + filas + '</div>' + dud;
+}
+
 function pintarPedidos(){
   var el = $('pedidos');
   var lista = pendientesHoy();
@@ -1874,7 +2000,8 @@ function panEnComanda(prov){
 function nombrePan(prov){ return prov === 'S' ? 'Pan de José' : 'Pan de Julio'; }
 /** HU14: cuántos panes de ese proveedor quedan para esta venta. */
 function panDisponible(prov){
-  return (prov === 'S' ? T.stock.panS : T.stock.panJ) - panEnComanda(prov);
+  var L = libreEnTurno();
+  return (prov === 'S' ? L.panS : L.panJ) - panEnComanda(prov);
 }
 /** HU14 · escenario 4: "Solo pan" no se vende sin stock. Devuelve el aviso o ''. */
 function faltaPanSuelto(c, prov){
@@ -1903,13 +2030,16 @@ function avisarStock(c){
   } else {
     var esCombo = sel.id === 'combo';
     var nCar = esCombo ? c * COMBO.carne : c, nPan = esCombo ? c * COMBO.pan : c;
-    if (nCar > T.stock.carne) faltas.push('carnes (hacen falta ' + nCar + ' y hay ' + T.stock.carne + ')');
+    // v20: se compara contra lo LIBRE, no contra el stock crudo. Lo que ya
+    // comprometieron los pedidos de hoy tiene dueño aunque siga en la heladera.
+    var L = libreEnTurno();
+    if (nCar > L.carne) faltas.push('carnes (hacen falta ' + nCar + ' y quedan libres ' + Math.max(0,L.carne) + ')');
     if (sel.pan){
-      if (prov === 'J' && nPan > T.stock.panJ) faltas.push('pan de Julio (hacen falta ' + nPan + ' y hay ' + T.stock.panJ + ')');
-      if (prov === 'S' && nPan > T.stock.panS) faltas.push('pan de José (hacen falta ' + nPan + ' y hay ' + T.stock.panS + ')');
+      if (prov === 'J' && nPan > L.panJ) faltas.push('pan de Julio (hacen falta ' + nPan + ' y quedan libres ' + Math.max(0,L.panJ) + ')');
+      if (prov === 'S' && nPan > L.panS) faltas.push('pan de José (hacen falta ' + nPan + ' y quedan libres ' + Math.max(0,L.panS) + ')');
     }
-    if (esCombo && c * COMBO.pack > T.stock.pack){
-      faltas.push('packs de cheddar (hacen falta ' + (c * COMBO.pack) + ' y hay ' + T.stock.pack + ')');
+    if (esCombo && c * COMBO.pack > L.pack){
+      faltas.push('packs de cheddar (hacen falta ' + (c * COMBO.pack) + ' y quedan libres ' + Math.max(0,L.pack) + ')');
     }
   }
   if (faltas.length){
@@ -2187,7 +2317,7 @@ function finalizarVenta(){
          pesos(total));
 
   guardarTurno();
-  pintarKPIs(); pintarMovs(); pintarDeudas(); pintarPedidos();
+  pintarKPIs(); pintarMovs(); pintarDeudas(); pintarPedidos(); pintarStockTurno();
   venta = null;
   mostrar('pTurno');
 }
@@ -2222,11 +2352,14 @@ function avisarStockPedido(){
       ps = ent($('sPanS').value), ch = ent($('sChe').value),
       pk = ent($('sPack').value);
   var faltan = [];
-  if (pk > T.stock.pack)  faltan.push('packs de cheddar (hay ' + T.stock.pack + ')');
-  if (c  > T.stock.carne) faltan.push('carnes (hay ' + T.stock.carne + ')');
-  if (pj > T.stock.panJ)  faltan.push('pan de Julio (hay ' + T.stock.panJ + ')');
-  if (ps > T.stock.panS)  faltan.push('pan de José (hay ' + T.stock.panS + ')');
-  if (ch > T.stock.che)   faltan.push('cheddar (hay ' + T.stock.che + ')');
+  // El pedido que se está entregando se excluye del comprometido: si no, se
+  // descontaría dos veces y siempre parecería que falta mercadería.
+  var L = libreEnTurno(venta && venta.pedido);
+  if (pk > L.pack)  faltan.push('packs de cheddar (quedan libres ' + Math.max(0,L.pack) + ')');
+  if (c  > L.carne) faltan.push('carnes (quedan libres ' + Math.max(0,L.carne) + ')');
+  if (pj > L.panJ)  faltan.push('pan de Julio (quedan libres ' + Math.max(0,L.panJ) + ')');
+  if (ps > L.panS)  faltan.push('pan de José (quedan libres ' + Math.max(0,L.panS) + ')');
+  if (ch > L.che)   faltan.push('cheddar (quedan libres ' + Math.max(0,L.che) + ')');
   $('avisoStockPedido').innerHTML = faltan.length
     ? '<div class="aviso ambar">No alcanza el stock de ' + faltan.join(' ni de ') +
       '. Si acaba de llegar mercadería, cargala con “Ingresó mercadería”.</div>'
@@ -2410,6 +2543,67 @@ function anularGastoEnNube(g, motivo){
         gasto:{Categoria:g.Categoria, Monto:num(g.Monto), Detalle:String(g.Detalle || '')},
         quien: usuarioActivo() || (T && T.quien) || '', motivo: motivo})});
   }catch(e){}
+}
+
+
+/* ===== v21 · plata que entra y NO es una venta del turno =====
+   Dos fuentes: el cobro de una deuda vieja y el botón "Entró plata" (señas,
+   cobros de pedidos que no estaban cargados, devoluciones). Las dos suman a la
+   caja y al MP que se espera contar al cerrar, y NINGUNA suma a las ventas:
+   si sumaran, el total del día diría que se vendió algo que no se vendió.
+   Se guardan en columnas propias del cierre para que Finanzas las lea aparte. */
+function otrosEfe(){
+  var cd = T && T.cobrosDeuda ? T.cobrosDeuda.efe : 0;
+  var oi = T && T.otrosIng ? T.otrosIng.efe : 0;
+  return cd + oi;
+}
+function otrosMP(){
+  var cd = T && T.cobrosDeuda ? (T.cobrosDeuda.tra + T.cobrosDeuda.mp) : 0;
+  var oi = T && T.otrosIng ? T.otrosIng.mp : 0;
+  return cd + oi;
+}
+var IP_VIA    = [{v:'EFECTIVO', t:'Efectivo'}, {v:'MP', t:'Mercado Pago'}];
+var IP_MOTIVO = ['Seña de un pedido', 'Cobro de un pedido que no estaba cargado',
+                 'Devolución de un proveedor', 'Aporte a la caja', 'Otro'];
+
+function llenarIngresoPlata(){
+  $('ipVia').innerHTML = IP_VIA.map(function(o){
+    return '<option value="' + o.v + '">' + o.t + '</option>'; }).join('');
+  $('ipMotivo').innerHTML = IP_MOTIVO.map(function(m){
+    return '<option>' + m + '</option>'; }).join('');
+}
+
+function abrirIngresoPlata(){
+  ponerNumero('ipMonto', 0);
+  $('ipDetalle').value = '';
+  $('avisoIngPlata').innerHTML = '';
+  mostrar('pIngresoPlata');
+}
+
+function guardarIngresoPlata(){
+  var m = ent($('ipMonto').value);
+  var via = $('ipVia').value;
+  var motivo = $('ipMotivo').value;
+  var falta = [];
+  if (m <= 0) falta.push('cuánto entró');
+  if (!via) falta.push('si fue en efectivo o por Mercado Pago');
+  if (!motivo) falta.push('de qué es');
+  if (!$('ipQuien').value) falta.push('quién lo registra');
+  if (falta.length){
+    $('avisoIngPlata').innerHTML = '<div class="aviso rojo">Falta ' +
+      falta.join(', ').replace(/,([^,]*)$/, ' y$1') + '.</div>';
+    return;
+  }
+  if (!T.otrosIng) T.otrosIng = {efe:0, mp:0};
+  if (via === 'EFECTIVO'){ T.otrosIng.efe += m; T.caja += m; }
+  else { T.otrosIng.mp += m; }
+
+  var det = motivo + ($('ipDetalle').value.trim() ? ' · ' + $('ipDetalle').value.trim() : '');
+  anotar('Entró plata', pesos(m) + ' · ' + (via === 'EFECTIVO' ? 'efectivo' : 'Mercado Pago') +
+         ' · ' + det + ' · ' + $('ipQuien').value, '');
+  guardarTurno();
+  pintarKPIs(); pintarMovs();
+  mostrar('pTurno');
 }
 
 function abrirRetiro(){
@@ -2618,7 +2812,8 @@ function esperado(){
     che:   T.ini.che   + T.entr.che   - T.vend.che,
     pack:  T.ini.pack  + T.entr.pack  - T.vend.pack,
     // La cobranza de deudas viejas tambien esta fisicamente en la caja.
-    caja:  T.ini.caja  + T.cobros.efe + (T.cobrosDeuda ? T.cobrosDeuda.efe : 0) - T.retiros
+    caja:  T.ini.caja  + T.cobros.efe + (T.cobrosDeuda ? T.cobrosDeuda.efe : 0)
+                       + (T.otrosIng ? T.otrosIng.efe : 0) - T.retiros
   };
 }
 
@@ -2665,7 +2860,7 @@ function comparar(){
     caja:  ent($('zCaja').value),
     mp:    ent($('zMp').value)
   };
-  e.mp = T.cobros.tra + T.cobros.mp + ((T.cobrosDeuda ? T.cobrosDeuda.tra + T.cobrosDeuda.mp : 0));
+  e.mp = T.cobros.tra + T.cobros.mp + otrosMP();
 
   var h = '';
   h += '<div class="aviso info">Lo esperado sale de: <b>lo que había al abrir</b> + <b>lo que llegó en el turno</b> − <b>lo que se vendió</b>.</div>';
@@ -2791,7 +2986,11 @@ function confirmarCierre(){
     AperturaChe: T.ini.che, AperturaPack: T.ini.pack, AperturaCaja: T.ini.caja,
     CierreCarne: (T.contado ? T.contado.carne : ''), CierrePanJ: (T.contado ? T.contado.panJ : ''),
     CierrePanS: (T.contado ? T.contado.panS : ''), CierreChe: (T.contado ? T.contado.che : ''),
-    CierrePack: (T.contado ? T.contado.pack : '')
+    CierrePack: (T.contado ? T.contado.pack : ''),
+    // v21: plata que entró y no fue venta de este turno. Va aparte para que
+    // Total/Efectivo/MercadoPago sigan siendo SOLO ventas y la cuenta cierre.
+    OtrosIngresosEfe: otrosEfe(),
+    OtrosIngresosMP:  otrosMP()
   });
 
   var h = '<div class="aviso verde">Turno de <b>' + T.quien + '</b> cerrado. Se mandó el resumen al Cuaderno.</div>';
@@ -2878,7 +3077,8 @@ function entrarAlTurno(){
 
 function iniciar(){
   cargarPrecios();
-  llenarGente(['aQuien','iQuien','rQuien','pfQuien','dcQuien']);
+  llenarGente(['aQuien','iQuien','rQuien','pfQuien','dcQuien','ipQuien']);
+  llenarIngresoPlata();
   pintarProductos();
 
   var t = cargarTurno();
@@ -2979,6 +3179,9 @@ function iniciar(){
     }
   });
   $('btnCancelarRetiro').addEventListener('click', function(){ mostrar('pTurno'); });
+  $('btnIngPlata').addEventListener('click', abrirIngresoPlata);
+  $('btnGuardarIngPlata').addEventListener('click', guardarIngresoPlata);
+  $('btnCancelarIngPlata').addEventListener('click', function(){ mostrar('pTurno'); });
 
   $('dcMonto').addEventListener('input', notaMontoDeuda);
   $('btnPagaTodo').addEventListener('click', function(){
@@ -3022,13 +3225,17 @@ function prepararCamposPlata(ids){
     var el=document.getElementById(id); if(!el) return;
     el.classList.add('plata');
     el.setAttribute('inputmode','numeric');
-    var p=el.parentNode;
-    if(p && !(p.classList && p.classList.contains('con-peso'))){
-      var w=document.createElement('span'); w.className='con-peso';
-      p.insertBefore(w,el); w.appendChild(el);
-      // El "$" come ancho: sin un mínimo propio, el campo se achica contra los
-      // vecinos y un monto largo queda cortado en el celular.
-      if(p.classList) p.classList.add('campo-plata');
+    // Ventas YA trae su propio "$" con la clase .conpeso. Envolverlo de nuevo
+    // ponía dos signos y el doble de padding, y el campo empujaba a la etiqueta
+    // hasta recortarla ("Efe...", "M..."). Si el campo ya tiene su $, solo se le
+    // agrega el formato de miles y no se toca nada del layout.
+    if(!el.closest('.conpeso')){
+      var p=el.parentNode;
+      if(p && !(p.classList && p.classList.contains('con-peso'))){
+        var w=document.createElement('span'); w.className='con-peso';
+        p.insertBefore(w,el); w.appendChild(el);
+        if(p.classList) p.classList.add('campo-plata');
+      }
     }
     el.addEventListener('input', function(){ formatearPlata(el); });
     el.addEventListener('focus', function(){ formatearPlata(el); });
