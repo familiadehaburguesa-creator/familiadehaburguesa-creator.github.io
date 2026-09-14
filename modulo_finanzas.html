@@ -183,6 +183,17 @@ button.sec:hover{background:#33291a;color:#fff}
 .ref-dia b{color:#fff}
 @media(max-width:880px){.saldos{grid-template-columns:1fr}}
 @media(max-width:560px){#campoCat{flex:1 1 100%;max-width:none}}
+
+/* v19 · campos de plata: el "$" es decoración, no parte del valor */
+.con-peso{position:relative;display:block;width:100%}
+.con-peso::before{content:'$';position:absolute;left:11px;top:50%;transform:translateY(-50%);
+  color:var(--gris,#8b8b95);font-weight:700;pointer-events:none;font-size:.95rem}
+.con-peso>input.plata{padding-left:24px;width:100%}
+.campo-plata{min-width:152px}
+.campo.chico.campo-plata{max-width:none}
+/* v19 · filtros de fecha y botones de rango: alto cómodo para el dedo */
+input[type=date],select{min-height:44px}
+.rango button,.chips>*{min-height:44px}
 </style>
 </head>
 <body>
@@ -360,7 +371,7 @@ var MOTIVOS_TESO={
   EGRESO :['Depósito en banco','Reposición de caja del local','Entrega a socio','Ajuste de arqueo','Otro']
 };
 
-function num(v){ var n=Number(String(v==null?'':v).replace(/\./g,'').replace(',','.')); return isNaN(n)?0:n; }
+function num(v){ var n=Number(String(v==null?'':v).replace(/[^\d,.\-]/g,'').replace(/\./g,'').replace(',','.')); return isNaN(n)?0:n; }
 function ent(v){ return Math.max(0,Math.round(num(v))); }
 function miles(n){ return Number(n||0).toLocaleString('es-AR'); }
 function pesos(n){ return '$'+miles(n); }
@@ -461,11 +472,80 @@ function porCobrar(){ return deudoresAbiertos().reduce(function(t,d){ return t+d
    que se sepa qué pasó, pero no suma en ningún lado. */
 function esAnulado(g){ return /^anulad/i.test(String(g.Categoria||'').trim()); }
 function vigentes(){ return D.gastos.filter(function(g){ return !esAnulado(g); }); }
+
+/* ===== v19 · fecha de corte =====
+   El saldo inicial de Tesorería es una foto de la plata que había ese día, y esa
+   foto YA tiene descontado todo lo que se pagó antes. Si además restáramos esos
+   gastos viejos, la misma salida contaría dos veces y el saldo quedaría corto.
+   Por eso los saldos por canal solo miran de la fecha del saldo inicial en
+   adelante. El listado de gastos y el reporte por período NO usan esto: ahí se
+   sigue viendo todo el histórico. */
+function fechaCorte(){
+  var f=D.tesoreria.filter(function(t){
+      return limpiaClave(t.Motivo)==='saldo inicial' && !tesEsEgreso(t);
+    }).map(function(t){ return String(t.FechaCierre||t.Fecha||'').slice(0,10); })
+    .filter(Boolean).sort();
+  return f.length?f[0]:'';
+}
+function despuesDelCorte(g){
+  var c=fechaCorte();
+  if(!c) return true;                       // sin saldo inicial cargado, cuenta todo
+  return String(g.Fecha||'').slice(0,10)>=c;
+}
+function vigentesDesdeCorte(){ return vigentes().filter(despuesDelCorte); }
+
+/* Google Sheets guarda una hora suelta como una fecha con base 30/12/1899, así
+   que al leerla vuelve un ISO crudo ("1899-12-30T13:22:48.000Z"). Sacamos HH:mm
+   del texto, sin pasar por Date: convertir aplicaría zona horaria y correría la
+   hora que la persona vio al cargar. */
+function soloHora(v){
+  var s=String(v==null?'':v).trim();
+  if(!s) return '';
+  var iso=s.match(/T(\d{2}:\d{2})/);   if(iso) return iso[1];
+  var hm=s.match(/^(\d{1,2}):(\d{2})/); if(hm) return ('0'+hm[1]).slice(-2)+':'+hm[2];
+  return '';
+}
+
+/* ===== v19 · plata en los campos de monto =====
+   Mientras se escribe, el número se separa en miles y al costado se ve un "$".
+   El "$" va por CSS y NUNCA dentro del valor: si entrara al value, cualquier
+   lectura del campo tendría que limpiarlo y alcanza con olvidarse una vez para
+   guardar un monto en cero. Lo que se guarda sigue siendo el número pelado. */
+function formatearPlata(el){
+  var antes=el.value, caret=el.selectionStart==null?antes.length:el.selectionStart;
+  var tecleados=antes.slice(0,caret).replace(/\D/g,'').length;
+  var limpio=antes.replace(/\D/g,'').replace(/^0+(?=\d)/,'');
+  var fmt=limpio?Number(limpio).toLocaleString('es-AR'):'';
+  if(fmt===antes) return;
+  el.value=fmt;
+  var i=0,d=0;
+  while(i<fmt.length && d<tecleados){ if(/\d/.test(fmt.charAt(i))) d++; i++; }
+  try{ el.setSelectionRange(i,i); }catch(e){}
+}
+function prepararCamposPlata(ids){
+  ids.forEach(function(id){
+    var el=document.getElementById(id); if(!el) return;
+    el.classList.add('plata');
+    el.setAttribute('inputmode','numeric');
+    if(/^\$?\s*$/.test(el.getAttribute('placeholder')||'')) el.setAttribute('placeholder','0');
+    var p=el.parentNode;
+    if(p && !(p.classList && p.classList.contains('con-peso'))){
+      var w=document.createElement('span'); w.className='con-peso';
+      p.insertBefore(w,el); w.appendChild(el);
+      // El "$" come ancho: sin un mínimo propio, el campo se achica contra los
+      // vecinos y un monto largo queda cortado en el celular.
+      if(p.classList) p.classList.add('campo-plata');
+    }
+    el.addEventListener('input', function(){ formatearPlata(el); });
+    el.addEventListener('focus', function(){ formatearPlata(el); });
+    formatearPlata(el);
+  });
+}
 function esFondo(g){ return /fondo/i.test(String(g.Categoria||'')); }
 function gastosMes(){ return vigentes().filter(function(g){ return String(g.Fecha||'').slice(0,7)===mesActual() && !esFondo(g); }).reduce(function(t,g){ return t+num(g.Monto); },0); }
 /* Fondo viejo: antes de la HU4 un aporte era un gasto con categoría "Fondo de
    inversión". Esas filas quedan como están y siguen sumando (histórico intacto). */
-function fondoViejo(){ return vigentes().filter(esFondo).reduce(function(t,g){ return t+num(g.Monto); },0); }
+function fondoViejo(){ return vigentesDesdeCorte().filter(esFondo).reduce(function(t,g){ return t+num(g.Monto); },0); }
 
 /* ===== HU1 · medio de pago de un gasto =====
    Retrocompatible: los gastos cargados antes de esta mejora no tienen medio.
@@ -488,11 +568,11 @@ function etiquetaMedio(c){
 }
 function claseMedio(c){ return c==='MP_FDH'?'mp':(c==='EFECTIVO'?'efe':(c==='CAJA'?'caja':'sin')); }
 function gastosPorMedio(canal){
-  return vigentes().filter(function(g){ return !esFondo(g) && medioDe(g)===canal; })
+  return vigentesDesdeCorte().filter(function(g){ return !esFondo(g) && medioDe(g)===canal; })
                    .reduce(function(t,g){ return t+num(g.Monto); },0);
 }
-function gastosSinMedio(){ return vigentes().filter(function(g){ return !esFondo(g) && !medioDe(g); }).length; }
-function montoSinMedio(){ return vigentes().filter(function(g){ return !esFondo(g) && !medioDe(g); }).reduce(function(t,g){ return t+num(g.Monto); },0); }
+function gastosSinMedio(){ return vigentesDesdeCorte().filter(function(g){ return !esFondo(g) && !medioDe(g); }).length; }
+function montoSinMedio(){ return vigentesDesdeCorte().filter(function(g){ return !esFondo(g) && !medioDe(g); }).reduce(function(t,g){ return t+num(g.Monto); },0); }
 
 /* ===== HU3/HU4 · hoja Fondos ===== */
 function fTipoDe(f){ return /mp|mercado/.test(limpiaClave(f.TipoFondo))?'MP_FDH':'EFECTIVO'; }
@@ -819,7 +899,7 @@ function pintarRefDia(){
 }
 function movimientosTeso(){
   return D.tesoreria.map(function(t){
-    return { carga:String(t.Fecha||'').slice(0,10), hora:String(t.Hora||''),
+    return { carga:String(t.Fecha||'').slice(0,10), hora:soloHora(t.Hora),
              dia:String(t.FechaCierre||'').slice(0,10)||String(t.Fecha||'').slice(0,10),
              mov:tesEsEgreso(t)?'EGRESO':'INGRESO', motivo:String(t.Motivo||''), canal:tesCanal(t),
              monto:num(t.Monto), quien:String(t.Quien||''), detalle:String(t.Detalle||'') };
@@ -855,13 +935,13 @@ function pintarTeso(){
 /* ===== HU4 · historial de fondos (Fondos + los aportes viejos de Gastos) ===== */
 function movimientosFondo(){
   var l=D.fondos.map(function(f){
-    return { fecha:String(f.Fecha||'').slice(0,10), hora:String(f.Hora||'')||horaDeNota(f.Detalle),
+    return { fecha:String(f.Fecha||'').slice(0,10), hora:soloHora(f.Hora)||horaDeNota(f.Detalle),
              tipo:fTipoDe(f), mov:fEsRetiro(f)?'RETIRO':'APORTE', monto:num(f.Monto),
              quien:String(f.Quien||''), detalle:String(f.Detalle||''), viejo:false };
   });
   // Aportes anteriores a la HU4: eran un gasto con categoría "Fondo de inversión".
   // No tienen tipo de fondo, así que quedan fuera del filtro por tipo.
-  vigentes().filter(esFondo).forEach(function(g){
+  vigentesDesdeCorte().filter(esFondo).forEach(function(g){
     l.push({ fecha:String(g.Fecha||'').slice(0,10), hora:horaDeNota(g.Detalle), tipo:'',
              mov:'APORTE', monto:num(g.Monto), quien:String(g.Quien||''),
              detalle:String(g.Detalle||''), viejo:true });
@@ -1072,6 +1152,7 @@ pintarMotivosTeso();
 $('tFecha').value=hoyLocal();
 pintarRefDia();
 rangoRapido(0);   // HU-03: el reporte arranca mostrando hoy
+prepararCamposPlata(['gMonto','tMonto','fMonto']);   // v19
 // El cache puede venir de una versión anterior (sin la hoja Fondos): se completa
 // lo que falte para que la pantalla no se rompa al abrirla la primera vez.
 try{ var c=JSON.parse(localStorage.getItem(K_CACHE)||'null');

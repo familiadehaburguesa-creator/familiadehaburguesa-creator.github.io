@@ -407,6 +407,17 @@ h2{font-family:'Oswald','Segoe UI',sans-serif;text-transform:uppercase;letter-sp
 :root{--texto:#ffffff;--suave:#ddd2c6;--tenue:#b3a698}
 label{color:#fff}
 .btn.gris{color:#fff;border:1px solid rgba(214,172,90,.55)}
+
+/* v19 · campos de plata: el "$" es decoración, no parte del valor */
+.con-peso{position:relative;display:block;width:100%}
+.con-peso::before{content:'$';position:absolute;left:11px;top:50%;transform:translateY(-50%);
+  color:var(--gris,#8b8b95);font-weight:700;pointer-events:none;font-size:.95rem}
+.con-peso>input.plata{padding-left:24px;width:100%}
+.campo-plata{min-width:152px}
+.campo.chico.campo-plata{max-width:none}
+/* v19 · filtros de fecha y botones de rango: alto cómodo para el dedo */
+input[type=date],select{min-height:44px}
+.rango button,.chips>*{min-height:44px}
 </style>
 </head>
 <body>
@@ -916,7 +927,7 @@ function $(id){ return document.getElementById(id); }
 function ver(id, si){ $(id).classList[si ? 'remove' : 'add']('oculto'); }
 /** Limpia puntos de miles antes de convertir: "300.000" -> 300000 */
 function num(v){
-  if (typeof v === 'string') v = v.replace(/\./g, '').replace(',', '.');
+  if (typeof v === 'string') v = v.replace(/[^\d,.\-]/g, '').replace(/\./g, '').replace(',', '.');
   var n = parseFloat(v);
   return isFinite(n) ? n : 0;
 }
@@ -2990,7 +3001,45 @@ function iniciar(){
   });
 }
 
+/* ===== v19 · plata en los campos de monto =====
+   Separador de miles al escribir y un "$" al costado. El "$" va por CSS y nunca
+   dentro del value: si entrara al valor, cualquier lectura del campo tendria que
+   limpiarlo y con olvidarse una sola vez se guarda un monto en cero.
+   Los campos de CANTIDAD (carnes, panes, packs) quedan afuera a proposito. */
+function formatearPlata(el){
+  var antes=el.value, caret=el.selectionStart==null?antes.length:el.selectionStart;
+  var tecleados=antes.slice(0,caret).replace(/\D/g,'').length;
+  var limpio=antes.replace(/\D/g,'').replace(/^0+(?=\d)/,'');
+  var fmt=limpio?Number(limpio).toLocaleString('es-AR'):'';
+  if(fmt===antes) return;
+  el.value=fmt;
+  var i=0,d=0;
+  while(i<fmt.length && d<tecleados){ if(/\d/.test(fmt.charAt(i))) d++; i++; }
+  try{ el.setSelectionRange(i,i); }catch(e){}
+}
+function prepararCamposPlata(ids){
+  ids.forEach(function(id){
+    var el=document.getElementById(id); if(!el) return;
+    el.classList.add('plata');
+    el.setAttribute('inputmode','numeric');
+    var p=el.parentNode;
+    if(p && !(p.classList && p.classList.contains('con-peso'))){
+      var w=document.createElement('span'); w.className='con-peso';
+      p.insertBefore(w,el); w.appendChild(el);
+      // El "$" come ancho: sin un mínimo propio, el campo se achica contra los
+      // vecinos y un monto largo queda cortado en el celular.
+      if(p.classList) p.classList.add('campo-plata');
+    }
+    el.addEventListener('input', function(){ formatearPlata(el); });
+    el.addEventListener('focus', function(){ formatearPlata(el); });
+    formatearPlata(el);
+  });
+}
+var CAMPOS_PLATA=['aCaja','vPrecio','pTotal','cEfe','cMp','cDeb','rCuanto','dcMonto','zCaja','zMp'];
+
+
 iniciar();
+prepararCamposPlata(CAMPOS_PLATA);   // v19
 </script>
 <script>
 /* PWA: registro del service worker (red primero, no cachea HTML viejo) */
