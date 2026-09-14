@@ -103,7 +103,10 @@ input:focus,select:focus{outline:2px solid var(--dorado);border-color:var(--dora
 button{background:var(--dorado);color:#2a1800;border:none;border-radius:9px;padding:10px 18px;font-weight:800;cursor:pointer;font-size:.92rem}
 button:hover{background:#f5c75e}
 footer{text-align:center;color:var(--dorado);font-size:.85rem;margin-top:22px;padding:14px;border-top:1px solid #3a1018}
-@media(max-width:760px){.c4,.c3{grid-template-columns:repeat(2,1fr)}.c2,.dual{grid-template-columns:1fr}}
+@media(max-width:760px){.c4,.c3{grid-template-columns:repeat(2,1fr)}.c2,.dual{grid-template-columns:1fr}
+  /* Sin esto las tarjetas no achican por debajo del número que traen adentro y la
+     pantalla se va de costado en el celular. */
+  .cards>*{min-width:0}.kpi{padding:14px 10px}.kpi .big{font-size:1.2rem;overflow-wrap:anywhere}}
 .nube-estado{display:inline-flex;align-items:center;gap:6px;font-size:.8rem;font-weight:700;padding:6px 14px;border-radius:20px;margin-left:6px}
 .nube-estado.cargando{background:rgba(91,184,232,.15);color:var(--celeste);border:1px solid var(--celeste)}
 .nube-estado.ok{background:rgba(62,196,109,.15);color:var(--verde);border:1px solid var(--verde)}
