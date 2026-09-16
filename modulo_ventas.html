@@ -1347,7 +1347,7 @@ function cargarPrecios(){
 /* ---------------------- pantallas ---------------------- */
 
 function mostrar(cual){
-  ['pApertura','pTurno','pVenta','pCalendario','pIngreso','pRetiro','pCobrarDeuda','pCierre','pCerrado'].forEach(function(p){
+  ['pApertura','pTurno','pVenta','pCalendario','pIngreso','pRetiro','pIngresoPlata','pCobrarDeuda','pCierre','pCerrado'].forEach(function(p){
     ver(p, p === cual);
   });
   window.scrollTo(0,0);
@@ -1771,12 +1771,14 @@ function tarjetaPedido(f, i, conBoton){
   var c = cobroDePedido(f);
   var saldo = c.total - c.dejo;
   var chip = '';
-  if (c.total > 0){
+  if (c.total > 0 && c.total < 1000){    chip = '<span class="pill revisar">Revisar precio: ' + pesos(c.total) + '</span>';  } else if (c.total > 0){
     if (saldo > 0)       chip = '<span class="pill deuda">Falta ' + pesos(saldo) + '</span>';
     else if (saldo === 0) chip = '<span class="pill ok">Ya pagado</span>';
     // Dejó MÁS de lo que costaba: casi siempre es un error de carga en el
     // formulario. No se puede tapar mostrando "Ya pagado".
     else chip = '<span class="pill revisar">Revisar: dejó ' + pesos(-saldo) + ' de más</span>';
+  } else {
+    chip = '<span class="pill revisar">Falta el precio</span>';
   }
   // Si la planilla no le puso número, se avisa. Antes se mostraba el texto
   // basura de esa columna como si fuera el número.
