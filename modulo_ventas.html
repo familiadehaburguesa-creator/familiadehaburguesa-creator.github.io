@@ -598,6 +598,7 @@ input[type=date],select{min-height:44px}
         <div id="wrapProv">
           <label for="vProv">¿De qué pan sale?</label>
           <select id="vProv">
+            <option value="" selected disabled>Elegí uno</option>
             <option value="J">Pan de Julio</option>
             <option value="S">Pan de José</option>
           </select>
@@ -2003,6 +2004,10 @@ function elegirProducto(id){
                            : sel.id === 'chepack' ? '¿Cuántos packs de 10 fetas?'
                            : '¿Cuántas carnes?';
   ver('wrapProv', sel.pan);
+  // Sin proveedor por defecto: si no se elige a propósito, no se puede
+  // vender. Antes quedaba en "Pan de Julio" (primera opción) aunque nadie
+  // lo tocara, y el stock del pan equivocado se descontaba solo.
+  if (sel.pan) $('vProv').value = '';
   recalcular();
 }
 
@@ -2064,6 +2069,15 @@ function faltaPanSuelto(c, prov){
          ' y querés vender ' + miles(c) + '. Corregí la cantidad o cambiá de pan.';
 }
 
+/** "carnes: hay 440 · 440 reservadas para pedidos de hoy · quedan libres 0 (necesitás 200)" */
+function textoFaltante(nombre, necesita, hay, reservado){
+  var libre = hay - reservado;
+  var txt = nombre + ' (hay ' + miles(hay);
+  if (reservado > 0) txt += ' · ' + miles(reservado) + ' ya reservadas para pedidos de hoy';
+  txt += ' · quedan libres ' + miles(Math.max(0, libre)) + ', necesitás ' + miles(necesita) + ')';
+  return txt;
+}
+
 function avisarStock(c){
   var el = $('avisoStock');
   el.innerHTML = '';
@@ -2084,14 +2098,16 @@ function avisarStock(c){
     var nCar = esCombo ? c * COMBO.carne : c, nPan = esCombo ? c * COMBO.pan : c;
     // v20: se compara contra lo LIBRE, no contra el stock crudo. Lo que ya
     // comprometieron los pedidos de hoy tiene dueño aunque siga en la heladera.
+    // El aviso explica la reserva en palabras (no solo "quedan libres X"),
+    // porque si no parece que falta stock real y no que está apartado.
     var L = libreEnTurno();
-    if (nCar > L.carne) faltas.push('carnes (hacen falta ' + nCar + ' y quedan libres ' + Math.max(0,L.carne) + ')');
+    if (nCar > L.carne) faltas.push(textoFaltante('carnes', nCar, T.stock.carne, L.comp.carne));
     if (sel.pan){
-      if (prov === 'J' && nPan > L.panJ) faltas.push('pan de Julio (hacen falta ' + nPan + ' y quedan libres ' + Math.max(0,L.panJ) + ')');
-      if (prov === 'S' && nPan > L.panS) faltas.push('pan de José (hacen falta ' + nPan + ' y quedan libres ' + Math.max(0,L.panS) + ')');
+      if (prov === 'J' && nPan > L.panJ) faltas.push(textoFaltante('pan de Julio', nPan, T.stock.panJ, L.comp.panJ));
+      if (prov === 'S' && nPan > L.panS) faltas.push(textoFaltante('pan de José', nPan, T.stock.panS, 0));
     }
     if (esCombo && c * COMBO.pack > L.pack){
-      faltas.push('packs de cheddar (hacen falta ' + (c * COMBO.pack) + ' y quedan libres ' + Math.max(0,L.pack) + ')');
+      faltas.push(textoFaltante('packs de cheddar', c * COMBO.pack, T.stock.pack, L.comp.pack));
     }
   }
   if (faltas.length){
@@ -2114,6 +2130,10 @@ function agregarItem(){
     return;
   }
   var prov = sel.pan ? $('vProv').value : null;
+  if (sel.pan && !prov){
+    $('avisoStock').innerHTML = '<div class="aviso rojo">Elegí de qué pan sale (Julio o José) antes de agregarlo.</div>';
+    return;
+  }
   if (sel.id === 'solopan'){
     var falta = faltaPanSuelto(c, prov);
     if (falta){ $('avisoStock').innerHTML = '<div class="aviso rojo">' + falta + '</div>'; return; }
