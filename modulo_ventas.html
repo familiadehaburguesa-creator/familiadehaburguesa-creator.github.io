@@ -1570,6 +1570,11 @@ function pintarFabrica(mensaje, d){
 
 var PEDIDOS_HOY = [];
 var PEDIDOS_TODOS = [];
+/** 'cargando' | 'listo' | 'error'. El fetch a PedidosForm puede tardar o devolver
+ *  null (Google Apps Script a veces no entrega a tiempo); sin este estado la
+ *  pantalla se quedaba en silencio con la lista vacía y parecía "no hay pedidos". */
+var ESTADO_PEDIDOS = 'cargando';
+var PEDIDOS_REINTENTOS = 0;
 
 /** Fecha de retiro normalizada a 'aaaa-mm-dd', o '' si no se entiende. */
 function fechaDe(f){
@@ -1585,9 +1590,27 @@ function fechaDe(f){
 }
 
 function traerPedidos(){
+  ESTADO_PEDIDOS = 'cargando';
+  pintarPedidos(); pintarListaPedidos();
   traer('PedidosForm', function(r){
+    if (!r && PEDIDOS_REINTENTOS < 1){
+      // Un solo reintento automático y silencioso: la mayoría de las fallas
+      // son el relay lento de Google (script.googleusercontent.com/echo), no
+      // un error real. Si el segundo intento también falla, recién ahí se
+      // avisa y se deja el botón "Reintentar" a mano.
+      PEDIDOS_REINTENTOS++;
+      traerPedidos();
+      return;
+    }
+    PEDIDOS_REINTENTOS = 0;
+    if (!r){
+      ESTADO_PEDIDOS = 'error';
+      pintarPedidos(); pintarListaPedidos(); pintarStockTurno();
+      return;
+    }
+    ESTADO_PEDIDOS = 'listo';
     PEDIDOS_HOY = []; PEDIDOS_TODOS = [];
-    if (r && r.ok && r.datos){
+    if (r.ok && r.datos){
       r.datos.forEach(function(f){
         var est = limpiaClave(campo(f,'estado'));
         if (est.indexOf('cancelado') >= 0) return;
@@ -1597,7 +1620,7 @@ function traerPedidos(){
         PEDIDOS_HOY.push(f);
       });
     }
-    pintarPedidos(); pintarStockTurno();
+    pintarPedidos(); pintarListaPedidos(); pintarStockTurno();
     if (!$('pCalendario').classList.contains('oculto')) pintarMes();
   });
 }
@@ -1875,8 +1898,23 @@ function pintarStockTurno(){
   el.innerHTML = cab + '<div class="tabla-stock">' + filas + '</div>' + dud;
 }
 
+/** HTML del aviso de carga/error, compartido entre pintarPedidos() y pintarListaPedidos(). */
+function avisoPedidos(){
+  if (ESTADO_PEDIDOS === 'cargando') return 'Cargando pedidos…';
+  if (ESTADO_PEDIDOS === 'error') return 'No se pudieron traer los pedidos (falló la conexión). ' +
+    '<button type="button" class="btn chico" style="width:auto;padding:0 14px;margin-top:8px" data-reintentar-pedidos>Reintentar</button>';
+  return null;
+}
+
 function pintarPedidos(){
   var el = $('pedidos');
+  var aviso = avisoPedidos();
+  if (aviso !== null){
+    el.className = 'vacio';
+    el.innerHTML = aviso;
+    ligarReintentarPedidos(el);
+    return;
+  }
   var lista = pendientesHoy();
   var entregados = PEDIDOS_HOY.length - lista.length;
   if (!lista.length){
@@ -1894,6 +1932,13 @@ function pintarPedidos(){
 
 function pintarListaPedidos(){
   var el = $('listaPedidos');
+  var aviso = avisoPedidos();
+  if (aviso !== null){
+    el.className = 'vacio';
+    el.innerHTML = aviso;
+    ligarReintentarPedidos(el);
+    return;
+  }
   var lista = pendientesHoy();
   if (!lista.length){ el.className = 'vacio'; el.textContent = 'No quedan pedidos por entregar hoy.'; return; }
   el.className = '';
@@ -1901,6 +1946,11 @@ function pintarListaPedidos(){
   Array.prototype.forEach.call(el.querySelectorAll('[data-ped]'), function(b){
     b.addEventListener('click', function(){ elegirPedido(ent(b.getAttribute('data-ped'))); });
   });
+}
+
+function ligarReintentarPedidos(el){
+  var b = el.querySelector('[data-reintentar-pedidos]');
+  if (b) b.addEventListener('click', function(){ PEDIDOS_REINTENTOS = 0; traerPedidos(); });
 }
 
 /* ---------------------- venta ---------------------- */
