@@ -810,6 +810,17 @@ function pintarReporte(){
       h+='<div class="c-ops"><span class="c-op">Contó en caja: <b>'+pesos(num(v.EfectivoContado))+'</b></span>'+
          '<span class="c-op">Contó en MP: <b>'+pesos(num(v.MPContado))+'</b></span></div>';
     }
+    // Cobros de deuda / señas que entraron y NO son venta de este turno. Van
+    // aparte de "Efectivo"/"Mercado Pago" de arriba (que son solo ventas) para
+    // no duplicar la cuenta, pero si no se muestran acá quedan invisibles: es
+    // plata real que entró a la caja y el conteo del cierre la espera.
+    if(num(v.OtrosIngresosEfe)>0||num(v.OtrosIngresosMP)>0){
+      h+='<div class="c-ops"><span class="c-nota">💰 Entró sin ser venta (señas, cobros de deuda): '+
+         (num(v.OtrosIngresosEfe)>0?'efectivo <b>'+pesos(num(v.OtrosIngresosEfe))+'</b>':'')+
+         (num(v.OtrosIngresosEfe)>0&&num(v.OtrosIngresosMP)>0?' · ':'')+
+         (num(v.OtrosIngresosMP)>0?'MP <b>'+pesos(num(v.OtrosIngresosMP))+'</b>':'')+
+         '</span></div>';
+    }
     if(hayS){
       h+='<div class="c-ops"><span class="c-nota">Stock — abrió: '+sa.map(cant0).join(' / ')+
          ' · cerró: '+sc.map(cant0).join(' / ')+' <i>(carne / pan Julio / pan José / barras / packs)</i></span></div>';
@@ -827,13 +838,22 @@ function pintarReporte(){
   var entraEfe=cierres.reduce(function(a,v){ return a+num(v.Efectivo); },0);
   var entraMP=cierres.reduce(function(a,v){ return a+num(v.MercadoPago)+num(v.Transferencia); },0);
   var fiado=cierres.reduce(function(a,v){ return a+debeDeCierre(v); },0);
+  var otrosEfe=cierres.reduce(function(a,v){ return a+num(v.OtrosIngresosEfe); },0);
+  var otrosMp=cierres.reduce(function(a,v){ return a+num(v.OtrosIngresosMP); },0);
   var sale={EFECTIVO:0, MP_FDH:0, CAJA:0, '':0};
   gastos.forEach(function(g){ sale[medioDe(g)]=(sale[medioDe(g)]||0)+num(g.Monto); });
   h+='<div class="bloque-tit" style="margin-top:14px">Entró</div>'+
      fila('Efectivo', pesos(entraEfe), cierres.length+(cierres.length===1?' turno':' turnos'))+
      fila('Mercado Pago', pesos(entraMP),'')+
      fila('Quedó fiado', pesos(fiado),'no entró todavía')+
-     '<div class="parcial"><span>Total vendido</span><span>'+pesos(entraEfe+entraMP+fiado)+'</span></div>';
+     '<div class="parcial"><span>Total vendido</span><span>'+pesos(entraEfe+entraMP+fiado)+'</span></div>'+
+     // Aparte del total vendido a propósito: es plata real en la caja (señas,
+     // cobros de deuda) pero no es venta de este período, así que no se suma
+     // ahí — se mostraba en Ventas pero nunca acá, y por eso "sobraba" plata
+     // sin explicación al contar la caja a la noche.
+     (otrosEfe>0||otrosMp>0
+       ? fila('Entró sin ser venta', pesos(otrosEfe+otrosMp),'señas, cobros de deuda · efectivo '+pesos(otrosEfe)+' · MP '+pesos(otrosMp))
+       : '');
   h+='<div class="bloque-tit" style="margin-top:14px">Salió</div>'+
      fila('En efectivo', pesos(sale.EFECTIVO),'sale de Tesorería')+
      fila('Por MP - FDH', pesos(sale.MP_FDH),'')+
