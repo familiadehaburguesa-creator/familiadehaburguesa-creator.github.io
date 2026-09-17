@@ -215,10 +215,6 @@ input[type=date],select{min-height:44px}
 
 <div class="kpis" id="kpis"></div>
 
-<!-- HU3: saldos por canal (MP - FDH, Inversiones/FDI, Tesorería) -->
-<div class="bloque-tit">Saldos por canal</div>
-<div class="saldos" id="saldos"></div>
-
 <!-- HU-03: reporte de cierres por rango de fechas -->
 <div class="panel">
   <h2>📄 Reporte de cierres</h2>
@@ -705,7 +701,6 @@ function render(){
     kpi(porCobrar(),'📌 Falta cobrar','k-ambar',deudoresAbiertos().length+' deudores · mismo número que el mostrador')+
     kpi(gastosMes(),'🔴 Salió este mes','k-rojo','gastos + retiros de caja')+
     '';
-  pintarSaldos();
   pintarProveedores();
   pintarReporte();
   /* cierres */
@@ -755,16 +750,6 @@ function proveedoresUsados(){
 function pintarProveedores(){
   var d=$('listaProv'); if(!d) return;
   d.innerHTML=proveedoresUsados().map(function(p){ return '<option value="'+p.replace(/"/g,'&quot;')+'">'; }).join('');
-}
-
-function pintarSaldos(){
-  var sm=gastosSinMedio();
-  var nota=sm?(sm+(sm===1?' gasto sin medio':' gastos sin medio')+' · '+pesos(montoSinMedio())+' sin imputar')
-             :'lo declarado − los gastos en efectivo';
-  $('saldos').innerHTML=
-    kpi(saldoCanal('MP_FDH'),'💳 MP - FDH','k-celeste','cobros por MP de los cierres − gastos y aportes')+
-    kpi(fondoTotal(),'🟣 Inversiones / FDI','k-violeta','solo MP - FDH: aportes − retiros')+
-    kpi(saldoTesoreria(),'🏦 Tesorería (Efectivo)','k-verde',nota);
 }
 
 /* ============================================================================
