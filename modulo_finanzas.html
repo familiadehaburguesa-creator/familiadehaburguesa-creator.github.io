@@ -195,6 +195,11 @@ button.sec:hover{background:#33291a;color:#fff}
 .campo.chico.campo-plata{max-width:none}
 /* v19 · filtros de fecha y botones de rango: alto cómodo para el dedo */
 input[type=date],select{min-height:44px}
+/* El ícono nativo del calendario es negro por defecto y se pierde en un
+   fondo oscuro. color-scheme lo pone claro/blanco (Chrome/Edge/Safari);
+   el filtro es el respaldo para navegadores que no lo respetan. */
+input[type=date]{color-scheme:dark}
+input[type=date]::-webkit-calendar-picker-indicator{filter:invert(1) brightness(1.4);cursor:pointer}
 .rango button,.chips>*{min-height:44px}
 </style>
 </head>
