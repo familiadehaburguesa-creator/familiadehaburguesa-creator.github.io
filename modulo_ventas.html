@@ -2583,8 +2583,11 @@ function confirmarIngreso(que, c, fabricaNuevo, salvedad){
     FABRICA.listas = fabricaNuevo.listas;
     FABRICA.camara = fabricaNuevo.camara;
     FABRICA.sabido = true;
-    pintarFabrica(null, FABRICA);
   }
+  // Se repinta siempre, no solo cuando salió de la fábrica: el aviso "queda
+  // poco en el local" lee T.stock.carne, y si no se refresca acá se queda
+  // mostrando el número de antes del ingreso hasta el próximo "Actualizar".
+  pintarFabrica(null, FABRICA);
 
   guardarTurno();
   pintarKPIs(); pintarMovs();
