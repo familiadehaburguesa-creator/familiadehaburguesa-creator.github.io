@@ -499,6 +499,12 @@ input[type=date],select{min-height:44px}
     </div>
 
     <div class="caja">
+      <h2>Stock para pedidos (reservas)</h2>
+      <div class="kpis" id="kpiReservas"></div>
+      <div class="nota" id="reservasNota" style="margin-top:8px"></div>
+    </div>
+
+    <div class="caja">
       <h2>En la fábrica <button class="refrescar" id="btnRefrescarFabrica" type="button">Actualizar</button></h2>
       <div id="fabricaTurno" class="vacio">Consultando…</div>
       <button class="btn gris chico" id="btnCargarFabrica" style="margin-top:12px">Cargar el stock de fábrica</button>
@@ -1611,7 +1617,7 @@ function traerPedidos(){
     PEDIDOS_REINTENTOS = 0;
     if (!r){
       ESTADO_PEDIDOS = 'error';
-      pintarPedidos(); pintarListaPedidos(); pintarStockTurno();
+      pintarPedidos(); pintarListaPedidos(); pintarStockTurno(); pintarReservas();
       return;
     }
     ESTADO_PEDIDOS = 'listo';
@@ -1626,7 +1632,7 @@ function traerPedidos(){
         PEDIDOS_HOY.push(f);
       });
     }
-    pintarPedidos(); pintarListaPedidos(); pintarStockTurno();
+    pintarPedidos(); pintarListaPedidos(); pintarStockTurno(); pintarReservas();
     if (!$('pCalendario').classList.contains('oculto')) pintarMes();
   });
 }
@@ -1902,6 +1908,39 @@ function pintarStockTurno(){
   var dud = c.dudosos ? '<div class="nota">'+c.dudosos+' pedido(s) con cantidades que no pude leer: no están contados acá. Revisalos a mano.</div>' : '';
   el.className = '';
   el.innerHTML = cab + '<div class="tabla-stock">' + filas + '</div>' + dud;
+}
+
+/**
+ * "Stock en el local" hermano: lo que ya tienen dueño los pedidos de hoy sin
+ * entregar. Mismos números que "STOCK DEL TURNO" (columna "pedidos"), pero
+ * en tarjetas grandes como el panel de arriba, para verlo de un vistazo sin
+ * tener que leer la tabla. Se pinta en los mismos momentos que
+ * pintarStockTurno() — al abrir el turno, al traer pedidos y al cerrar cada
+ * venta/entrega — así que cuando un pedido se entrega y sale de PEDIDOS_HOY,
+ * la reserva baja sola acá y en "Stock en el local" al mismo tiempo.
+ */
+function pintarReservas(){
+  var el = $('kpiReservas');
+  if (!el) return;
+  if (!T || !T.abierto){ el.innerHTML=''; $('reservasNota').textContent=''; return; }
+  var c = libreEnTurno().comp;
+  // El desglose de pedidos no distingue pan de Julio de pan de José (queda
+  // dicho en comprometidoHoy()): se muestra un solo total de pan, no dos.
+  var riesgo = {
+    carne: c.carne > T.stock.carne,
+    pan:   c.panJ  > (T.stock.panJ + T.stock.panS),
+    che:   c.che   > T.stock.che,
+    pack:  c.pack  > T.stock.pack
+  };
+  $('kpiReservas').innerHTML =
+    kpi(c.carne, 'Carnes', riesgo.carne?'rojo':'') +
+    kpi(c.panJ,  'Pan', riesgo.pan?'rojo':'', 'Julio + José juntos') +
+    kpi(c.che,   'Barras cheddar', riesgo.che?'rojo':'') +
+    kpi(c.pack,  'Packs cheddar', riesgo.pack?'rojo':'') +
+    kpi(c.pedidos, 'Pedidos de hoy sin entregar', 'total');
+  $('reservasNota').textContent = c.dudosos
+    ? c.dudosos+' pedido(s) con cantidades que no se pudieron leer: no están contados acá arriba, revisalos a mano.'
+    : (c.pedidos ? '' : 'No hay pedidos pendientes de hoy: nada reservado.');
 }
 
 /** HTML del aviso de carga/error, compartido entre pintarPedidos() y pintarListaPedidos(). */
@@ -2394,7 +2433,7 @@ function finalizarVenta(){
          pesos(total));
 
   guardarTurno();
-  pintarKPIs(); pintarMovs(); pintarDeudas(); pintarPedidos(); pintarStockTurno();
+  pintarKPIs(); pintarMovs(); pintarDeudas(); pintarPedidos(); pintarStockTurno(); pintarReservas();
   venta = null;
   mostrar('pTurno');
 }
