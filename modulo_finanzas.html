@@ -815,8 +815,8 @@ function pintarReporte(){
   h+='<div class="bloque-tit" style="margin-top:6px">Turnos del período'+(SOLO_OBS?' (solo con observación)':'')+'</div>';
   if(!cierresMostrados.length) h+='<div class="vacio">'+(SOLO_OBS?'Ninguno en este rango tiene observación.':'Sin cierres en el rango.')+'</div>';
   cierresMostrados.slice().reverse().forEach(function(v){
-    var ho=String(v.HoraApertura||''), hc=String(v.HoraCierre||'');
-    var rango=(ho||hc) ? (ho||'—')+' a '+(hc||'—') : 'sin horario registrado';
+    var ho=soloHora(v.HoraApertura), hc=soloHora(v.HoraCierre);
+    var rango=(ho||hc) ? (ho||'—')+' a '+(hc||'—')+' hs' : 'sin horario registrado';
     var sa=[v.AperturaCarne,v.AperturaPanJ,v.AperturaPanS,v.AperturaChe,v.AperturaPack];
     var sc=[v.CierreCarne,v.CierrePanJ,v.CierrePanS,v.CierreChe,v.CierrePack];
     var hayS=sa.some(hayDato)||sc.some(hayDato);
