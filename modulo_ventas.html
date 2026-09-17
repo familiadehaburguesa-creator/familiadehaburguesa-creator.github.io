@@ -263,7 +263,12 @@
      alto útil real es de unos 600px, así que cada campo se compacta y las
      listas largas scrollean adentro de su propia caja, nunca la página. */
   @media (min-width: 900px){
-    body{height:100vh;overflow:hidden;padding:12px 18px 10px}
+    /* overflow-y:auto en vez de hidden: al 100% de zoom entra igual, sin
+       scroll de página (auto no muestra barra si no hace falta) — pero si
+       alguien hace zoom del navegador, 100vh pasa a ser menos píxeles y el
+       contenido de ancho/alto fijo ya no entra. Con "hidden" quedaba
+       recortado y sin forma de bajar; con "auto" aparece el scroll. */
+    body{height:100vh;overflow-y:auto;padding:12px 18px 10px}
     /* Se aprovecha todo el ancho. El tope es alto solo para que en un monitor
        muy grande el texto no quede en líneas interminables. */
     .wrap{max-width:2000px;height:100%;display:flex;flex-direction:column;min-height:0}
