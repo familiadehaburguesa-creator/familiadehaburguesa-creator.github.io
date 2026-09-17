@@ -111,6 +111,8 @@ button.mini{padding:5px 10px;font-size:.8rem;border-radius:7px}
 .c-op b{font-weight:800}
 .c-op+.c-op{padding-left:14px;border-left:1px solid #2c2c34}
 .c-nota{font-size:.76rem;color:#d8cdb9;font-style:italic}
+.c-obs{display:block;margin-top:9px;padding:8px 11px;border-left:3px solid var(--amarillo);background:rgba(242,193,78,.09);border-radius:0 8px 8px 0;font-size:.85rem;line-height:1.35;color:var(--crema)}
+.c-obs b{color:var(--amarillo)}
 .vacio{color:var(--gris);font-size:.82rem;font-style:italic;padding:6px 2px}
 .solo-lectura{display:inline-block;font-size:.68rem;font-weight:800;padding:2px 10px;border-radius:11px;background:rgba(91,184,232,.14);color:var(--celeste);margin-left:6px}
 .aviso{border-radius:9px;padding:9px 13px;font-size:.85rem;font-weight:600;margin-top:9px}
@@ -226,6 +228,7 @@ input[type=date],select{min-height:44px}
     <div class="campo chico"><label>&nbsp;</label><button class="mini sec" onclick="rangoRapido(7)">Últimos 7 días</button></div>
     <div class="campo chico"><label>&nbsp;</label><button class="mini sec" onclick="rangoRapido('mes')">Este mes</button></div>
   </div>
+  <div id="chipObsWrap" class="oculto" style="margin-bottom:10px"><button class="mini" id="chipObs" onclick="toggleSoloObs()"></button></div>
   <div id="reporte"></div>
 </div>
 
@@ -775,11 +778,25 @@ function fila(et,val,sub){
   return '<div class="item"><div><div class="t1">'+et+'</div>'+(sub?'<div class="t2">'+sub+'</div>':'')+'</div>'+
          '<div class="monto">'+val+'</div></div>';
 }
+var SOLO_OBS=false;
+function toggleSoloObs(){ SOLO_OBS=!SOLO_OBS; pintarReporte(); }
+
 function pintarReporte(){
   if(!$('rDesde').value && !$('rHasta').value){
     $('reporte').innerHTML='<div class="vacio">Elegí un rango de fechas o tocá uno de los botones.</div>'; return;
   }
   var cierres=D.ventas.filter(function(v){ return enRango(v.Fecha); });
+  var conObs=cierres.filter(function(v){ return String(v.Observacion||'').trim(); });
+  // Chip para escanear rápido: hay pocas observaciones, así que en vez de una
+  // sección nueva (que quedaría vacía casi siempre) se filtra la misma lista.
+  if(conObs.length){
+    $('chipObsWrap').classList.remove('oculto');
+    $('chipObs').textContent=(SOLO_OBS?'✓ ':'📝 ')+conObs.length+(conObs.length===1?' turno con observación':' turnos con observación')+(SOLO_OBS?' · ver todos':' · ver solo estos');
+  } else {
+    $('chipObsWrap').classList.add('oculto');
+    SOLO_OBS=false;
+  }
+  var cierresMostrados=SOLO_OBS?conObs:cierres;
   var gastos=vigentes().filter(function(g){ return !esFondo(g) && enRango(g.Fecha); });
   var teso=D.tesoreria.filter(function(t){ return enRango(t.FechaCierre||t.Fecha); });
   var deudas=D.deudas.filter(function(f){ return enRango(f.Fecha); });
@@ -790,9 +807,9 @@ function pintarReporte(){
   }
 
   /* --- 1. turnos --- */
-  h+='<div class="bloque-tit" style="margin-top:6px">Turnos del período</div>';
-  if(!cierres.length) h+='<div class="vacio">Sin cierres en el rango.</div>';
-  cierres.slice().reverse().forEach(function(v){
+  h+='<div class="bloque-tit" style="margin-top:6px">Turnos del período'+(SOLO_OBS?' (solo con observación)':'')+'</div>';
+  if(!cierresMostrados.length) h+='<div class="vacio">'+(SOLO_OBS?'Ninguno en este rango tiene observación.':'Sin cierres en el rango.')+'</div>';
+  cierresMostrados.slice().reverse().forEach(function(v){
     var ho=String(v.HoraApertura||''), hc=String(v.HoraCierre||'');
     var rango=(ho||hc) ? (ho||'—')+' a '+(hc||'—') : 'sin horario registrado';
     var sa=[v.AperturaCarne,v.AperturaPanJ,v.AperturaPanS,v.AperturaChe,v.AperturaPack];
@@ -806,6 +823,13 @@ function pintarReporte(){
          '<div class="c-medio mp"><span class="c-et">Mercado Pago</span><span class="c-m">'+pesos(num(v.MercadoPago)+num(v.Transferencia))+'</span></div>'+
          '<div class="c-medio deb'+(debeDeCierre(v)>0?' hay':'')+'"><span class="c-et">Debe</span><span class="c-m">'+pesos(debeDeCierre(v))+'</span></div>'+
        '</div>';
+    // La observación va PRIMERO y con su propio bloque, no mezclada como una
+    // línea gris más: es lo único que un socio escribió a mano para avisar
+    // algo puntual, y hoy se perdía entre stock/MP/caja contada.
+    var obs=String(v.Observacion||'').trim();
+    if(obs){
+      h+='<div class="c-obs" data-obs="1">📝 <b>Observación:</b> '+obs+'</div>';
+    }
     if(hayDato(v.EfectivoContado)||hayDato(v.MPContado)){
       h+='<div class="c-ops"><span class="c-op">Contó en caja: <b>'+pesos(num(v.EfectivoContado))+'</b></span>'+
          '<span class="c-op">Contó en MP: <b>'+pesos(num(v.MPContado))+'</b></span></div>';
@@ -824,9 +848,6 @@ function pintarReporte(){
     if(hayS){
       h+='<div class="c-ops"><span class="c-nota">Stock — abrió: '+sa.map(cant0).join(' / ')+
          ' · cerró: '+sc.map(cant0).join(' / ')+' <i>(carne / pan Julio / pan José / barras / packs)</i></span></div>';
-    }
-    if(String(v.Observacion||'').trim()){
-      h+='<div class="c-ops"><span class="c-nota">📝 '+v.Observacion+'</span></div>';
     }
     if(String(v.PagadoresMP||'').trim()){
       h+='<div class="c-ops"><span class="c-nota">Pagaron por MP: '+v.PagadoresMP+'</span></div>';
