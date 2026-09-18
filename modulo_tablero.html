@@ -250,38 +250,62 @@ function leer(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return 
 /* ☁️ Lectura de la nube (cuaderno central) por JSONP, para no chocar con CORS */
 const NUBE_URL='https://script.google.com/macros/s/AKfycbxfraGEgAFUeypW4D9wsEct90sH4DRZjOJsQiky-WZtF41qPOaul9HDlgSjynwHAjpk/exec';
 let datosNube=null;
+/* Caché de exhibición: última respuesta buena de la nube en esta pestaña
+   (sessionStorage, se borra sola al cerrarla). No toca localStorage ni el
+   Cuaderno — solo evita que el Tablero arranque en blanco ~15s en cada
+   carga cuando ya se sabe algo reciente. */
+const KCACHE_NUBE='fdh_nube_cache_tablero';
+function pintarCacheSesion(){
+ try{
+   const c=JSON.parse(sessionStorage.getItem(KCACHE_NUBE)||'null');
+   if(!c||!c.datos) return;
+   datosNube=c.datos;
+   const aviso=$('nubeEstado');
+   if(aviso){aviso.textContent='☁️ Última lectura conocida · actualizando…';aviso.className='nube-estado cargando';aviso.style.display='inline-flex'}
+   cargar();
+ }catch(e){}
+}
 function cargarNube(){
  const cb='nubeCB_'+Date.now();
  const aviso=$('nubeEstado');
  if(aviso){aviso.textContent='☁️ Trayendo datos de todos los dispositivos...';aviso.className='nube-estado cargando';aviso.style.display='inline-flex'}
+ let listo=false;
  window[cb]=function(resp){
+   listo=true;
    if(resp&&resp.ok&&resp.datos){
      datosNube=resp.datos;
      if(aviso){aviso.textContent='✓ Datos de la nube actualizados';aviso.className='nube-estado ok';setTimeout(()=>{aviso.style.display='none'},4000)}
      cargar(); /* re-render con los datos completos */
+     try{ sessionStorage.setItem(KCACHE_NUBE,JSON.stringify({datos:resp.datos})); }catch(e){}
    } else if(aviso){aviso.textContent='⚠️ No se pudo traer la nube (muestro lo de esta compu)';aviso.className='nube-estado error'}
-   delete window[cb];document.getElementById(cb)&&document.getElementById(cb).remove();
+   limpiar();
  };
  const s=document.createElement('script');
  s.id=cb;s.src=NUBE_URL+'?callback='+cb+'&t='+Date.now();
- s.onerror=function(){if(aviso){aviso.textContent='⚠️ Sin conexión a la nube (muestro lo local)';aviso.className='nube-estado error'}delete window[cb];s.remove()};
+ s.onerror=avisar;
  document.body.appendChild(s);
+ /* mismo fix que Producción: no borrar el callback apenas se avisa el
+    error, para que una respuesta tardía de la nube (4-12s+ documentado)
+    no choque con un ReferenceError y se pueda seguir aprovechando. */
+ setTimeout(avisar,20000);
+ setTimeout(function(){ if(!listo) limpiar(); },35000);
+ function avisar(){ if(listo) return; if(aviso){aviso.textContent='⚠️ Sin conexión a la nube (muestro lo local)';aviso.className='nube-estado error'} }
+ function limpiar(){ try{ delete window[cb]; }catch(e){} if(s.parentNode) s.parentNode.removeChild(s); }
 }
 function burgy(m){$('burgyDice').textContent=m}
 function toggle(id){$(id).classList.toggle('abierto')}
 
-const PERSONAS=['Pablo','Paula','Cielo','Yami'];
+const PERSONAS=['Pablo','Yami','Cielo','Paula','Mara','Soporte'];
 let quienObj=PERSONAS[0];
 $('aoQuien').innerHTML=PERSONAS.map((p,i)=>'<div class="chip'+(i===0?' sel':'')+'" onclick="setQuien(this,\''+p+'\')">'+p+'</div>').join('');
 function setQuien(el,p){document.querySelectorAll('#aoQuien .chip').forEach(e=>e.classList.remove('sel'));el.classList.add('sel');quienObj=p}
 
-/* Objetivos por defecto (ejemplos editables). Cada uno: nombre, avances 3/6/12, firma */
-let objetivos=leer('fdh_objetivos_v1')||[
- {id:1,nombre:'Duplicar las ventas',a3:90,a6:55,a12:28,quien:'Pablo',cuando:ahora()},
- {id:2,nombre:'Multiplicar la producción en cantidad',a3:80,a6:50,a12:25,quien:'Mara',cuando:ahora()},
- {id:3,nombre:'Levantar 5 revendedores nuevos',a3:60,a6:40,a12:20,quien:'Pablo',cuando:ahora()},
- {id:4,nombre:'Lograr el fondo de inversión 🏆',a3:100,a6:45,a12:25,quien:'Yami',cuando:ahora()}
-];
+/* Los objetivos de ejemplo se sacaron (regresión contra la política ya
+   validada el 19-ago-2026: "el tablero muestra SOLO datos reales").
+   Caían acá cada vez que el localStorage estaba vacío (celular nuevo) y
+   se mostraban con cuando:ahora() — o sea con la hora ACTUAL — como si
+   Pablo/Mara/Yami hubieran actualizado el objetivo recién, sin ser cierto. */
+let objetivos=leer('fdh_objetivos_v1')||[];
 function guardarObj(){localStorage.setItem('fdh_objetivos_v1',JSON.stringify(objetivos))}
 function agregarObjetivo(){
  const n=$('aoNombre').value.trim();if(!n){burgy('Escribí el nombre del objetivo. ✍️');return}
@@ -447,8 +471,9 @@ function kpi(color,big,lbl){return '<div class="kpi '+color+'"><div class="big">
 function dl(k,v){return '<div class="dl"><span>'+k+'</span><b>'+v+'</b></div>'}
 function dlBar(k,v,pct,col){return '<div><div class="dl"><span>'+k+'</span><b>'+v+'</b></div><div class="bar-cat"><div class="f" style="width:'+pct+'%;background:'+col+'"></div></div></div>'}
 
-cargar();      /* 1) muestra al instante lo de esta compu */
-cargarNube();  /* 2) en paralelo trae los datos de todos los dispositivos y re-renderiza */
+cargar();            /* 1) muestra al instante lo de esta compu */
+pintarCacheSesion(); /* 2) si esta pestaña ya sabía algo reciente, lo pinta ya mismo */
+cargarNube();        /* 3) en paralelo trae los datos de todos los dispositivos y re-renderiza */
 </script>
 <script>
 /* PWA: registro del service worker (red primero, no cachea HTML viejo) */

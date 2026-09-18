@@ -412,16 +412,25 @@ function hoyLocal(){ var d=new Date(); return d.getFullYear()+'-'+String(d.getMo
 function ahora(){ return new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}); }
 function burgy(m){ $('burgyDice').textContent=m; }
 
-/* ===== Nube ===== */
+/* ===== Nube =====
+   El MENSAJERO puede tardar 4-12s+ en responder. Antes, a los 12s se
+   asumia error y se borraba el callback JSONP (delete window[nombre]):
+   si la respuesta llegaba despues igual, el script la intentaba llamar
+   y explotaba con "ReferenceError: fdhprod1 is not defined", dejando el
+   modulo trabado en "Sin conexion" para siempre. Ahora el aviso de error
+   sale a los 20s pero el callback sigue vivo hasta los 35s: si la nube
+   contesta tarde, se sigue aprovechando y la pantalla se recupera sola. */
 var cbN=0;
 function traer(hoja, ok){
-  var nombre='fdhprod'+(++cbN), listo=false;
+  var nombre='fdhprod'+(++cbN), listo=false, avisado=false;
   window[nombre]=function(r){ listo=true; try{ ok(r); }catch(e){} limpiar(); };
   var s=document.createElement('script');
   s.src=NUBE_URL+'?hoja='+encodeURIComponent(hoja)+'&callback='+nombre;
-  s.onerror=function(){ if(!listo){ ok(null); limpiar(); } };
+  s.onerror=avisar;
   document.head.appendChild(s);
-  setTimeout(function(){ if(!listo){ ok(null); limpiar(); } },12000);
+  setTimeout(avisar,20000);
+  setTimeout(function(){ if(!listo) limpiar(); },35000);
+  function avisar(){ if(listo||avisado) return; avisado=true; try{ ok(null); }catch(e){} }
   function limpiar(){ try{ delete window[nombre]; }catch(e){} if(s.parentNode) s.parentNode.removeChild(s); }
 }
 function subirNube(fila){
@@ -435,26 +444,44 @@ function nubeEstado(cls,txt){ var e=$('nubeEstado'); e.className='nube-estado '+
 
 /* frz = carnes LISTAS en freezers · cam = carnes en la camara */
 var NUBE={frz:0, cam:0, sabido:false, movs:[], fechaCam:''};
+var KCACHE_NUBE='fdh_nube_cache_produccion';
+function aplicarDatosNube(d){
+  if(d.length){
+    var u=d[d.length-1];
+    NUBE.frz=num(u.StockResultante!==''&&u.StockResultante!=null?u.StockResultante:u.CarnesProducidas);
+    NUBE.cam=num(u.CamaraResultante||0);
+  } else { NUBE.frz=0; NUBE.cam=0; }
+  /* fecha de la ultima entrada a camara, para avisar si quedo de ayer */
+  NUBE.fechaCam='';
+  for(var i=d.length-1;i>=0;i--){
+    if(/c[aá]mara/i.test(String(d[i].Movimiento||''))){ NUBE.fechaCam=String(d[i].Fecha||'').slice(0,10); break; }
+  }
+  NUBE.sabido=true;
+  NUBE.movs=d.slice(-10).reverse();
+}
+/* Pinta al instante lo ultimo que se supo en esta pestaña (sessionStorage,
+   se borra solo al cerrarla) mientras se espera la respuesta fresca de la
+   nube — asi la pantalla no arranca siempre en blanco/ceros por ~15s. No
+   toca localStorage ni el Cuaderno, es puramente de exhibicion. */
+function pintarCacheSesion(){
+  try{
+    var c=JSON.parse(sessionStorage.getItem(KCACHE_NUBE)||'null');
+    if(!c || !c.datos) return;
+    aplicarDatosNube(c.datos);
+    nubeEstado('cargando','☁️ Última lectura conocida · actualizando…');
+    reconciliarFreezers();
+    render();
+  }catch(e){}
+}
 function cargarNube(){
   nubeEstado('cargando','☁️ Consultando la nube…');
   traer('Producción', function(r){
     if(!r || !r.ok || !r.datos){ NUBE.sabido=false; nubeEstado('error','⚠️ Sin conexión con la nube'); render(); return; }
-    var d=r.datos;
-    if(d.length){
-      var u=d[d.length-1];
-      NUBE.frz=num(u.StockResultante!==''&&u.StockResultante!=null?u.StockResultante:u.CarnesProducidas);
-      NUBE.cam=num(u.CamaraResultante||0);
-    } else { NUBE.frz=0; NUBE.cam=0; }
-    /* fecha de la ultima entrada a camara, para avisar si quedo de ayer */
-    NUBE.fechaCam='';
-    for(var i=d.length-1;i>=0;i--){
-      if(/c[aá]mara/i.test(String(d[i].Movimiento||''))){ NUBE.fechaCam=String(d[i].Fecha||'').slice(0,10); break; }
-    }
-    NUBE.sabido=true;
-    NUBE.movs=d.slice(-10).reverse();
+    aplicarDatosNube(r.datos);
     nubeEstado('ok','☁️ Nube al día');
     reconciliarFreezers();
     render();
+    try{ sessionStorage.setItem(KCACHE_NUBE, JSON.stringify({datos:r.datos})); }catch(e){}
   });
 }
 
@@ -955,6 +982,7 @@ $('camSueltas').addEventListener('input',espejoCamara);
 $('embCanastos').addEventListener('input',espejoEmbolsado);
 $('embBolsas').addEventListener('input',espejoEmbolsado);
 render(); renderContingencias();
+pintarCacheSesion();
 cargarNube();
 /* refresco suave: si Ventas registro un envio, aca se ve solo */
 setInterval(cargarNube, 90000);
