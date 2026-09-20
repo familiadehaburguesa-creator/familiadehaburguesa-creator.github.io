@@ -77,7 +77,10 @@
   .kpi.total .b{margin-top:0;font-size:11px;font-weight:600;width:100%;text-align:right}
   /* El stock son cinco: carnes, los dos panes, barras y packs de cheddar.
      En cuatro columnas la quinta caía sola en una fila nueva. */
-  #kpiStock{grid-template-columns:repeat(5,1fr)}
+  #kpiStock,#kpiReservas{grid-template-columns:repeat(5,1fr)}
+  /* HU1: la fila de "Pedidos de hoy sin entregar" es un total y va sola, de
+     punta a punta, igual que las demás tarjetas ".total" del módulo. */
+  #kpiReservas .kpi.total{grid-column:1/-1}
   /* min-width:0 es lo que permite que una celda de grid se achique por debajo
      de su contenido. Sin esto la última tarjeta se sale de la caja. */
   .kpi{background:var(--panel2);border:1px solid var(--borde);border-radius:10px;
@@ -98,7 +101,7 @@
   .kpi.rojo .n{color:#f2a6a4}
   .kpi.plata .n{color:var(--verde)}
   .kpi.total.plata .n{color:var(--verde)}
-  @media(max-width:420px){.kpis,#kpiStock{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:420px){.kpis,#kpiStock,#kpiReservas{grid-template-columns:repeat(2,1fr)}}
 
   /* --- Campos --- */
   label{display:block;font-size:12.5px;color:var(--suave);margin-bottom:5px;font-weight:600}
@@ -300,7 +303,12 @@
       display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;
       flex:1;min-height:0;align-items:stretch;
     }
-    #pTurno .col{display:flex;flex-direction:column;gap:11px;min-height:0;max-height:100%;overflow:hidden}
+    /* HU3: antes overflow:hidden — si las cajas de una columna no entraban en
+       el alto disponible, el sobrante se recortaba sin forma de verlo (había
+       que bajar el navegador al 50% de zoom). Con overflow-y:auto cada
+       columna scrollea de forma independiente cuando hace falta, sin romper
+       el "todo entra sin scroll" para el caso común. */
+    #pTurno .col{display:flex;flex-direction:column;gap:11px;min-height:0;max-height:100%;overflow-y:auto;overflow-x:hidden}
     #pTurno .col > .caja{margin-bottom:0}
     /* Las listas que crecen (pedidos y movimientos) se estiran hasta el fondo
        de su columna: así se ven varios pedidos de una, en vez de dos y media
@@ -312,7 +320,7 @@
     #pTurno #btnCerrar{margin-top:9px}
 
     /* Las demás pantallas también entran sin scroll */
-    #pApertura, #pVenta, #pCierre, #pIngreso, #pRetiro, #pCobrarDeuda{
+    #pApertura, #pVenta, #pCierre, #pIngreso, #pAjusteStock, #pRetiro, #pCobrarDeuda{
       overflow-y:auto;min-height:0;flex:1;
     }
     /* Las pantallas de un solo formulario no necesitan todo el ancho. */
@@ -494,7 +502,7 @@ input[type=date],select{min-height:44px}
 
     <div class="col">
       <div class="caja">
-      <h2>Stock en el local</h2>
+      <h2>Stock en el local <button class="refrescar" id="btnAjusteStock" type="button" title="Corregir un error de carga">✏️ Corregir</button></h2>
       <div class="kpis" id="kpiStock"></div>
     </div>
 
@@ -749,6 +757,39 @@ input[type=date],select{min-height:44px}
       <div id="avisoIngreso"></div>
       <button class="btn" id="btnGuardarIngreso">Sumar al stock</button>
       <button class="btn gris chico" id="btnCancelarIngreso" style="margin-top:10px">Cancelar</button>
+    </div>
+  </section>
+
+  <!-- ================= CORRECCIÓN DE STOCK POR ERROR DE CARGA ================= -->
+  <section id="pAjusteStock" class="oculto">
+    <div class="caja">
+      <h2>Corregir stock por error de carga</h2>
+      <div class="aviso info">Es para corregir un error de tipeo o de carga, no para registrar mercadería nueva. Si llegó mercadería de verdad, usá "Ingresó mercadería".</div>
+      <div class="fila">
+        <div>
+          <label for="ajQue">¿Qué insumo corregís?</label>
+          <select id="ajQue">
+            <option value="carne">Carnes</option>
+            <option value="panJ">Pan de Julio</option>
+            <option value="panS">Pan de José</option>
+            <option value="che">Barras de cheddar</option>
+            <option value="pack">Pack de cheddar - 10 fetas</option>
+          </select>
+        </div>
+        <div><label for="ajQuien">¿Quién corrige?</label><select id="ajQuien"></select></div>
+      </div>
+      <div class="campo">
+        <label for="ajValor">Cantidad real (la que hay de verdad)</label>
+        <input id="ajValor" type="number" inputmode="numeric" min="0" value="0">
+        <div class="nota" id="ajActual"></div>
+      </div>
+      <div class="campo">
+        <label for="ajMotivo">¿Por qué se corrige? (opcional)</label>
+        <input id="ajMotivo" type="text" placeholder="Ej: se tipeó mal al abrir el turno">
+      </div>
+      <div id="avisoAjuste"></div>
+      <button class="btn" id="btnGuardarAjuste">Corregir stock</button>
+      <button class="btn gris chico" id="btnCancelarAjuste" style="margin-top:10px">Cancelar</button>
     </div>
   </section>
 
@@ -1359,7 +1400,7 @@ function cargarPrecios(){
 /* ---------------------- pantallas ---------------------- */
 
 function mostrar(cual){
-  ['pApertura','pTurno','pVenta','pCalendario','pIngreso','pRetiro','pIngresoPlata','pCobrarDeuda','pCierre','pCerrado'].forEach(function(p){
+  ['pApertura','pTurno','pVenta','pCalendario','pIngreso','pAjusteStock','pRetiro','pIngresoPlata','pCobrarDeuda','pCierre','pCerrado'].forEach(function(p){
     ver(p, p === cual);
   });
   window.scrollTo(0,0);
@@ -1924,8 +1965,12 @@ function pintarReservas(){
   if (!el) return;
   if (!T || !T.abierto){ el.innerHTML=''; $('reservasNota').textContent=''; return; }
   var c = libreEnTurno().comp;
-  // El desglose de pedidos no distingue pan de Julio de pan de José (queda
-  // dicho en comprometidoHoy()): se muestra un solo total de pan, no dos.
+  // HU1: el desglose de pedidos no distingue pan de Julio de pan de José
+  // (queda dicho en comprometidoHoy()): toda la reserva de pan se carga
+  // contra Pan Julio, nunca contra Pan José. Se muestran igual dos tarjetas,
+  // como en "Stock en el local", para que ambas secciones luzcan iguales;
+  // Pan José reservado va a quedar siempre en 0 hasta que el formulario de
+  // pedidos pregunte la variedad.
   var riesgo = {
     carne: c.carne > T.stock.carne,
     pan:   c.panJ  > (T.stock.panJ + T.stock.panS),
@@ -1934,7 +1979,8 @@ function pintarReservas(){
   };
   $('kpiReservas').innerHTML =
     kpi(c.carne, 'Carnes', riesgo.carne?'rojo':'') +
-    kpi(c.panJ,  'Pan', riesgo.pan?'rojo':'', 'Julio + José juntos') +
+    kpi(c.panJ,  'Pan Julio', riesgo.pan?'rojo':'') +
+    kpi(0,       'Pan José', '') +
     kpi(c.che,   'Barras cheddar', riesgo.che?'rojo':'') +
     kpi(c.pack,  'Packs cheddar', riesgo.pack?'rojo':'') +
     kpi(c.pedidos, 'Pedidos de hoy sin entregar', 'total');
@@ -2638,6 +2684,52 @@ function confirmarIngreso(que, c, fabricaNuevo, salvedad){
   mostrar('pTurno');
 }
 
+/* ---------------------- BLOQUE A2: corrección de stock por error de carga ---------------------- */
+
+/**
+ * HU: el stock del local vive solo en T.stock (localStorage) — no hay una
+ * hoja de Sheets que lo guarde turno a turno, así que corregirlo es la misma
+ * operación que hace guardarIngreso() con los demás campos: se pisa el
+ * número en memoria, se anota en la bitácora del turno y se persiste con
+ * guardarTurno(). No hay nada que mandarle a la nube.
+ */
+var NOMBRES_INSUMO = {carne:'Carnes', panJ:'Pan de Julio', panS:'Pan de José', che:'Barras de cheddar', pack:'Pack de cheddar'};
+
+function abrirAjusteStock(){
+  $('avisoAjuste').innerHTML = '';
+  $('ajMotivo').value = '';
+  espejoAjuste();
+  mostrar('pAjusteStock');
+}
+
+function espejoAjuste(){
+  var que = $('ajQue').value;
+  var actual = T.stock[que];
+  var b = enBolsas(actual, que);
+  $('ajActual').textContent = 'Ahora el sistema tiene cargado: ' + miles(actual) + (b ? ' (' + b + ')' : '');
+  ponerNumero('ajValor', actual);
+}
+
+function guardarAjusteStock(){
+  var que = $('ajQue').value;
+  var nuevo = ent($('ajValor').value);
+  if (nuevo < 0){ $('avisoAjuste').innerHTML = '<div class="aviso rojo">La cantidad no puede ser negativa.</div>'; return; }
+  var anterior = T.stock[que];
+  if (nuevo === anterior){ $('avisoAjuste').innerHTML = '<div class="aviso rojo">Ese es el mismo valor que ya está cargado: no hay nada para corregir.</div>'; return; }
+  var quien = $('ajQuien').value;
+  var motivo = $('ajMotivo').value.trim();
+
+  T.stock[que] = nuevo;
+  anotar('Corrigió por error de carga',
+    NOMBRES_INSUMO[que] + ': ' + miles(anterior) + ' → ' + miles(nuevo) + ' · corrigió ' + quien +
+    (motivo ? ' · ' + motivo : ''),
+    '');
+
+  guardarTurno();
+  pintarKPIs(); pintarMovs(); pintarReservas(); pintarStockTurno();
+  mostrar('pTurno');
+}
+
 /* ---------------------- retiro de caja ---------------------- */
 
 /**
@@ -3196,7 +3288,7 @@ function entrarAlTurno(){
 
 function iniciar(){
   cargarPrecios();
-  llenarGente(['aQuien','iQuien','rQuien','pfQuien','dcQuien','ipQuien']);
+  llenarGente(['aQuien','iQuien','ajQuien','rQuien','pfQuien','dcQuien','ipQuien']);
   llenarIngresoPlata();
   pintarProductos();
 
@@ -3290,6 +3382,10 @@ function iniciar(){
   $('iDe').addEventListener('change', espejoIngreso);
   $('btnGuardarIngreso').addEventListener('click', guardarIngreso);
   $('btnCancelarIngreso').addEventListener('click', function(){ mostrar('pTurno'); });
+  $('btnAjusteStock').addEventListener('click', abrirAjusteStock);
+  $('ajQue').addEventListener('change', espejoAjuste);
+  $('btnGuardarAjuste').addEventListener('click', guardarAjusteStock);
+  $('btnCancelarAjuste').addEventListener('click', function(){ mostrar('pTurno'); });
   $('btnGuardarRetiro').addEventListener('click', function(){ guardarRetiro(); });
   // HU11: si cambia el monto, la duda del duplicado ya no aplica.
   $('rCuanto').addEventListener('input', function(){
