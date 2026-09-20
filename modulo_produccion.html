@@ -103,6 +103,9 @@ button.mini{padding:5px 10px;font-size:.8rem;border-radius:7px}
 .camara-box .cb-n{font-size:1.3rem;font-weight:800}
 .camara-box .cb-l{font-size:.75rem;margin-top:2px}
 .camara-box .cb-aviso{font-size:.74rem;font-weight:700;margin-top:5px;color:var(--amarillo)}
+.conteo-general{border-radius:12px;padding:10px 13px;border:1px solid var(--dorado);background:rgba(232,181,74,.08);margin-bottom:10px;text-align:center;font-size:.85rem}
+.conteo-general b{color:var(--dorado);font-size:1rem}
+.conteo-general .cg-ojo{display:block;font-size:.74rem;font-weight:700;margin-top:4px;color:var(--amarillo)}
 .freezers-titulo{font-size:.78rem;color:var(--dorado);font-weight:700;margin:6px 0 7px;display:flex;justify-content:space-between;align-items:center}
 .freezers-mini{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}
 .fz{background:#101014;border:1px solid #34343e;border-radius:9px;padding:8px}
@@ -313,6 +316,7 @@ button.sec:hover{background:#33291a;color:#fff}
     <div class="stock-total" id="stockTotal"><div class="vacio">Consultando la nube…</div></div>
     <div class="stock-unidades" id="stockUnidades"></div>
     <div class="camara-box" id="camaraBox"></div>
+    <div class="conteo-general" id="conteoGeneral"></div>
     <div class="freezers-titulo"><span>📍 Mapa: freezers + cámara (tope base 38, editable en Corregir stock)</span></div>
     <div class="freezers-mini" id="freezers"></div>
     <div class="sueltas-nota" id="sueltasNota"></div>
@@ -527,16 +531,12 @@ function fijarFreezerValor(f,nuevo){
   var delta=nuevo-f.ocup;
   if(delta===0){ render(); return true; }
   if(nuevo>f.cap){ burgy(f.nombre+' está a tope: '+f.cap+' bolsas. El resto va a la cámara de frío o a otro freezer.'); render(); return false; }
-  if(delta>0 && sueltasFrz() < delta*BOLSA){ burgy('El total de la nube no respalda '+delta+' bolsa'+(delta>1?'s':'')+' más en '+f.nombre+'. El mapa no puede decir más que el total.'); render(); return false; }
   f.ocup=nuevo; guardarLocal(); render(); return true;
 }
 function ajustarCamB(d){ fijarCamBValor(camBolsas+d); }
 function fijarCamB(el){ if(!fijarCamBValor(ent(el.value))) el.value=camBolsas; }
 function fijarCamBValor(nuevo){
   if(nuevo<0) nuevo=0;
-  var delta=nuevo-camBolsas;
-  if(delta===0){ render(); return true; }
-  if(delta>0 && sueltasFrz() < delta*BOLSA){ burgy('El total de la nube no respalda '+delta+' bolsa'+(delta>1?'s':'')+' más en la cámara. El mapa no puede decir más que el total.'); render(); return false; }
   camBolsas=nuevo; guardarLocal(); render(); return true;
 }
 function fijarCap(id,el){
@@ -779,7 +779,7 @@ function escribirAjuste(frzReal, camReal, quien, motivo){
 function renderStock(){
   if(!NUBE.sabido){
     $('stockTotal').innerHTML='<div class="vacio">Sin conexión con la nube. Tocá Actualizar.</div>';
-    $('stockUnidades').innerHTML=''; $('camaraBox').innerHTML='';
+    $('stockUnidades').innerHTML=''; $('camaraBox').innerHTML=''; $('conteoGeneral').innerHTML='';
   } else {
     var bolsasListas=Math.floor(NUBE.frz/BOLSA);
     var dias=NUBE.frz/VENTA_DIA; var pill='sp-verde', msg='Cubre '+dias.toFixed(1)+' días de venta';
@@ -793,6 +793,19 @@ function renderStock(){
       (camBolsas>0?'<div class="cb-l">👜 + <b>'+camBolsas+' bolsas ya embolsadas</b> guardadas acá (disponibles para el local)</div>':'')+
       (pendiente?'<div class="cb-aviso">⏳ Esperando embolsado desde '+NUBE.fechaCam.split('-').reverse().slice(0,2).join('/')+'</div>':'');
     try{ localStorage.setItem('fdh_stock_actual',JSON.stringify({carnes:NUBE.frz+NUBE.cam,bolsas:Math.round(NUBE.frz/BOLSA),fecha:hoyLocal()})); }catch(e){}
+
+    /* Conteo general = freezers (mapa local) + cámara embolsada (mapa local).
+       Freezer y cámara son depósitos independientes; esto es solo la suma.
+       Se compara contra NUBE.frz porque ESO es lo que ve Ventas (lee
+       StockResultante de la última fila de Producción) — no el mapa de este
+       dispositivo. Si no coinciden, el número de Ventas puede estar
+       desactualizado hasta que se use "Corregir stock". */
+    var totalLocal=mapaBolsas()+camBolsas;
+    var totalLocalCarnes=totalLocal*BOLSA;
+    $('conteoGeneral').innerHTML='🧮 Conteo general (freezers + cámara embolsada): <b>'+miles(totalLocal)+' bolsas</b> · '+miles(totalLocalCarnes)+' carnes'+
+      (totalLocalCarnes!==NUBE.frz
+        ? '<span class="cg-ojo">⚠️ Ventas ve '+miles(NUBE.frz)+' carnes desde la nube — no coincide con este mapa. Usá "Corregir stock" para igualarlo.</span>'
+        : '<span class="cg-ojo" style="color:var(--verde)">✓ Coincide con lo que ve Ventas.</span>');
   }
   $('freezers').innerHTML=freezers.map(function(f){
     var pct=Math.min(100,Math.round(f.ocup/f.cap*100));
@@ -813,7 +826,9 @@ function renderStock(){
   }).join('');
   var s=sueltasFrz();
   $('sueltasNota').innerHTML=NUBE.sabido
-    ? (s>0?'Fuera del mapa: <b>'+miles(s)+' carnes</b> ('+(s>=BOLSA?Math.floor(s/BOLSA)+' bolsas sin ubicar':'sueltas')+'). Anotalas escribiendo el número en el freezer o la cámara donde estén.':'✓ El mapa coincide con el total de la nube.')
+    ? (s>0?'Fuera del mapa: <b>'+miles(s)+' carnes</b> ('+(s>=BOLSA?Math.floor(s/BOLSA)+' bolsas sin ubicar':'sueltas')+'). Anotalas escribiendo el número en el freezer o la cámara donde estén.'
+        :s<0?'⚠️ El mapa tiene <b>'+miles(-s)+' carnes más</b> que el total de la nube. Puede ser producción real que la nube todavía no sincronizó — revisalo con Corregir stock si hace falta.'
+        :'✓ El mapa coincide con el total de la nube.')
     : '';
   /* embolsado */
   var hayCam=NUBE.sabido && NUBE.cam>0;
