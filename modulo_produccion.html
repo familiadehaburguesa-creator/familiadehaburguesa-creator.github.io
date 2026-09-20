@@ -64,14 +64,12 @@ button.mini{padding:5px 10px;font-size:.8rem;border-radius:7px}
 @keyframes sirena{0%,100%{box-shadow:0 0 0 0 rgba(255,125,110,.55)}50%{box-shadow:0 0 0 7px rgba(255,125,110,0)}}
 
 #panelTurno{border-width:2px}
-#panelTurno.et-abrir{border-color:var(--verde)}
 #panelTurno.et-camara{border-color:var(--frio)}
 #panelTurno.et-cerrar{border-color:var(--celeste)}
 #panelTurno.et-listo{border-color:#2c2c34}
 .turno-estado{font-size:.85rem;color:var(--gris);margin-bottom:10px}
 .turno-estado b{color:var(--crema)}
 .btn-etapa{width:100%;padding:15px;font-size:1.05rem;border-radius:12px}
-.btn-etapa.abrir{background:var(--verde);color:#0d2916}.btn-etapa.abrir:hover{background:#55d584}
 .btn-etapa.camara{background:var(--frio);color:#0d2233}.btn-etapa.camara:hover{background:#93d6f5}
 .btn-etapa.cerrar{background:var(--celeste);color:#0d2233}.btn-etapa.cerrar:hover{background:#79c9f0}
 .form-etapa{background:#101014;border:1px solid #34343e;border-radius:12px;padding:14px;margin-top:12px}
@@ -234,32 +232,21 @@ button.sec:hover{background:#33291a;color:#fff}
   <div class="turno-estado" id="turnoEstado"></div>
   <button class="btn-etapa" id="btnEtapa" onclick="abrirFormEtapa()"></button>
 
-  <!-- Form APERTURA -->
-  <div class="form-etapa oculto" id="formAbrir">
-    <div class="ft">🌅 Iniciar turno</div>
-    <div class="fila">
-      <div class="campo chico"><label>Hora de inicio</label><input type="time" id="apHora"></div>
-      <div class="campo"><label>¿La fábrica está limpia y en condiciones?</label><div class="chips" id="apLimpia"></div></div>
-    </div>
-    <label>¿Quién abre?</label><div class="chips" id="apQuien"></div>
-    <div id="avisoAbrir"></div>
-    <div class="fila" style="margin-top:12px">
-      <button class="dorado" style="flex:1" onclick="guardarApertura()">Registrar inicio</button>
-      <button class="sec" onclick="cerrarForms()">Cancelar</button>
-    </div>
-  </div>
-
-  <!-- Form ENTRADA A CAMARA (fin del turno de produccion) -->
+  <!-- Form ENTRADA A CAMARA: un solo paso para cargar la producción del día.
+       Antes había que "Iniciar turno" en una pantalla aparte (hora + limpieza
+       + quién abre) antes de poder ver dónde cargar los canastos — eso ya
+       quedaba resuelto acá mismo, así que se fusionó todo en un solo form. -->
   <div class="form-etapa oculto" id="formCamara">
-    <div class="ft">🧊 Terminar turno: entrada a la Cámara de Frío</div>
+    <div class="ft">🧊 Cargar producción de hoy: entrada a la Cámara de Frío</div>
     <div class="ayuda" style="margin-top:2px">La producción del día entra a la cámara a congelarse, en canastos (cada canasto = 1 bolsa de 50 + 10 sueltas = 60 carnes). Mañana se embolsa y pasa a los freezers.</div>
     <div class="fila">
       <div class="campo chico"><label>Canastos que entraron</label><input type="number" id="camCanastos" min="0" value=""></div>
       <div class="campo chico"><label>Carnes sueltas (si hay)</label><input type="number" id="camSueltas" min="0" value=""></div>
-      <div class="campo chico"><label>Hora de fin</label><input type="time" id="camHora"></div>
+      <div class="campo chico"><label>Hora</label><input type="time" id="camHora"></div>
     </div>
     <div class="equiv" id="camEquiv">Poné los canastos y te muestro el total.</div>
-    <label>¿Quién informa?</label><div class="chips" id="camQuien"></div>
+    <div id="camAperturaBox"><label>¿La fábrica está limpia y en condiciones?</label><div class="chips" id="camLimpia"></div></div>
+    <label>¿Quién carga?</label><div class="chips" id="camQuien"></div>
     <div id="avisoCamara"></div>
     <div class="fila" style="margin-top:12px">
       <button class="frio" style="flex:1" id="btnGuardarCamara" onclick="guardarEntradaCamara()">Registrar entrada a cámara</button>
@@ -585,28 +572,33 @@ function pickChip(el){
 /* ===== Jornada: un boton que muta ===== */
 var jornada=JSON.parse(localStorage.getItem(KJ)||'{}');
 function j(){ jornada[hoyLocal()]=jornada[hoyLocal()]||{}; return jornada[hoyLocal()]; }
+/* Se sacó el paso separado "Iniciar turno" (hora + limpieza + quién abre en
+   una pantalla propia, antes de poder ver dónde cargar los canastos). Ahora
+   la apertura se completa sola, con los mismos datos, al cargar la primera
+   entrada a cámara del día — un solo paso en vez de dos. */
 function etapa(){
   var x=j();
-  if(!x.apertura) return 'abrir';
   if(!x.camara) return 'camara';
   if(!x.cierre) return 'cerrar';
   return 'listo';
 }
-function cerrarForms(){ ['formAbrir','formCamara','formCerrar'].forEach(function(f){ $(f).classList.add('oculto'); }); $('btnEtapa').classList.remove('oculto'); pintarTurno(); }
+function cerrarForms(){ ['formCamara','formCerrar'].forEach(function(f){ $(f).classList.add('oculto'); }); $('btnEtapa').classList.remove('oculto'); pintarTurno(); }
 function abrirFormEtapa(){
   var e=etapa(); if(e==='listo') return;
   $('btnEtapa').classList.add('oculto');
   var hhmm=new Date().toTimeString().slice(0,5);
-  if(e==='abrir'){ $('apHora').value=hhmm; $('formAbrir').classList.remove('oculto'); }
-  if(e==='camara'){ $('camHora').value=hhmm; $('formCamara').classList.remove('oculto'); espejoCamara(); }
+  if(e==='camara'){
+    $('camHora').value=hhmm; $('formCamara').classList.remove('oculto');
+    $('camAperturaBox').classList.toggle('oculto', !!j().apertura);
+    espejoCamara();
+  }
   if(e==='cerrar'){ $('ciHora').value=hhmm; $('formCerrar').classList.remove('oculto'); }
 }
 function pintarTurno(){
   var e=etapa(), x=j(), b=$('btnEtapa'), p=$('panelTurno');
   p.className='panel et-'+e;
   b.className='btn-etapa '+e; b.classList.remove('oculto');
-  if(e==='abrir'){ b.textContent='🌅 INICIAR TURNO'; $('turnoEstado').innerHTML='Todavía no se abrió el turno de hoy.'; }
-  if(e==='camara'){ b.textContent='🧊 TERMINAR TURNO: ENTRADA A CÁMARA'; $('turnoEstado').innerHTML='Turno abierto por <b>'+x.apertura.quien+'</b> a las <b>'+x.apertura.hora+'</b> · limpia: '+x.apertura.limpia; }
+  if(e==='camara'){ b.textContent='🧊 CARGAR ENTRADA A CÁMARA'; $('turnoEstado').innerHTML='Todavía no se cargó producción hoy.'; }
   if(e==='cerrar'){ b.textContent='🌙 CERRAR JORNADA'; $('turnoEstado').innerHTML='A la cámara entraron <b>'+miles(x.camara.carnes)+' carnes</b> ('+x.camara.canastos+' canastos) · '+x.camara.quien+' '+x.camara.hora+'.'; }
   if(e==='listo'){ b.classList.add('oculto'); $('turnoEstado').innerHTML='✅ Jornada de hoy cerrada.'; }
 
@@ -624,17 +616,8 @@ function camaraExtra(){
   guardarLocal(); pintarTurno(); abrirFormEtapa();
 }
 
-function guardarApertura(){
-  if(!$('apHora').value){ burgy('Poné la hora de inicio. 🕐'); return; }
-  if(!seleccion.apLimpia){ burgy('Decinos si la fábrica está en condiciones. Es obligatorio. ✅'); return; }
-  if(!seleccion.apQuien){ burgy('Tocá quién abre. 🙋'); return; }
-  j().apertura={hora:$('apHora').value, limpia:seleccion.apLimpia, quien:seleccion.apQuien};
-  guardarLocal(); cerrarForms();
-  burgy(seleccion.apLimpia==='Sí' ? '¡Arrancamos en condiciones, '+seleccion.apQuien+'! A producir. 🌅'
-                                  : 'Inicio registrado. La fábrica NO estaba en condiciones — queda anotado. ⚠️');
-}
-
-/* ===== Entrada a camara (fin del turno de produccion) ===== */
+/* ===== Entrada a camara (arranca el dia; si es la primera del dia, tambien
+   completa sola la apertura del turno con los mismos datos) ===== */
 function espejoCamara(){
   var c=ent($('camCanastos').value), s=ent($('camSueltas').value);
   var total=c*CANASTO+s;
@@ -646,9 +629,12 @@ function guardarEntradaCamara(){
   var c=ent($('camCanastos').value), s=ent($('camSueltas').value);
   var total=c*CANASTO+s;
   if(total<=0){ burgy('Poné cuántos canastos entraron a la cámara. 🧊'); return; }
-  if(!$('camHora').value){ burgy('Poné la hora de fin del turno. 🕐'); return; }
-  if(!seleccion.camQuien){ burgy('Tocá quién informa. 🙋'); return; }
+  if(!$('camHora').value){ burgy('Poné la hora. 🕐'); return; }
+  if(!seleccion.camQuien){ burgy('Tocá quién carga. 🙋'); return; }
+  var esPrimeraDelDia=!j().apertura;
+  if(esPrimeraDelDia && !seleccion.camLimpia){ burgy('Decinos si la fábrica está en condiciones. Es obligatorio. ✅'); return; }
 
+  if(esPrimeraDelDia) j().apertura={hora:$('camHora').value, limpia:seleccion.camLimpia, quien:seleccion.camQuien};
   var salvedad=NUBE.sabido?'':' · ⚠ la nube no respondió al cargar: el saldo puede necesitar ajuste';
   j().camara={canastos:c, sueltas:s, carnes:total, quien:seleccion.camQuien, hora:$('camHora').value};
   subirNube({
@@ -769,7 +755,7 @@ function guardarCierre(){
 function mostrarCorreccion(){ $('cajaCorreccion').classList.toggle('oculto'); }
 function corregirStock(){
   if($('corFrz').value==='' && $('corCam').value===''){ burgy('Poné al menos un número contado de verdad. 🔢'); return; }
-  var quien=seleccion.embQuien||seleccion.camQuien||seleccion.apQuien||seleccion.ciQuien||'—';
+  var quien=seleccion.embQuien||seleccion.camQuien||seleccion.ciQuien||'—';
   var frzReal=$('corFrz').value===''?NUBE.frz:ent($('corFrz').value)*BOLSA;
   var camReal=$('corCam').value===''?NUBE.cam:ent($('corCam').value)*CANASTO;
   escribirAjuste(frzReal, camReal, quien, 'corrección manual');
@@ -972,7 +958,7 @@ function render(){ renderStock(); renderMovs(); renderInsumos(); pintarTurno(); 
 
 /* ===== Arranque ===== */
 $('fechaHoy').textContent=new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-chipGroup('apLimpia',['Sí','No'],'apLimpia','sino'); chipGroup('apQuien',PERSONAS,'apQuien');
+chipGroup('camLimpia',['Sí','No'],'camLimpia','sino');
 chipGroup('camQuien',PERSONAS,'camQuien');
 chipGroup('embQuien',PERSONAS,'embQuien');
 chipGroup('ciLimpia',['Sí','No'],'ciLimpia','sino'); chipGroup('ciConteo',['Sí','No'],'ciConteo','sino'); chipGroup('ciQuien',PERSONAS,'ciQuien');
