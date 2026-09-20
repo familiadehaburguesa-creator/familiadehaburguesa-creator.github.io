@@ -310,13 +310,19 @@
        el "todo entra sin scroll" para el caso común. */
     #pTurno .col{display:flex;flex-direction:column;gap:11px;min-height:0;max-height:100%;overflow-y:auto;overflow-x:hidden}
     #pTurno .col > .caja{margin-bottom:0}
-    /* Las listas que crecen (pedidos y movimientos) se estiran hasta el fondo
-       de su columna: así se ven varios pedidos de una, en vez de dos y media
-       con el resto escondido detrás de un scroll de 130px. */
-    #pTurno .col > .caja:has(#pedidos),
+    /* Las listas que crecen (movimientos y deudas) se estiran hasta el fondo
+       de su columna: así se ven varios de una, en vez de dos y media con el
+       resto escondido detrás de un scroll de 130px. "Para retirar hoy" queda
+       afuera a propósito: a diferencia de #movs/#deudas, esa caja tiene un
+       botón fijo debajo de la lista ("Ver el calendario de pedidos"). Con
+       flex:1 el que se achicaba era el recuadro entero (título y botón
+       incluidos) hasta quedar del alto de una línea, y el botón terminaba
+       flotando fuera de su caja, pisando la de abajo. Sin flex:1 esta caja
+       mide lo que necesita su contenido, y si no entra, scrollea la columna
+       entera (ver overflow-y:auto en #pTurno .col más arriba). */
     #pTurno .col > .caja:has(#movs),
     #pTurno .col > .caja:has(#deudas){min-height:0;display:flex;flex-direction:column;flex:1}
-    #pedidos, #movs, #deudas{overflow-y:auto;min-height:0}
+    #movs, #deudas{overflow-y:auto;min-height:0;flex:1}
     #pTurno #btnCerrar{margin-top:9px}
 
     /* Las demás pantallas también entran sin scroll */
