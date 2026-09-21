@@ -34,25 +34,19 @@ h1{font-size:1.45rem;color:var(--dorado);letter-spacing:.5px}
 label{display:block;font-size:.76rem;color:var(--gris);margin-bottom:5px;margin-top:10px}
 input,select{background:#101014;border:1px solid #34343e;color:var(--crema);border-radius:8px;padding:9px 11px;font-size:.95rem;width:100%}
 input:focus,select:focus{outline:2px solid var(--dorado);border-color:var(--dorado)}
-input[type=time]{color-scheme:dark}
 .campo{flex:1;min-width:110px}.campo.chico{max-width:160px}
 .fila{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
 button{background:var(--rojo);color:#fff;border:none;border-radius:9px;padding:10px 16px;font-weight:700;cursor:pointer;font-size:.92rem}
 button:hover{background:#e01432}
 button.dorado{background:var(--dorado);color:#3a2410}button.dorado:hover{background:#f5c75e}
 button.sec{background:#2c2c34}button.sec:hover{background:#3a3a46}
-input.edn{width:64px;padding:6px 4px;text-align:center;background:#17171d;border:1px solid #3a3a46;border-radius:8px;color:#fff;font-weight:700;font-size:1rem}
-input.edn:focus{border-color:var(--amarillo);outline:none}
-.fz-cam{border:1px dashed #4a6a7a}
-.fz-nota{font-size:.72rem;color:#9aa3ad;margin-top:4px}
 button.frio{background:var(--frio);color:#0d2233}button.frio:hover{background:#93d6f5}
 button.mini{padding:5px 10px;font-size:.8rem;border-radius:7px}
+button:disabled{opacity:.45;cursor:not-allowed}
 .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
-.chip{background:#101014;border:2px solid #34343e;border-radius:9px;padding:8px 14px;cursor:pointer;font-weight:700;font-size:.88rem;transition:.12s;color:var(--crema)}
+.chip{background:#101014;border:2px solid #34343e;border-radius:9px;padding:7px 13px;cursor:pointer;font-weight:700;font-size:.85rem;transition:.12s;color:var(--crema)}
 .chip:hover{border-color:var(--dorado)}
 .chip.sel{border-color:var(--dorado);background:rgba(232,181,74,.14);color:var(--dorado)}
-.chip.si.sel{border-color:var(--verde);background:rgba(62,196,109,.16);color:var(--verde)}
-.chip.no.sel{border-color:var(--coral);background:rgba(255,125,110,.16);color:var(--coral)}
 .oculto{display:none!important}
 
 #alertas{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
@@ -63,75 +57,47 @@ button.mini{padding:5px 10px;font-size:.8rem;border-radius:7px}
 .alerta-pill.frio{background:rgba(121,201,240,.13);color:var(--frio);border:1px solid var(--frio)}
 @keyframes sirena{0%,100%{box-shadow:0 0 0 0 rgba(255,125,110,.55)}50%{box-shadow:0 0 0 7px rgba(255,125,110,0)}}
 
-#panelTurno{border-width:2px}
-#panelTurno.et-camara{border-color:var(--frio)}
-#panelTurno.et-cerrar{border-color:var(--celeste)}
-#panelTurno.et-listo{border-color:#2c2c34}
-.turno-estado{font-size:.85rem;color:var(--gris);margin-bottom:10px}
-.turno-estado b{color:var(--crema)}
-.btn-etapa{width:100%;padding:15px;font-size:1.05rem;border-radius:12px}
-.btn-etapa.camara{background:var(--frio);color:#0d2233}.btn-etapa.camara:hover{background:#93d6f5}
-.btn-etapa.cerrar{background:var(--celeste);color:#0d2233}.btn-etapa.cerrar:hover{background:#79c9f0}
-.form-etapa{background:#101014;border:1px solid #34343e;border-radius:12px;padding:14px;margin-top:12px}
-.form-etapa .ft{font-weight:800;color:var(--dorado);font-size:.95rem;margin-bottom:2px}
-.equiv{margin-top:8px;font-size:.85rem;color:var(--celeste);background:rgba(91,184,232,.09);border:1px dashed var(--celeste);border-radius:8px;padding:7px 11px}
-.equiv.merma-mal{color:var(--coral);border-color:var(--coral);background:rgba(255,125,110,.08)}
-.jresumen{font-size:.84rem;color:var(--gris);margin-top:8px;line-height:1.6}
-.jresumen b{color:var(--crema)}
-.linkcito{background:none;border:none;color:var(--celeste);text-decoration:underline;cursor:pointer;font-size:.8rem;padding:4px 0;font-weight:600}
+/* ===== Turno ===== */
+#panelTurno{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+#panelTurno .tt{flex:1;min-width:220px}
+#panelTurno h2{margin-bottom:6px}
+.estado-pill{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;font-weight:700;padding:5px 13px;border-radius:20px;background:rgba(62,196,109,.16);color:var(--verde);border:1px solid var(--verde)}
+.estado-pill.apagado{background:rgba(155,155,166,.14);color:var(--gris);border-color:#3a3a46}
+#operadorBox{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:.8rem;color:var(--gris)}
+#operadorBox .chips{margin-top:0}
 
-.reparto{margin-top:10px}
-.reparto .rp{display:flex;align-items:center;gap:9px;margin:6px 0}
-.reparto .rp .fn{min-width:86px;font-size:.84rem;font-weight:700}
-.reparto .rp input{max-width:90px;text-align:center}
-.reparto .rp .libre{font-size:.75rem;color:var(--gris)}
-.rep-check{font-size:.84rem;font-weight:700;margin-top:8px}
-.rep-check.ok{color:var(--verde)}.rep-check.mal{color:var(--coral)}
+/* ===== Resumen (tarjetas grandes) ===== */
+.resumen{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:14px}
+.rcard{background:var(--carbon);border:1px solid #2c2c34;border-radius:14px;padding:16px;text-align:center}
+.rcard h3{font-size:.82rem;color:var(--dorado);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:6px}
+.rcard .big{font-size:2.1rem;font-weight:800;line-height:1}
+.rcard .peq{font-size:.8rem;color:var(--gris);margin:4px 0 10px}
+.rcard.disp .big{color:var(--verde)}
+.rcard .fila-btn{display:flex;gap:6px;justify-content:center;margin-top:4px}
+.editbox{background:#101014;border:1px solid #34343e;border-radius:10px;padding:10px;margin-top:8px;text-align:left}
+.editbox label{margin-top:0}
+.editbox .fila{margin-top:8px}
 
-.triple{display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:14px;margin-bottom:14px}
-.triple .panel{margin-bottom:0;display:flex;flex-direction:column}
-.stock-total{border-radius:12px;padding:14px;text-align:center;border:1px solid var(--celeste);background:rgba(91,184,232,.1);color:var(--celeste);margin-bottom:10px}
-.stock-total .big{font-size:2.05rem;font-weight:800;line-height:1}
-.stock-total .lbl{font-size:.78rem;margin-top:4px}
-.stock-total .estado-pill{display:inline-block;margin-top:8px;font-size:.74rem;font-weight:700;padding:3px 11px;border-radius:13px}
-.sp-verde{background:rgba(62,196,109,.2);color:var(--verde)}
-.sp-amarillo{background:rgba(242,193,78,.2);color:var(--amarillo)}
-.sp-rojo{background:rgba(255,125,110,.22);color:var(--coral)}
-.stock-unidades{display:flex;justify-content:center;gap:14px;font-size:.8rem;color:var(--gris);margin-bottom:10px;flex-wrap:wrap}
-.stock-unidades b{color:var(--celeste)}
-.camara-box{border-radius:12px;padding:11px 13px;border:1px solid var(--frio);background:rgba(121,201,240,.08);color:var(--frio);margin-bottom:10px;text-align:center}
-.camara-box .cb-n{font-size:1.3rem;font-weight:800}
-.camara-box .cb-l{font-size:.75rem;margin-top:2px}
-.camara-box .cb-aviso{font-size:.74rem;font-weight:700;margin-top:5px;color:var(--amarillo)}
-.conteo-general{border-radius:12px;padding:10px 13px;border:1px solid var(--dorado);background:rgba(232,181,74,.08);margin-bottom:10px;text-align:center;font-size:.85rem}
-.conteo-general b{color:var(--dorado);font-size:1rem}
-.conteo-general .cg-ojo{display:block;font-size:.74rem;font-weight:700;margin-top:4px;color:var(--amarillo)}
-.freezers-titulo{font-size:.78rem;color:var(--dorado);font-weight:700;margin:6px 0 7px;display:flex;justify-content:space-between;align-items:center}
-.freezers-mini{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}
-.fz{background:#101014;border:1px solid #34343e;border-radius:9px;padding:8px}
-.fz .fn{font-size:.76rem;color:var(--crema);font-weight:700;margin-bottom:4px;display:flex;justify-content:space-between}
-.fz .fn .pct{color:var(--gris);font-weight:600}
-.fz .barra{height:7px;background:#2c2c34;border-radius:5px;overflow:hidden;margin:4px 0}
-.fz .relleno{height:100%;transition:.25s}
-.fz .cnt{display:flex;align-items:center;justify-content:space-between;gap:5px;margin-top:5px}
-.fz .cnt .v{font-size:.8rem;font-weight:800}
-.fz .cnt .v small{color:var(--gris);font-weight:600}
-.fz .cnt button{width:26px;height:26px;padding:0;font-size:.95rem;border-radius:6px}
-.sueltas-nota{font-size:.76rem;color:var(--gris);margin-top:7px}
-.sueltas-nota b{color:var(--crema)}
+/* ===== Freezers ===== */
+.freezers-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px}
+.fzcard{background:var(--carbon);border:1px solid #2c2c34;border-radius:14px;padding:14px;text-align:center}
+.fzcard h3{font-size:.85rem;color:var(--dorado);margin-bottom:6px}
+.fzcard .big{font-size:1.7rem;font-weight:800}
+.fzcard .peq{font-size:.76rem;color:var(--gris);margin-bottom:8px}
 
-.mini-lista{margin-top:4px;font-size:.8rem;color:var(--gris);max-height:340px;overflow:auto;flex:1}
-.mini-lista .reg{padding:7px 0;border-bottom:1px solid #2c2c34;line-height:1.45}
+.mini-lista{margin-top:4px;font-size:.8rem;color:var(--gris);max-height:520px;overflow:auto}
+.mini-lista .reg{padding:8px 0;border-bottom:1px solid #2c2c34;line-height:1.5}
 .mini-lista .reg b{color:var(--crema)}
 .mini-lista .reg .mas{color:var(--verde);font-weight:800}
 .mini-lista .reg .menos{color:var(--coral);font-weight:800}
-.mini-lista .reg .igual{color:var(--amarillo);font-weight:800}
-.mini-lista .reg .frio{color:var(--frio);font-weight:800}
+.mini-lista .reg .edit{color:var(--amarillo);font-weight:800}
 .vacio{color:var(--gris);font-size:.82rem;font-style:italic;padding:6px 2px}
 .nube-estado{font-size:.78rem;font-weight:700;padding:5px 12px;border-radius:16px;display:inline-flex;align-items:center;gap:6px}
 .nube-estado.cargando{background:rgba(91,184,232,.13);color:var(--celeste)}
 .nube-estado.ok{background:rgba(62,196,109,.13);color:var(--verde)}
 .nube-estado.error{background:rgba(242,193,78,.13);color:var(--amarillo)}
+
+.doscols{display:grid;grid-template-columns:1.3fr 1fr;gap:14px}
 
 .ins-resumen{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
 .res-card{border-radius:12px;padding:13px;text-align:center;border:1px solid}
@@ -156,6 +122,7 @@ button.mini{padding:5px 10px;font-size:.8rem;border-radius:7px}
 .ins-card .pm{display:flex;align-items:center;gap:5px}
 .ins-card .pm button{width:28px;height:28px;padding:0;font-size:1rem;border-radius:7px}
 .ins-card .pm .v{font-weight:800;min-width:26px;text-align:center}
+input.edn{width:64px;padding:6px 4px;text-align:center;background:#17171d;border:1px solid #3a3a46;border-radius:8px;color:#fff;font-weight:700;font-size:1rem}
 .ins-card .impacto{font-size:.7rem;color:#ffb3a8;margin-top:6px;line-height:1.3}
 .ins-card .x{background:none;border:none;color:var(--gris);cursor:pointer;font-size:.85rem;padding:2px 4px}
 .ins-card .x:hover{color:var(--coral)}
@@ -166,7 +133,8 @@ button.mini{padding:5px 10px;font-size:.8rem;border-radius:7px}
 .aviso.info{background:rgba(91,184,232,.1);color:var(--celeste);border:1px solid var(--celeste)}
 
 footer{text-align:center;color:var(--dorado);font-size:.85rem;margin-top:22px;padding:14px;border-top:1px solid #3a1018}
-@media(max-width:900px){.triple{grid-template-columns:1fr}.ins-resumen{grid-template-columns:1fr}}
+@media(max-width:1000px){.resumen{grid-template-columns:repeat(2,1fr)}.freezers-grid{grid-template-columns:repeat(2,1fr)}.doscols{grid-template-columns:1fr}}
+@media(max-width:560px){.resumen{grid-template-columns:1fr}.freezers-grid{grid-template-columns:1fr}}
 .btn-volver-home{display:inline-flex;align-items:center;gap:6px;position:sticky;top:0;z-index:40;background:var(--dorado);color:#2a1800;font-weight:800;text-decoration:none;padding:9px 16px;border-radius:0 0 12px 0;font-size:.88rem;box-shadow:0 2px 10px rgba(0,0,0,.4);margin-bottom:8px}
 .btn-volver-home:hover{background:#f5c75e}
 .btn-cero{background:rgba(255,125,110,.15);color:var(--coral);border:1px solid var(--coral);font-weight:700;padding:8px 14px;border-radius:10px;cursor:pointer;font-size:.82rem;white-space:nowrap}
@@ -186,8 +154,9 @@ footer{text-align:center;color:var(--dorado);font-size:.85rem;margin-top:22px;pa
 :root{--dorado:#d6ac5a;--negro:#0c0a07;--carbon:#171310;--crema:#fff4e3;--rojo-osc:#1d150c}
 body{background:radial-gradient(1100px 520px at 75% -8%,rgba(214,172,90,.10),transparent 60%),linear-gradient(170deg,#0c0a07 0%,#131008 60%,#1d150c 130%)}
 h1{font-family:'Oswald','Segoe UI',sans-serif;text-transform:uppercase;letter-spacing:2px;font-weight:500}
-.panel{background:#171310;border-color:rgba(214,172,90,.22);box-shadow:inset 0 1px 0 rgba(255,244,227,.05)}
+.panel,.rcard,.fzcard{background:#171310;border-color:rgba(214,172,90,.22);box-shadow:inset 0 1px 0 rgba(255,244,227,.05)}
 .panel h2{font-family:'Oswald','Segoe UI',sans-serif;text-transform:uppercase;letter-spacing:1.3px;font-weight:500;padding-bottom:9px;border-bottom:1px solid rgba(214,172,90,.25)}
+.rcard h3,.fzcard h3{font-family:'Oswald','Segoe UI',sans-serif;letter-spacing:1.3px}
 button{background:linear-gradient(180deg,#e6c276,#c69838);color:#241a08}
 button:hover{background:linear-gradient(180deg,#efcf8d,#d2a748)}
 header .logowrap{background:transparent;box-shadow:none;padding:0;border-radius:0}
@@ -204,7 +173,7 @@ input::placeholder,textarea::placeholder{color:#a89c8b}
 button.sec{background:#241d12;color:#fff;border:1px solid rgba(214,172,90,.6)}
 button.sec:hover{background:#33291a;color:#fff}
 .sub,.panel .ayuda,.vacio{color:#d8cdb9}
-.fz .fn .pct,.fz .cnt .v small,.reparto .rp .libre,.fz-nota{color:#d8cdb9}
+.rcard .peq,.fzcard .peq{color:#d8cdb9}
 </style>
 </head>
 <body>
@@ -227,131 +196,121 @@ button.sec:hover{background:#33291a;color:#fff}
 
 <div id="alertas"></div>
 
+<!-- OPERADOR + TURNO -->
+<div class="panel" id="panelTurno">
+  <div class="tt">
+    <h2 style="border:none;padding:0">🔑 Turno de producción</h2>
+    <div class="sub" id="turnoInfo"></div>
+  </div>
+  <button id="btnIniciarTurno" class="dorado" onclick="iniciarTurno()">Iniciar turno</button>
+  <div id="operadorBox">
+    <span>Operador de hoy:</span>
+    <div class="chips" id="chipsOperador"></div>
+  </div>
+</div>
+
 <div id="vistaTablero">
 
-<!-- TURNO: un solo boton que muta -->
-<div class="panel" id="panelTurno">
-  <h2>🔑 Turno de producción</h2>
-  <div class="turno-estado" id="turnoEstado"></div>
-  <button class="btn-etapa" id="btnEtapa" onclick="abrirFormEtapa()"></button>
-
-  <!-- Form ENTRADA A CAMARA: un solo paso para cargar la producción del día.
-       Antes había que "Iniciar turno" en una pantalla aparte (hora + limpieza
-       + quién abre) antes de poder ver dónde cargar los canastos — eso ya
-       quedaba resuelto acá mismo, así que se fusionó todo en un solo form. -->
-  <div class="form-etapa oculto" id="formCamara">
-    <div class="ft">🧊 Cargar producción de hoy: entrada a la Cámara de Frío</div>
-    <div class="ayuda" style="margin-top:2px">La producción del día entra a la cámara a congelarse, en canastos (cada canasto = 1 bolsa de 50 + 10 sueltas = 60 carnes). Mañana se embolsa y pasa a los freezers.</div>
-    <div class="fila">
-      <div class="campo chico"><label>Canastos que entraron</label><input type="number" id="camCanastos" min="0" value=""></div>
-      <div class="campo chico"><label>Carnes sueltas (si hay)</label><input type="number" id="camSueltas" min="0" value=""></div>
-      <div class="campo chico"><label>Hora</label><input type="time" id="camHora"></div>
-    </div>
-    <div class="equiv" id="camEquiv">Poné los canastos y te muestro el total.</div>
-    <div id="camAperturaBox"><label>¿La fábrica está limpia y en condiciones?</label><div class="chips" id="camLimpia"></div></div>
-    <label>¿Quién carga?</label><div class="chips" id="camQuien"></div>
-    <div id="avisoCamara"></div>
-    <div class="fila" style="margin-top:12px">
-      <button class="frio" style="flex:1" id="btnGuardarCamara" onclick="guardarEntradaCamara()">Registrar entrada a cámara</button>
-      <button class="sec" onclick="cerrarForms()">Cancelar</button>
+<!-- RESUMEN DEL DIA -->
+<div class="resumen">
+  <div class="rcard">
+    <h3>🥩 Producción de hoy</h3>
+    <div class="big" id="prodBig">0</div>
+    <div class="peq">carnes</div>
+    <div class="fila-btn"><button onclick="abrirCargarProduccion()">Cargar producción</button><button class="sec mini" onclick="toggleEdit('editProd')">Editar</button></div>
+    <div class="editbox oculto" id="editProd">
+      <label>Producción de hoy (canastos)</label>
+      <input type="number" id="inEditProd" min="0">
+      <div class="fila"><button class="dorado" onclick="guardarEdicionProduccion()">Guardar</button><button class="sec" onclick="toggleEdit('editProd')">Cancelar</button></div>
     </div>
   </div>
 
-  <!-- Form CIERRE -->
-  <div class="form-etapa oculto" id="formCerrar">
-    <div class="ft">🌙 Cerrar la jornada</div>
-    <div class="fila">
-      <div class="campo chico"><label>Hora de cierre</label><input type="time" id="ciHora"></div>
-      <div class="campo"><label>¿Se limpió todo?</label><div class="chips" id="ciLimpia"></div></div>
-      <div class="campo"><label>¿Se contabilizó y embolsó todo?</label><div class="chips" id="ciConteo"></div></div>
-    </div>
-    <label>¿Quién cierra?</label><div class="chips" id="ciQuien"></div>
-    <label>🔢 Conteo físico (opcional — solo si algún número real no coincide con el de arriba)</label>
-    <div class="fila">
-      <div class="campo chico"><label style="margin-top:0">Bolsas en freezers</label><input type="number" id="ciFrz" min="0" placeholder="bolsas contadas"></div>
-      <div class="campo chico"><label style="margin-top:0">Canastos en cámara</label><input type="number" id="ciCam" min="0" placeholder="canastos contados"></div>
-    </div>
-    <div id="avisoCerrar"></div>
-    <div class="fila" style="margin-top:12px">
-      <button class="dorado" style="flex:1" onclick="guardarCierre()">Registrar cierre</button>
-      <button class="sec" onclick="cerrarForms()">Cancelar</button>
+  <div class="rcard">
+    <h3>🧊 En cámara</h3>
+    <div class="big" id="camBig">0</div>
+    <div class="peq" id="camPeq">canastos</div>
+    <div class="fila-btn"><button class="frio" onclick="abrirCargarProduccion()">+ Registrar entrada</button><button class="sec mini" onclick="toggleEdit('editCam')">Editar</button></div>
+    <div class="editbox oculto" id="editCam">
+      <label>Canastos en cámara</label>
+      <input type="number" id="inEditCam" min="0">
+      <div class="fila"><button class="dorado" onclick="guardarEdicionCamara()">Guardar</button><button class="sec" onclick="toggleEdit('editCam')">Cancelar</button></div>
     </div>
   </div>
 
-  <div class="jresumen" id="jResumen"></div>
-</div>
+  <div class="rcard">
+    <h3>👜 Envasado</h3>
+    <div class="big" id="envBig">0</div>
+    <div class="peq" id="envPeq">bolsas</div>
+    <div class="fila-btn"><button onclick="abrirEnvasado()">Registrar envasado</button><button class="sec mini" onclick="toggleEdit('editEnv')">Editar</button></div>
+    <div class="editbox oculto" id="editEnv">
+      <label>Envasado de hoy (bolsas)</label>
+      <input type="number" id="inEditEnv" min="0">
+      <div class="fila"><button class="dorado" onclick="guardarEdicionEnvasado()">Guardar</button><button class="sec" onclick="toggleEdit('editEnv')">Cancelar</button></div>
+    </div>
+  </div>
 
-<!-- EMBOLSADO: el paso del dia siguiente. Vive fuera del turno. -->
-<div class="panel" id="panelEmbolsado" style="border:2px solid var(--frio)">
-  <h2>🧊→👜 Embolsado: de la cámara a los freezers</h2>
-  <div class="ayuda">Cuando lo de la cámara está congelado, se embolsa definitivo y pasa a los freezers. Recién ahí queda disponible para el local.</div>
-  <div id="embResumen"></div>
-  <button class="frio oculto" id="btnEmbolsar" style="width:100%;margin-top:4px" onclick="abrirEmbolsado()">👜 Embolsar y pasar a freezers</button>
-
-  <div class="form-etapa oculto" id="formEmbolsar">
-    <div class="fila">
-      <div class="campo chico"><label>Canastos a embolsar</label><input type="number" id="embCanastos" min="0" value=""></div>
-      <div class="campo chico"><label>Bolsas REALES que salieron</label><input type="number" id="embBolsas" min="0" value=""></div>
-    </div>
-    <div class="equiv" id="embEquiv">Poné los canastos y te muestro las bolsas esperadas.</div>
-    <label>¿Quién embolsó?</label><div class="chips" id="embQuien"></div>
-    <div class="reparto oculto" id="cajaRepartoEmb">
-      <label style="margin-top:14px">📍 ¿A qué freezers van? (propuesta — corregila si en la realidad fue distinto)</label>
-      <div id="repartoEmb"></div>
-      <div class="rep-check" id="repCheckEmb"></div>
-    </div>
-    <div id="avisoEmb"></div>
-    <div class="fila" style="margin-top:12px">
-      <button class="frio" style="flex:1" id="btnGuardarEmb" onclick="guardarEmbolsado()">Registrar embolsado</button>
-      <button class="sec" onclick="cerrarEmbolsado()">Cancelar</button>
-    </div>
+  <div class="rcard disp">
+    <h3>🛒 Disponible para venta</h3>
+    <div class="big" id="dispBig">0</div>
+    <div class="peq" id="dispPeq">carnes</div>
+    <div class="peq" id="dispPill"></div>
   </div>
 </div>
 
-<div class="triple">
-  <!-- STOCK -->
-  <div class="panel">
-    <h2>❄️ Stock de fábrica <span style="margin-left:auto"><button class="mini sec" onclick="cargarNube()">Actualizar</button></span></h2>
-    <div class="ayuda">Vive en la nube: es lo mismo que ve el módulo de Ventas.</div>
-    <div class="stock-total" id="stockTotal"><div class="vacio">Consultando la nube…</div></div>
-    <div class="stock-unidades" id="stockUnidades"></div>
-    <div class="camara-box" id="camaraBox"></div>
-    <div class="conteo-general" id="conteoGeneral"></div>
-    <div class="freezers-titulo"><span>📍 Mapa: freezers + cámara (tope base 38, editable en Corregir stock)</span></div>
-    <div class="freezers-mini" id="freezers"></div>
-    <div class="sueltas-nota" id="sueltasNota"></div>
-    <button class="linkcito" onclick="mostrarCorreccion()">¿Los números físicos no coinciden? Corregir stock</button>
-    <div class="oculto" id="cajaCorreccion">
-      <div class="fila">
-        <div class="campo chico"><label>Bolsas embolsadas (freezers + cámara)</label><input type="number" id="corFrz" min="0" placeholder="contadas"></div>
-        <div class="campo chico"><label>Canastos en cámara</label><input type="number" id="corCam" min="0" placeholder="contados"></div>
-        <button class="sec" onclick="corregirStock()">Ajustar</button>
-      </div>
-      <div class="ayuda" style="margin-top:6px">Queda registrado como Ajuste en la nube, con las diferencias y quién contó.</div>
-      <div class="fila" id="capsFila" style="margin-top:8px;flex-wrap:wrap"></div>
-      <div class="ayuda">Capacidad de cada freezer: base 38 bolsas. Si alguno rinde menos (p. ej. 34), fijalo acá.</div>
-    </div>
+<!-- FORM: cargar producción / entrada a camara -->
+<div class="panel oculto" id="formCargarProd">
+  <h2>🥩 Cargar producción de hoy</h2>
+  <div class="ayuda">1 canasto = 60 carnes. Entra directo a la Cámara de Frío.</div>
+  <div class="fila">
+    <div class="campo chico"><label>Canastos producidos</label><input type="number" id="inCanastos" min="0" oninput="espejoProduccion()"></div>
   </div>
+  <div class="aviso info" id="equivProd">Poné los canastos y te muestro las carnes.</div>
+  <div id="avisoProd"></div>
+  <div class="fila" style="margin-top:12px">
+    <button class="frio" style="flex:1" onclick="guardarProduccion()">Registrar producción</button>
+    <button class="sec" onclick="cerrarPanel('formCargarProd')">Cancelar</button>
+  </div>
+</div>
 
+<!-- FORM: envasado -->
+<div class="panel oculto" id="formEnvasar">
+  <h2>👜 Registrar envasado</h2>
+  <div class="ayuda">1 bolsa = 50 carnes. Se descuenta de la Cámara de Frío.</div>
+  <div class="fila">
+    <div class="campo chico"><label>Bolsas envasadas</label><input type="number" id="inBolsas" min="0" oninput="espejoEnvasado()"></div>
+  </div>
+  <div class="aviso info" id="equivEnv">Poné las bolsas y te muestro las carnes.</div>
+  <div id="avisoEnv"></div>
+  <div class="fila" style="margin-top:12px">
+    <button class="frio" style="flex:1" onclick="guardarEnvasado()">Registrar envasado</button>
+    <button class="sec" onclick="cerrarPanel('formEnvasar')">Cancelar</button>
+  </div>
+</div>
+
+<!-- FREEZERS -->
+<div class="panel">
+  <h2>❄️ Freezers</h2>
+  <div class="ayuda">6 freezers, en bolsas. Cargá el número real que ves físicamente — el sistema hace las cuentas.</div>
+  <div class="freezers-grid" id="freezersGrid"></div>
+  <div class="fila" style="justify-content:space-between;margin-top:4px">
+    <div><b id="totalFrzBolsas">0</b> bolsas en total · <span id="totalFrzCarnes">0</span> carnes</div>
+  </div>
+  <div id="avisoSyncFrz"></div>
+</div>
+
+<div class="doscols">
   <!-- MOVIMIENTOS -->
   <div class="panel">
     <h2>📒 Movimientos</h2>
-    <div class="ayuda">Entradas a cámara, embolsados, envíos al local y ajustes. Todo junto, leído de la nube.</div>
+    <div class="ayuda">Fecha, acción, cantidad. Las ediciones muestran valor anterior → nuevo. Todo leído de la nube.</div>
     <div class="mini-lista" id="movsNube"><div class="vacio">Consultando la nube…</div></div>
   </div>
 
-  <!-- CONTINGENCIAS -->
+  <!-- INSUMOS resumen rapido -->
   <div class="panel">
-    <h2>⚠️ Contingencias</h2>
-    <div class="ayuda">Algo que afectó la producción. Queda con responsable.</div>
-    <label style="margin-top:0">¿Qué pasó?</label>
-    <select id="conTipo"><option>Falta de materia prima</option><option>Corte de luz</option><option>Máquina parada</option><option>Falta de insumo</option><option>Problema de personal</option><option>Llegada tarde</option><option>Otro</option></select>
-    <label>Detalle</label>
-    <input id="conDetalle" placeholder="Ej: sin pastillas, no se bajó el pedido grande">
-    <label>¿Quién se ocupa?</label>
-    <div class="chips" id="conQuien"></div>
-    <button style="margin-top:10px;width:100%" onclick="cargarContingencia()">Registrar</button>
-    <div class="mini-lista" id="listaContingencias"></div>
+    <h2>🧰 Insumos</h2>
+    <div class="ayuda">Vista rápida. Detalle completo en Inventario.</div>
+    <div id="insumosResumenRapido"></div>
   </div>
 </div>
 </div><!-- /vistaTablero -->
@@ -380,21 +339,48 @@ button.sec:hover{background:#33291a;color:#fff}
 
 <script>
 /* ============================================================================
-   PRODUCCIÓN v5 — el flujo físico real, validado con Samu el 19/08:
-     1) La producción del día entra a la CÁMARA DE FRÍO en canastos
-        (1 canasto = 1 bolsa de 50 + 10 sueltas = 60 carnes). NO disponible.
-     2) Al día siguiente se EMBOLSA definitivo y pasa a los FREEZERS
-        (base 38 bolsas por freezer, tope editable · el excedente queda embolsado en la cámara). Disponible.
-     3) El local retira: sale de freezers primero y, si hace falta, de la
-        cámara (embolsado a día vencido). Lo registra EL QUE RECIBE en Ventas.
-   Los saldos viven en la nube (hoja Producción) y los calcula el MENSAJERO
-   V12 en el servidor, con candado. Este navegador solo muestra y pide.
+   PRODUCCIÓN v7 — rediseño validado contra HU de Samu (21/09/2026) Y contra
+   el código REAL del MENSAJERO (doPost/doGet, script V21, leído el
+   21/09/2026 — no la copia V18 que había en Drive, que estaba desactualizada).
+
+   EL SERVIDOR RECALCULA, NO GUARDA LO QUE SE MANDA. En conSaldoDelServidor_
+   (Código.gs, hoja Producción) el saldo lo decide el TEXTO de Movimiento,
+   por regex, con 4 casos reales — no hay un quinto "editar" genérico:
+     /c[aá]mara/i        → suma Cantidad a CamaraResultante. Freezers intacto.
+     /embols/i           → suma Cantidad a StockResultante (freezers, lo que
+                            lee Ventas) y resta SacadoDeCamara de la cámara.
+     /env[ií]o|salida/i  → resta Cantidad: primero de freezers, el resto de
+                            cámara. Es lo que ya usa Ventas al retirar stock.
+     /ajuste/i           → el navegador manda los DOS totales YA CONTADOS
+                            (StockResultante y CamaraResultante absolutos) y
+                            el servidor calcula la diferencia solo.
+   Cualquier otro texto cae en un caso por defecto que suma Cantidad directo
+   a StockResultante sin tocar la cámara — por eso acá NINGUNA acción usa un
+   nombre inventado: "Cargar producción" manda 'Entrada a cámara', "Registrar
+   envasado" manda 'Embolsado', y toda EDICIÓN (RN08/RN09, HU03/HU04/HU05/HU06)
+   manda 'Ajuste de conteo' — el único mecanismo del servidor pensado para
+   corregir un valor sin perder el anterior. El envasado SÍ es lo que hace
+   subir el número que ve Ventas (RN06): no es una carga de freezer aparte.
+
+     · Producción se carga en CANASTOS (1 canasto = 60 carnes) → cámara.
+     · Envasado se carga en BOLSAS (1 bolsa = 50 carnes) → descuenta de
+       cámara y suma directo al disponible para venta (StockResultante).
+     · Los 6 FREEZERS son el desglose LOCAL de ese mismo total — el servidor
+       no conoce freezers individuales. Editar uno solo escribe a la nube
+       si el TOTAL cambia; si es una reacomodada entre freezers, queda local.
+       Sin tope de capacidad ni reparto automático inventado.
+     · Toda edición queda en Movimientos con valor anterior → nuevo.
+     · Se sacó Contingencias del front (pedido explícito, RN10).
+   Si Ventas retiró stock o alguien corrigió desde otro dispositivo, el mapa
+   local de freezers de ESTE dispositivo puede no coincidir con el total
+   oficial: se avisa la diferencia en vez de adivinar de qué freezer salió
+   (esa regla no está definida en ningún lado — no se inventa).
    ============================================================================ */
-var CANASTO = 60, BOLSA = 50, CAP_FREEZER = 38, VENTA_DIA = 4500;
+var CANASTO = 60, BOLSA = 50, VENTA_DIA = 4500;
 var $ = function(id){ return document.getElementById(id); };
 var NUBE_URL='https://script.google.com/macros/s/AKfycbxfraGEgAFUeypW4D9wsEct90sH4DRZjOJsQiky-WZtF41qPOaul9HDlgSjynwHAjpk/exec';
 
-var KJ='fdh_jornada_v3', KFZ='fdh_freezers_v6', KCB='fdh_cambolsas_v1', KI='fdh_insumos_v2', KC='fdh_conting_v1';
+var KFZ='fdh_freezers_v7', KI='fdh_insumos_v2', KTURNO='fdh_turno_v2', KOP='fdh_operador_v1';
 
 function num(v){ var n=Number(String(v==null?'':v).replace(/\./g,'').replace(',','.')); return isNaN(n)?0:n; }
 function ent(v){ return Math.max(0, Math.round(num(v))); }
@@ -403,14 +389,7 @@ function hoyLocal(){ var d=new Date(); return d.getFullYear()+'-'+String(d.getMo
 function ahora(){ return new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}); }
 function burgy(m){ $('burgyDice').textContent=m; }
 
-/* ===== Nube =====
-   El MENSAJERO puede tardar 4-12s+ en responder. Antes, a los 12s se
-   asumia error y se borraba el callback JSONP (delete window[nombre]):
-   si la respuesta llegaba despues igual, el script la intentaba llamar
-   y explotaba con "ReferenceError: fdhprod1 is not defined", dejando el
-   modulo trabado en "Sin conexion" para siempre. Ahora el aviso de error
-   sale a los 20s pero el callback sigue vivo hasta los 35s: si la nube
-   contesta tarde, se sigue aprovechando y la pantalla se recupera sola. */
+/* ===== Nube ===== */
 var cbN=0;
 function traer(hoja, ok){
   var nombre='fdhprod'+(++cbN), listo=false, avisado=false;
@@ -433,434 +412,313 @@ function subirNube(fila){
 }
 function nubeEstado(cls,txt){ var e=$('nubeEstado'); e.className='nube-estado '+cls; e.textContent=txt; }
 
-/* frz = carnes LISTAS en freezers · cam = carnes en la camara */
-var NUBE={frz:0, cam:0, sabido:false, movs:[], fechaCam:''};
-var KCACHE_NUBE='fdh_nube_cache_produccion';
+/* frzCarnes = carnes disponibles (freezers) · camCarnes = carnes en cámara.
+   dataset = todas las filas (para sumar "hoy"); movs = ventana reciente
+   para el panel de Movimientos. */
+var NUBE={frzCarnes:0, camCarnes:0, sabido:false, dataset:[]};
 function aplicarDatosNube(d){
-  if(d.length){
+  NUBE.dataset=d||[];
+  if(d && d.length){
     var u=d[d.length-1];
-    NUBE.frz=num(u.StockResultante!==''&&u.StockResultante!=null?u.StockResultante:u.CarnesProducidas);
-    NUBE.cam=num(u.CamaraResultante||0);
-  } else { NUBE.frz=0; NUBE.cam=0; }
-  /* fecha de la ultima entrada a camara, para avisar si quedo de ayer */
-  NUBE.fechaCam='';
-  for(var i=d.length-1;i>=0;i--){
-    if(/c[aá]mara/i.test(String(d[i].Movimiento||''))){ NUBE.fechaCam=String(d[i].Fecha||'').slice(0,10); break; }
-  }
+    NUBE.frzCarnes=num(u.StockResultante!==''&&u.StockResultante!=null?u.StockResultante:0);
+    NUBE.camCarnes=num(u.CamaraResultante!==''&&u.CamaraResultante!=null?u.CamaraResultante:0);
+  } else { NUBE.frzCarnes=0; NUBE.camCarnes=0; }
   NUBE.sabido=true;
-  NUBE.movs=d.slice(-10).reverse();
-}
-/* Pinta al instante lo ultimo que se supo en esta pestaña (sessionStorage,
-   se borra solo al cerrarla) mientras se espera la respuesta fresca de la
-   nube — asi la pantalla no arranca siempre en blanco/ceros por ~15s. No
-   toca localStorage ni el Cuaderno, es puramente de exhibicion. */
-function pintarCacheSesion(){
-  try{
-    var c=JSON.parse(sessionStorage.getItem(KCACHE_NUBE)||'null');
-    if(!c || !c.datos) return;
-    aplicarDatosNube(c.datos);
-    nubeEstado('cargando','☁️ Última lectura conocida · actualizando…');
-    reconciliarFreezers();
-    render();
-  }catch(e){}
 }
 function cargarNube(){
   nubeEstado('cargando','☁️ Consultando la nube…');
   traer('Producción', function(r){
-    if(!r || !r.ok || !r.datos){ NUBE.sabido=false; nubeEstado('error','⚠️ Sin conexión con la nube'); render(); return; }
+    if(!r || !r.ok || !r.datos){ nubeEstado('error','⚠️ Sin conexión con la nube'); render(); return; }
     aplicarDatosNube(r.datos);
     nubeEstado('ok','☁️ Nube al día');
-    reconciliarFreezers();
     render();
-    try{ sessionStorage.setItem(KCACHE_NUBE, JSON.stringify({datos:r.datos})); }catch(e){}
   });
 }
-
-/* ===== Freezers: mapa en BOLSAS. Capacidad base 38, editable por freezer.
-   camBolsas = bolsas YA embolsadas guardadas en la camara (excedente cuando
-   los freezers estan llenos). Cuentan como stock listo igual. ===== */
-var freezers=JSON.parse(localStorage.getItem(KFZ)||'null');
-if(!freezers){
-  var _v5=JSON.parse(localStorage.getItem('fdh_freezers_v5')||'null');
-  if(_v5){ freezers=_v5.map(function(f){ f.cap=(!f.cap||f.cap===34)?CAP_FREEZER:f.cap; return f; }); }
+/* ===== "Hoy" (HU02/HU05) =====
+   EL MENSAJERO (doPost, V21) no guarda lo que manda el navegador: lo
+   recalcula en el servidor según el TEXTO de Movimiento, con solo 4
+   patrones reales (conSaldoDelServidor_ en el script):
+     /c[aá]mara/i        → suma Cantidad a CamaraResultante (freezers intacto)
+     /embols/i           → suma Cantidad a StockResultante (freezers) y resta
+                            SacadoDeCamara de CamaraResultante
+     /env[ií]o|salida/i  → resta Cantidad: primero de freezers, el resto de
+                            cámara (lo usa Ventas al retirar mercadería)
+     /ajuste/i           → el navegador manda los DOS totales ya contados
+                            (StockResultante y CamaraResultante) y el
+                            servidor calcula sola la diferencia
+   Cualquier otro texto cae en un caso por defecto que suma Cantidad directo
+   a StockResultante — por eso NINGUNA acción de este módulo puede usar un
+   nombre propio: "Cargar producción" es 'Entrada a cámara', "Envasado" es
+   'Embolsado', y toda EDICIÓN (RN08/RN09) es 'Ajuste de conteo', el único
+   mecanismo del servidor pensado para corregir sin perder el valor
+   anterior. Como ese caso no guarda un texto por tipo de edición, el
+   detalle ("Producción de hoy: 10 → 12 canastos") lo escribe el navegador
+   y se vuelve a leer de ahí para reconstruir el total del día. */
+function produccionHoyCarnes(){
+  var hoy=hoyLocal(), total=0;
+  NUBE.dataset.forEach(function(r){
+    if(String(r.Fecha||'').slice(0,10)!==hoy) return;
+    if(r.Movimiento==='Entrada a cámara') total+=num(r.Cantidad);
+    else if(r.Movimiento==='Ajuste de conteo' && /^Producci[oó]n de hoy:/.test(String(r.Detalle||''))){
+      var m=/→\s*([\d.,]+)\s*canastos/.exec(String(r.Detalle||''));
+      if(m) total=ent(m[1])*CANASTO;
+    }
+  });
+  return Math.max(0,total);
 }
-freezers=freezers||[1,2,3,4,5,6].map(function(i){
-  return {id:'f'+i, nombre:'Freezer '+i, cap:CAP_FREEZER, ocup:0};   // en BOLSAS
+function envasadoHoyCarnes(){
+  var hoy=hoyLocal(), total=0;
+  NUBE.dataset.forEach(function(r){
+    if(String(r.Fecha||'').slice(0,10)!==hoy) return;
+    if(r.Movimiento==='Embolsado') total+=num(r.Cantidad);
+    else if(r.Movimiento==='Ajuste de conteo' && /^Envasado de hoy:/.test(String(r.Detalle||''))){
+      var m=/→\s*([\d.,]+)\s*bolsas/.exec(String(r.Detalle||''));
+      if(m) total=ent(m[1])*BOLSA;
+    }
+  });
+  return Math.max(0,total);
+}
+
+/* ===== Freezers: mapa en BOLSAS de este dispositivo. Sin capacidad maxima
+   ni reparto automatico — el operador carga el numero fisico real. ===== */
+var freezers=JSON.parse(localStorage.getItem(KFZ)||'null')||[1,2,3,4,5,6].map(function(i){
+  return {id:'f'+i, nombre:'Freezer '+i, bolsas:0};
 });
-var camBolsas=ent(localStorage.getItem(KCB)||0);
-function mapaBolsas(){ return freezers.reduce(function(s,f){ return s+f.ocup; },0); }
-function capTotal(){ return freezers.reduce(function(s,f){ return s+f.cap; },0); }
-function lugarLibre(){ return freezers.reduce(function(s,f){ return s+Math.max(0,f.cap-f.ocup); },0); }
-function sueltasFrz(){ return NUBE.sabido ? NUBE.frz - (mapaBolsas()+camBolsas)*BOLSA : 0; }
-
-/* El mapa nunca puede decir MAS que la nube. Si Ventas registro un envio,
-   la nube bajo: aca se descuenta solo, del freezer mas lleno primero
-   (tiende a dejar freezers vacios que se pueden apagar). */
-function reconciliarFreezers(){
-  if(!NUBE.sabido) return;
-  var cambio=false;
-  while((mapaBolsas()+camBolsas)*BOLSA > NUBE.frz){
-    if(camBolsas>0){ camBolsas--; cambio=true; continue; }
-    var lleno=freezers.slice().sort(function(a,b){ return b.ocup-a.ocup; })[0];
-    if(!lleno || lleno.ocup<=0) break;
-    lleno.ocup--; cambio=true;
-  }
-  if(cambio) guardarLocal();
-}
-
-/* Propuesta de reparto en bolsas: llena F1→F6 hasta el tope de cada uno;
-   lo que no entra queda embolsado en la camara (fila siempre visible). */
-function proponerReparto(bolsas){
-  var resto=bolsas;
-  return freezers.map(function(f){
-    var libre=Math.max(0, f.cap-f.ocup);
-    var pone=Math.min(resto, libre); resto-=pone;
-    return {id:f.id, nombre:f.nombre, pone:pone, libre:libre};
-  }).concat([{id:'_cam', nombre:'Cámara de frío', pone:resto, libre:null}]);
-}
-function ajustarFreezer(id,d){
-  var f=freezers.find(function(x){ return x.id===id; });
-  fijarFreezerValor(f, f.ocup+d);
-}
-function fijarFreezer(id,el){
-  var f=freezers.find(function(x){ return x.id===id; });
-  if(!fijarFreezerValor(f, ent(el.value))) el.value=f.ocup;
-}
-function fijarFreezerValor(f,nuevo){
-  if(nuevo<0) nuevo=0;
-  var delta=nuevo-f.ocup;
-  if(delta===0){ render(); return true; }
-  if(nuevo>f.cap){ burgy(f.nombre+' está a tope: '+f.cap+' bolsas. El resto va a la cámara de frío o a otro freezer.'); render(); return false; }
-  f.ocup=nuevo; guardarLocal(); render(); return true;
-}
-function ajustarCamB(d){ fijarCamBValor(camBolsas+d); }
-function fijarCamB(el){ if(!fijarCamBValor(ent(el.value))) el.value=camBolsas; }
-function fijarCamBValor(nuevo){
-  if(nuevo<0) nuevo=0;
-  camBolsas=nuevo; guardarLocal(); render(); return true;
-}
-function fijarCap(id,el){
-  var f=freezers.find(function(x){ return x.id===id; });
-  f.cap=Math.max(1,ent(el.value));
-  if(f.ocup>f.cap) burgy('Ojo: '+f.nombre+' tiene '+f.ocup+' bolsas y el tope nuevo es '+f.cap+'. Mové el resto a la cámara u otro freezer.');
-  guardarLocal(); render();
-}
+function totalFreezersBolsas(){ return freezers.reduce(function(s,f){ return s+f.bolsas; },0); }
 function guardarLocal(){
   localStorage.setItem(KFZ,JSON.stringify(freezers));
-  localStorage.setItem(KCB,String(camBolsas));
   localStorage.setItem(KI,JSON.stringify(insumos));
-  localStorage.setItem(KJ,JSON.stringify(jornada));
-  localStorage.setItem(KC,JSON.stringify(contingencias));
 }
 
-/* ===== Chips ===== */
+/* ===== Operador (reemplaza un sistema de permisos: usa la lista de
+   personas que ya existe en la app, igual que en Ventas/Cierre) ===== */
 var PERSONAS=['Pablo','Yami','Cielo','Paula','Mara','Soporte'];
-var seleccion={};
-function chipGroup(cont,opciones,grupo,tipo){
-  seleccion[grupo]=null;
-  $(cont).innerHTML=opciones.map(function(o){
-    var cls=tipo==='sino'?(o==='Sí'?'chip si':'chip no'):'chip';
-    return '<div class="'+cls+'" data-g="'+grupo+'" data-v="'+o+'" onclick="pickChip(this)">'+o+'</div>';
+var operador=localStorage.getItem(KOP)||'';
+function pintarOperador(){
+  $('chipsOperador').innerHTML=PERSONAS.map(function(p){
+    return '<div class="chip'+(p===operador?' sel':'')+'" onclick="elegirOperador(\''+p+'\')">'+p+'</div>';
   }).join('');
 }
-function pickChip(el){
-  var g=el.dataset.g;
-  document.querySelectorAll('[data-g="'+g+'"]').forEach(function(e){ e.classList.remove('sel'); });
-  el.classList.add('sel'); seleccion[g]=el.dataset.v;
-}
+function elegirOperador(p){ operador=p; localStorage.setItem(KOP,p); pintarOperador(); }
+function quien(){ return operador||'Operador'; }
 
-/* ===== Jornada: un boton que muta ===== */
-var jornada=JSON.parse(localStorage.getItem(KJ)||'{}');
-function j(){ jornada[hoyLocal()]=jornada[hoyLocal()]||{}; return jornada[hoyLocal()]; }
-/* Se sacó el paso separado "Iniciar turno" (hora + limpieza + quién abre en
-   una pantalla propia, antes de poder ver dónde cargar los canastos). Ahora
-   la apertura se completa sola, con los mismos datos, al cargar la primera
-   entrada a cámara del día — un solo paso en vez de dos. */
-function etapa(){
-  var x=j();
-  if(!x.camara) return 'camara';
-  if(!x.cierre) return 'cerrar';
-  return 'listo';
-}
-function cerrarForms(){ ['formCamara','formCerrar'].forEach(function(f){ $(f).classList.add('oculto'); }); $('btnEtapa').classList.remove('oculto'); pintarTurno(); }
-function abrirFormEtapa(){
-  var e=etapa(); if(e==='listo') return;
-  $('btnEtapa').classList.add('oculto');
-  var hhmm=new Date().toTimeString().slice(0,5);
-  if(e==='camara'){
-    $('camHora').value=hhmm; $('formCamara').classList.remove('oculto');
-    $('camAperturaBox').classList.toggle('oculto', !!j().apertura);
-    espejoCamara();
-  }
-  if(e==='cerrar'){ $('ciHora').value=hhmm; $('formCerrar').classList.remove('oculto'); }
+/* ===== Turno (HU01): un solo dato por dia, no se recrea si ya existe ===== */
+var turno=JSON.parse(localStorage.getItem(KTURNO)||'null');
+function turnoActivoHoy(){ return turno && turno.fecha===hoyLocal(); }
+function iniciarTurno(){
+  turno={fecha:hoyLocal(), horaInicio:ahora()};
+  localStorage.setItem(KTURNO,JSON.stringify(turno));
+  burgy('Turno iniciado a las '+turno.horaInicio+'. ¡A producir! 🏭');
+  pintarTurno();
 }
 function pintarTurno(){
-  var e=etapa(), x=j(), b=$('btnEtapa'), p=$('panelTurno');
-  p.className='panel et-'+e;
-  b.className='btn-etapa '+e; b.classList.remove('oculto');
-  if(e==='camara'){ b.textContent='🧊 CARGAR ENTRADA A CÁMARA'; $('turnoEstado').innerHTML='Todavía no se cargó producción hoy.'; }
-  if(e==='cerrar'){ b.textContent='🌙 CERRAR JORNADA'; $('turnoEstado').innerHTML='A la cámara entraron <b>'+miles(x.camara.carnes)+' carnes</b> ('+x.camara.canastos+' canastos) · '+x.camara.quien+' '+x.camara.hora+'.'; }
-  if(e==='listo'){ b.classList.add('oculto'); $('turnoEstado').innerHTML='✅ Jornada de hoy cerrada.'; }
-
-  var r=[];
-  if(x.apertura) r.push('🌅 Abrió <b>'+x.apertura.quien+'</b> '+x.apertura.hora+' · limpia: '+x.apertura.limpia);
-  if(x.camara) r.push('🧊 A cámara: <b>'+x.camara.canastos+' canastos</b>'+(x.camara.sueltas?' + '+x.camara.sueltas+' sueltas':'')+' = <b>'+miles(x.camara.carnes)+'</b> carnes · '+x.camara.quien+' '+x.camara.hora);
-  if(x.cierre) r.push('🌙 Cerró <b>'+x.cierre.quien+'</b> '+x.cierre.hora+' · limpió: '+x.cierre.limpia+' · contó: '+x.cierre.conteo);
-  if(x.camara && etapa()==='cerrar') r.push('<button class="linkcito" onclick="camaraExtra()">¿Hubo otra tanda? Cargar otra entrada a cámara</button>');
-  $('jResumen').innerHTML=r.join('<br>');
-}
-function camaraExtra(){
-  delete j().cierre;
-  var p=j().camara; j()._anteriores=(j()._anteriores||[]); if(p) j()._anteriores.push(p);
-  delete j().camara;
-  guardarLocal(); pintarTurno(); abrirFormEtapa();
-}
-
-/* ===== Entrada a camara (arranca el dia; si es la primera del dia, tambien
-   completa sola la apertura del turno con los mismos datos) ===== */
-function espejoCamara(){
-  var c=ent($('camCanastos').value), s=ent($('camSueltas').value);
-  var total=c*CANASTO+s;
-  $('camEquiv').innerHTML = total>0
-    ? '<b>'+miles(total)+' carnes</b> a la cámara · cuando se embolsen van a ser ~'+miles(Math.floor(total/BOLSA))+' bolsas de '+BOLSA
-    : 'Poné los canastos y te muestro el total.';
-}
-function guardarEntradaCamara(){
-  var c=ent($('camCanastos').value), s=ent($('camSueltas').value);
-  var total=c*CANASTO+s;
-  if(total<=0){ burgy('Poné cuántos canastos entraron a la cámara. 🧊'); return; }
-  if(!$('camHora').value){ burgy('Poné la hora. 🕐'); return; }
-  if(!seleccion.camQuien){ burgy('Tocá quién carga. 🙋'); return; }
-  var esPrimeraDelDia=!j().apertura;
-  if(esPrimeraDelDia && !seleccion.camLimpia){ burgy('Decinos si la fábrica está en condiciones. Es obligatorio. ✅'); return; }
-
-  if(esPrimeraDelDia) j().apertura={hora:$('camHora').value, limpia:seleccion.camLimpia, quien:seleccion.camQuien};
-  var salvedad=NUBE.sabido?'':' · ⚠ la nube no respondió al cargar: el saldo puede necesitar ajuste';
-  j().camara={canastos:c, sueltas:s, carnes:total, quien:seleccion.camQuien, hora:$('camHora').value};
-  subirNube({
-    Fecha:hoyLocal(), CarnesProducidas:total, Quien:seleccion.camQuien,
-    Movimiento:'Entrada a cámara', Cantidad:total, Destino:'Cámara de frío',
-    Detalle:c+' canastos'+(s?' + '+s+' sueltas':'')+' · fin de turno '+$('camHora').value+salvedad
-  });
-  NUBE.cam=(NUBE.sabido?NUBE.cam:0)+total; NUBE.sabido=true; NUBE.fechaCam=hoyLocal();
-  NUBE.movs.unshift({Fecha:hoyLocal(),Movimiento:'Entrada a cámara',Cantidad:total,Quien:seleccion.camQuien,StockResultante:NUBE.frz,CamaraResultante:NUBE.cam,Detalle:c+' canastos'});
-  guardarLocal(); cerrarForms(); render();
-  burgy('¡'+c+' canastos a la cámara, '+seleccion.camQuien+'! Mañana, cuando estén congelados, tocá "Embolsar y pasar a freezers". 🧊');
-}
-
-/* ===== Embolsado: de la camara a los freezers ===== */
-function abrirEmbolsado(){
-  $('btnEmbolsar').classList.add('oculto');
-  $('formEmbolsar').classList.remove('oculto');
-  var can=Math.floor(NUBE.cam/CANASTO);
-  $('embCanastos').value=can>0?can:'';
-  $('embBolsas').value='';
-  espejoEmbolsado();
-}
-function cerrarEmbolsado(){ $('formEmbolsar').classList.add('oculto'); render(); }
-function espejoEmbolsado(){
-  var c=ent($('embCanastos').value);
-  var carnes=c*CANASTO;
-  var esperadas=Math.floor(carnes/BOLSA);
-  var reales=$('embBolsas').value===''?null:ent($('embBolsas').value);
-  var el=$('embEquiv');
-  if(c<=0){ el.className='equiv'; el.innerHTML='Poné los canastos y te muestro las bolsas esperadas.'; $('cajaRepartoEmb').classList.add('oculto'); return; }
-  var txt=miles(c)+' canastos = <b>'+miles(carnes)+' carnes</b> → se esperan <b>'+miles(esperadas)+' bolsas</b> de '+BOLSA;
-  if(reales!==null){
-    var merma=carnes-reales*BOLSA;
-    if(merma===0){ txt+=' · salieron '+miles(reales)+' ✓ justo'; el.className='equiv'; }
-    else if(merma>0){ txt+=' · salieron '+miles(reales)+' → <b>faltan '+miles(merma)+' carnes</b> ('+(esperadas-reales)+' bolsas): queda anotado'; el.className='equiv merma-mal'; }
-    else { txt+=' · salieron '+miles(reales)+' → <b>sobran '+miles(-merma)+' carnes</b>: queda anotado'; el.className='equiv merma-mal'; }
-  } else el.className='equiv';
-  el.innerHTML=txt;
-  var bolsasARepartir=reales!==null?reales:esperadas;
-  if(bolsasARepartir>0){
-    $('cajaRepartoEmb').classList.remove('oculto');
-    var prop=proponerReparto(bolsasARepartir);
-    $('repartoEmb').innerHTML=prop.map(function(p){
-      if(p.id==='_cam') return '<div class="rp"><span class="fn">🧊 '+p.nombre+'</span>'+
-        '<input type="number" min="0" id="remb__cam" value="'+p.pone+'" oninput="chequearRepartoEmb()">'+
-        '<span class="libre">quedan embolsadas en la cámara · disponibles igual</span></div>';
-      return '<div class="rp"><span class="fn">❄️ '+p.nombre+'</span>'+
-        '<input type="number" min="0" id="remb_'+p.id+'" value="'+p.pone+'" oninput="chequearRepartoEmb()">'+
-        '<span class="libre">lugar libre: '+p.libre+'</span></div>';
-    }).join('');
-    chequearRepartoEmb();
-  } else $('cajaRepartoEmb').classList.add('oculto');
-}
-function chequearRepartoEmb(){
-  var reales=$('embBolsas').value===''?Math.floor(ent($('embCanastos').value)*CANASTO/BOLSA):ent($('embBolsas').value);
-  var pasado=null;
-  var suma=freezers.reduce(function(s,f){
-    var i=$('remb_'+f.id); if(!i) return s;
-    var v=ent(i.value);
-    if(!pasado && f.ocup+v>f.cap) pasado=f.nombre+' quedaría en '+(f.ocup+v)+'/'+f.cap;
-    return s+v;
-  },0);
-  var ic=$('remb__cam'); if(ic) suma+=ent(ic.value);
-  var el=$('repCheckEmb');
-  if(pasado){ el.className='rep-check mal'; el.textContent='⚠ '+pasado+' bolsas: no entra. Pasá el resto a la cámara de frío.'; return false; }
-  if(suma===reales){ el.className='rep-check ok'; el.textContent='✓ Repartidas '+suma+' de '+reales+' bolsas.'; }
-  else { el.className='rep-check mal'; el.textContent='Repartiste '+suma+' de '+reales+' bolsas — corregí para que coincida.'; }
-  return suma===reales;
-}
-function guardarEmbolsado(){
-  var c=ent($('embCanastos').value);
-  if(c<=0){ burgy('Poné cuántos canastos se embolsaron. 👜'); return; }
-  if($('embBolsas').value===''){ burgy('Contá las bolsas que salieron de verdad y ponelas. Es el número que manda. 🔢'); return; }
-  var reales=ent($('embBolsas').value);
-  if(!seleccion.embQuien){ burgy('Tocá quién embolsó. 🙋'); return; }
-  var sacado=c*CANASTO;
-  if(NUBE.sabido && sacado>NUBE.cam){ $('avisoEmb').innerHTML='<div class="aviso rojo">En la cámara hay '+miles(NUBE.cam)+' carnes ('+Math.floor(NUBE.cam/CANASTO)+' canastos) y estás embolsando '+miles(sacado)+'. Corregí los canastos.</div>'; return; }
-  if(reales>0 && !chequearRepartoEmb()){ burgy('El reparto en freezers no coincide con las bolsas. Corregilo. 📍'); return; }
-
-  var esperadas=Math.floor(sacado/BOLSA);
-  var merma=sacado-reales*BOLSA;
-  freezers.forEach(function(f){ var i=$('remb_'+f.id); if(i) f.ocup+=ent(i.value); });
-  var aCamara=$('remb__cam')?ent($('remb__cam').value):0;
-  camBolsas+=aCamara;
-
-  subirNube({
-    Fecha:hoyLocal(), CarnesProducidas:0, Quien:seleccion.embQuien,
-    Movimiento:'Embolsado', Cantidad:reales*BOLSA, SacadoDeCamara:sacado, Destino:'Freezers',
-    Detalle:c+' canastos → se esperaban '+esperadas+' bolsas, salieron '+reales+
-      (merma!==0?' · '+(merma>0?'faltan ':'sobran ')+miles(Math.abs(merma))+' carnes':' · justo')+
-      ' · embolsó '+seleccion.embQuien+' a las '+ahora()+(aCamara>0?' · '+aCamara+' bolsas quedaron en cámara':'')
-  });
-  NUBE.frz=(NUBE.sabido?NUBE.frz:0)+reales*BOLSA;
-  NUBE.cam=Math.max(0,(NUBE.sabido?NUBE.cam:0)-sacado);
-  NUBE.sabido=true;
-  NUBE.movs.unshift({Fecha:hoyLocal(),Movimiento:'Embolsado',Cantidad:reales*BOLSA,Quien:seleccion.embQuien,StockResultante:NUBE.frz,CamaraResultante:NUBE.cam,Detalle:reales+' bolsas'+(merma>0?' · faltan '+miles(merma):'')});
-  guardarLocal(); $('formEmbolsar').classList.add('oculto'); render();
-  burgy(merma===0 ? '¡'+reales+' bolsas a los freezers, '+seleccion.embQuien+'! El local ya las ve disponibles. 👜'
-                  : 'Embolsado registrado: '+reales+' bolsas. La diferencia de '+miles(Math.abs(merma))+' carnes quedó anotada. 👜');
-}
-
-/* ===== Cierre + ajustes ===== */
-function guardarCierre(){
-  if(!$('ciHora').value){ burgy('Poné la hora de cierre. 🕐'); return; }
-  if(!seleccion.ciLimpia){ burgy('Decinos si se limpió todo. Es obligatorio. 🧼'); return; }
-  if(!seleccion.ciConteo){ burgy('Decinos si se contabilizó y embolsó todo. Es obligatorio. 📦'); return; }
-  if(!seleccion.ciQuien){ burgy('Tocá quién cierra. 🙋'); return; }
-  j().cierre={hora:$('ciHora').value, limpia:seleccion.ciLimpia, conteo:seleccion.ciConteo, quien:seleccion.ciQuien};
-  if($('ciFrz').value!=='' || $('ciCam').value!==''){
-    var frzReal=$('ciFrz').value===''?NUBE.frz:ent($('ciFrz').value)*BOLSA;
-    var camReal=$('ciCam').value===''?NUBE.cam:ent($('ciCam').value)*CANASTO;
-    escribirAjuste(frzReal, camReal, seleccion.ciQuien, 'conteo de cierre');
+  var f=new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
+  if(turnoActivoHoy()){
+    $('turnoInfo').innerHTML=f+' · <span class="estado-pill">🟢 En producción</span> · Inicio: '+turno.horaInicio;
+    $('btnIniciarTurno').classList.add('oculto');
+  } else {
+    $('turnoInfo').innerHTML=f+' · <span class="estado-pill apagado">Turno no iniciado</span>';
+    $('btnIniciarTurno').classList.remove('oculto');
   }
-  guardarLocal(); cerrarForms(); render();
-  var bien=seleccion.ciLimpia==='Sí'&&seleccion.ciConteo==='Sí';
-  burgy(bien?'🌙 ¡Cierre redondo, '+seleccion.ciQuien+'! Todo limpio, contado y embolsado.':'Cierre registrado. Quedó anotado lo que faltó. 💪');
 }
-function mostrarCorreccion(){ $('cajaCorreccion').classList.toggle('oculto'); }
-function corregirStock(){
-  if($('corFrz').value==='' && $('corCam').value===''){ burgy('Poné al menos un número contado de verdad. 🔢'); return; }
-  var quien=seleccion.embQuien||seleccion.camQuien||seleccion.ciQuien||'—';
-  var frzReal=$('corFrz').value===''?NUBE.frz:ent($('corFrz').value)*BOLSA;
-  var camReal=$('corCam').value===''?NUBE.cam:ent($('corCam').value)*CANASTO;
-  escribirAjuste(frzReal, camReal, quien, 'corrección manual');
-  $('corFrz').value=''; $('corCam').value=''; $('cajaCorreccion').classList.add('oculto');
+function exigirTurno(){
+  if(turnoActivoHoy()) return true;
+  burgy('Primero tocá "Iniciar turno", arriba. 🔑');
+  return false;
+}
+
+/* ===== Edición inline (mostrar/ocultar caja) ===== */
+function toggleEdit(id){
+  var el=$(id);
+  var abrir=el.classList.contains('oculto');
+  ['editProd','editCam','editEnv'].forEach(function(e){ $(e).classList.add('oculto'); });
+  if(abrir){
+    el.classList.remove('oculto');
+    if(id==='editProd') $('inEditProd').value=Math.round(produccionHoyCarnes()/CANASTO);
+    if(id==='editCam') $('inEditCam').value=Math.round(NUBE.camCarnes/CANASTO);
+    if(id==='editEnv') $('inEditEnv').value=Math.round(envasadoHoyCarnes()/BOLSA);
+  }
+}
+function cerrarPanel(id){ $(id).classList.add('oculto'); }
+
+/* ===== Producción (HU02/HU03) ===== */
+function abrirCargarProduccion(){
+  if(!exigirTurno()) return;
+  $('formCargarProd').classList.remove('oculto');
+  $('inCanastos').value='';
+  espejoProduccion();
+  $('formCargarProd').scrollIntoView({behavior:'smooth',block:'center'});
+}
+function espejoProduccion(){
+  var c=ent($('inCanastos').value), carnes=c*CANASTO;
+  $('equivProd').innerHTML = c>0 ? '<b>'+miles(carnes)+' carnes</b> van a la Cámara de Frío.' : 'Poné los canastos y te muestro las carnes.';
+}
+function guardarProduccion(){
+  var c=ent($('inCanastos').value);
+  if(c<=0){ burgy('Poné cuántos canastos se produjeron hoy. 🥩'); return; }
+  var carnes=c*CANASTO;
+  /* 'Entrada a cámara' matchea /c[aá]mara/i en el servidor: suma Cantidad
+     a CamaraResultante y deja StockResultante como está. */
+  subirNube({Fecha:hoyLocal(), Movimiento:'Entrada a cámara', Cantidad:carnes, CarnesProducidas:carnes,
+    Quien:quien(), Destino:'Cámara de frío', Detalle:c+' canastos ('+miles(carnes)+' carnes) · '+ahora()});
+  NUBE.camCarnes=(NUBE.sabido?NUBE.camCarnes:0)+carnes; NUBE.sabido=true;
+  NUBE.dataset.push({Fecha:hoyLocal(), Movimiento:'Entrada a cámara', Cantidad:carnes, CamaraResultante:NUBE.camCarnes, StockResultante:NUBE.frzCarnes, Quien:quien()});
+  cerrarPanel('formCargarProd'); render();
+  burgy('¡'+c+' canastos registrados, '+quien()+'! Entraron '+miles(carnes)+' carnes a la cámara. 🧊');
+}
+function guardarEdicionProduccion(){
+  var nuevoCanastos=ent($('inEditProd').value);
+  var actualCanastos=Math.round(produccionHoyCarnes()/CANASTO);
+  if(nuevoCanastos===actualCanastos){ toggleEdit('editProd'); return; }
+  var deltaCarnes=(nuevoCanastos-actualCanastos)*CANASTO;
+  var nuevaCam=Math.max(0,(NUBE.sabido?NUBE.camCarnes:0)+deltaCarnes);
+  var detalle='Producción de hoy: '+actualCanastos+' → '+nuevoCanastos+' canastos · '+ahora();
+  /* 'Ajuste de conteo': se mandan los DOS totales absolutos y el servidor
+     calcula la diferencia solo — StockResultante va sin cambios. */
+  subirNube({Fecha:hoyLocal(), Movimiento:'Ajuste de conteo', StockResultante:NUBE.frzCarnes,
+    CamaraResultante:nuevaCam, Quien:quien(), Detalle:detalle});
+  NUBE.camCarnes=nuevaCam; NUBE.sabido=true;
+  NUBE.dataset.push({Fecha:hoyLocal(), Movimiento:'Ajuste de conteo', Cantidad:0, CamaraResultante:nuevaCam, StockResultante:NUBE.frzCarnes, Detalle:detalle, Quien:quien()});
+  toggleEdit('editProd'); render();
+  burgy('Producción de hoy corregida: '+actualCanastos+' → '+nuevoCanastos+' canastos. Queda anotado. ✏️');
+}
+
+/* ===== Cámara (HU04): edición directa del stock en cámara ===== */
+function guardarEdicionCamara(){
+  var nuevoCanastos=ent($('inEditCam').value);
+  var actualCanastos=Math.round(NUBE.camCarnes/CANASTO);
+  if(nuevoCanastos===actualCanastos){ toggleEdit('editCam'); return; }
+  var nuevaCam=nuevoCanastos*CANASTO;
+  var detalle='Cámara: '+actualCanastos+' → '+nuevoCanastos+' canastos · '+ahora();
+  subirNube({Fecha:hoyLocal(), Movimiento:'Ajuste de conteo', StockResultante:NUBE.frzCarnes,
+    CamaraResultante:nuevaCam, Quien:quien(), Detalle:detalle});
+  NUBE.camCarnes=nuevaCam; NUBE.sabido=true;
+  NUBE.dataset.push({Fecha:hoyLocal(), Movimiento:'Ajuste de conteo', Cantidad:0, CamaraResultante:nuevaCam, StockResultante:NUBE.frzCarnes, Detalle:detalle, Quien:quien()});
+  toggleEdit('editCam'); render();
+  burgy('Cámara corregida: '+actualCanastos+' → '+nuevoCanastos+' canastos. Queda anotado. ✏️');
+}
+
+/* ===== Envasado (HU05) ===== */
+function abrirEnvasado(){
+  if(!exigirTurno()) return;
+  $('formEnvasar').classList.remove('oculto');
+  $('inBolsas').value='';
+  espejoEnvasado();
+  $('formEnvasar').scrollIntoView({behavior:'smooth',block:'center'});
+}
+function espejoEnvasado(){
+  var b=ent($('inBolsas').value), carnes=b*BOLSA;
+  $('equivEnv').innerHTML = b>0 ? '<b>'+miles(carnes)+' carnes</b> salen de la Cámara de Frío.' : 'Poné las bolsas y te muestro las carnes.';
+}
+function guardarEnvasado(){
+  var b=ent($('inBolsas').value);
+  if(b<=0){ burgy('Poné cuántas bolsas se envasaron. 👜'); return; }
+  var carnes=b*BOLSA;
+  if(NUBE.sabido && carnes>NUBE.camCarnes){
+    $('avisoEnv').innerHTML='<div class="aviso rojo">En la cámara hay '+miles(NUBE.camCarnes)+' carnes y estás envasando '+miles(carnes)+'. Corregí la cantidad o primero ajustá la cámara.</div>';
+    return;
+  }
+  /* 'Embolsado' matchea /embols/i en el servidor: suma Cantidad a
+     StockResultante (freezers, lo mismo que lee Ventas) y resta
+     SacadoDeCamara de CamaraResultante. Acá es 1 a 1, sin merma. */
+  subirNube({Fecha:hoyLocal(), Movimiento:'Embolsado', Cantidad:carnes, SacadoDeCamara:carnes,
+    Quien:quien(), Destino:'Freezers', Detalle:b+' bolsas ('+miles(carnes)+' carnes) · '+ahora()});
+  NUBE.frzCarnes=(NUBE.sabido?NUBE.frzCarnes:0)+carnes;
+  NUBE.camCarnes=Math.max(0,(NUBE.sabido?NUBE.camCarnes:0)-carnes);
+  NUBE.sabido=true;
+  NUBE.dataset.push({Fecha:hoyLocal(), Movimiento:'Embolsado', Cantidad:carnes, StockResultante:NUBE.frzCarnes, CamaraResultante:NUBE.camCarnes, Quien:quien()});
+  cerrarPanel('formEnvasar'); render();
+  burgy('¡'+b+' bolsas envasadas, '+quien()+'! Cargalas en el freezer donde quedaron y editá ese freezer para que el mapa coincida. 👜');
+}
+function guardarEdicionEnvasado(){
+  var nuevoBolsas=ent($('inEditEnv').value);
+  var actualBolsas=Math.round(envasadoHoyCarnes()/BOLSA);
+  if(nuevoBolsas===actualBolsas){ toggleEdit('editEnv'); return; }
+  var deltaCarnes=(nuevoBolsas-actualBolsas)*BOLSA;
+  var nuevaFrz=Math.max(0,(NUBE.sabido?NUBE.frzCarnes:0)+deltaCarnes);
+  var nuevaCam=Math.max(0,(NUBE.sabido?NUBE.camCarnes:0)-deltaCarnes);
+  var detalle='Envasado de hoy: '+actualBolsas+' → '+nuevoBolsas+' bolsas · '+ahora();
+  subirNube({Fecha:hoyLocal(), Movimiento:'Ajuste de conteo', StockResultante:nuevaFrz,
+    CamaraResultante:nuevaCam, Quien:quien(), Detalle:detalle});
+  NUBE.frzCarnes=nuevaFrz; NUBE.camCarnes=nuevaCam; NUBE.sabido=true;
+  NUBE.dataset.push({Fecha:hoyLocal(), Movimiento:'Ajuste de conteo', Cantidad:deltaCarnes, StockResultante:nuevaFrz, CamaraResultante:nuevaCam, Detalle:detalle, Quien:quien()});
+  toggleEdit('editEnv'); render();
+  burgy('Envasado de hoy corregido: '+actualBolsas+' → '+nuevoBolsas+' bolsas. Queda anotado. ✏️');
+}
+
+/* ===== Freezers (HU06): mapa local por dispositivo (el servidor no conoce
+   freezers individuales, solo el total). Cada edición cambia el total en la
+   misma medida y se empuja a la nube como 'Ajuste de conteo' — es el único
+   mecanismo real para corregir el stock disponible sin perder el valor
+   anterior. Sin tope de capacidad ni
+   reparto automático: no están definidos por el negocio. ===== */
+function editarFreezer(id){
+  var f=freezers.find(function(x){ return x.id===id; });
+  var actual=f.bolsas;
+  var txt=prompt(f.nombre+' — bolsas reales (ahora: '+actual+')', actual);
+  if(txt===null) return;
+  var nuevo=ent(txt);
+  if(nuevo===actual) return;
+  var totalAntes=totalFreezersBolsas();
+  f.bolsas=nuevo; guardarLocal();
+  var totalDespues=totalFreezersBolsas();
   render();
-}
-function escribirAjuste(frzReal, camReal, quien, motivo){
-  var antesF=NUBE.sabido?NUBE.frz:0, antesC=NUBE.sabido?NUBE.cam:0;
-  subirNube({
-    Fecha:hoyLocal(), CarnesProducidas:0, StockResultante:frzReal, CamaraResultante:camReal, Quien:quien,
-    Movimiento:'Ajuste de conteo', Cantidad:frzReal-antesF, Destino:'',
-    Detalle:motivo+' · freezers: '+miles(antesF)+' → '+miles(frzReal)+' · cámara: '+miles(antesC)+' → '+miles(camReal)
-  });
-  NUBE.frz=frzReal; NUBE.cam=camReal; NUBE.sabido=true;
-  NUBE.movs.unshift({Fecha:hoyLocal(),Movimiento:'Ajuste de conteo',Cantidad:frzReal-antesF,Quien:quien,StockResultante:frzReal,CamaraResultante:camReal,Detalle:motivo});
-  reconciliarFreezers(); guardarLocal();
-  burgy('🔢 Ajuste registrado: freezers '+miles(frzReal)+' · cámara '+miles(camReal)+'. Las diferencias quedaron anotadas.');
+  var nuevaFrzCarnes=totalDespues*BOLSA;
+  var detalle=f.nombre+': '+actual+' → '+nuevo+' bolsas · total freezers: '+totalAntes+' → '+totalDespues+' bolsas · '+ahora();
+  subirNube({Fecha:hoyLocal(), Movimiento:'Ajuste de conteo', StockResultante:nuevaFrzCarnes,
+    CamaraResultante:NUBE.camCarnes, Quien:quien(), Detalle:detalle});
+  NUBE.frzCarnes=nuevaFrzCarnes; NUBE.sabido=true;
+  NUBE.dataset.push({Fecha:hoyLocal(), Movimiento:'Ajuste de conteo', Cantidad:nuevaFrzCarnes-totalAntes*BOLSA, StockResultante:nuevaFrzCarnes, CamaraResultante:NUBE.camCarnes, Detalle:detalle, Quien:quien()});
+  render();
+  burgy(f.nombre+' corregido: '+actual+' → '+nuevo+' bolsas. Queda anotado. ✏️');
 }
 
 /* ===== Render ===== */
-function renderStock(){
-  if(!NUBE.sabido){
-    $('stockTotal').innerHTML='<div class="vacio">Sin conexión con la nube. Tocá Actualizar.</div>';
-    $('stockUnidades').innerHTML=''; $('camaraBox').innerHTML=''; $('conteoGeneral').innerHTML='';
-  } else {
-    var bolsasListas=Math.floor(NUBE.frz/BOLSA);
-    var dias=NUBE.frz/VENTA_DIA; var pill='sp-verde', msg='Cubre '+dias.toFixed(1)+' días de venta';
-    if(dias<1){ pill='sp-rojo'; msg='Menos de 1 día de venta'+(NUBE.cam>0?' — embolsar la cámara':' — producir'); }
-    else if(dias<2){ pill='sp-amarillo'; msg='Cubre '+dias.toFixed(1)+' días de venta — justo'; }
-    $('stockTotal').innerHTML='<div class="big">'+miles(bolsasListas)+'</div><div class="lbl">👜 bolsas LISTAS en freezers ('+miles(NUBE.frz)+' carnes)</div><div class="estado-pill '+pill+'">'+msg+'</div>';
-    $('stockUnidades').innerHTML='<span>📦 Freezers: <b>'+Math.round(mapaBolsas()/capTotal()*100)+'%</b> de '+capTotal()+' bolsas</span><span>🕳 Lugar libre: <b>'+miles(lugarLibre())+'</b> bolsas</span>';
-    var canCam=Math.floor(NUBE.cam/CANASTO);
-    var pendiente=NUBE.cam>0 && NUBE.fechaCam && NUBE.fechaCam<hoyLocal();
-    $('camaraBox').innerHTML='<div class="cb-n">🧊 '+miles(canCam)+' canastos</div><div class="cb-l">en la Cámara de Frío ('+miles(NUBE.cam)+' carnes congelándose · no disponibles todavía)</div>'+
-      (camBolsas>0?'<div class="cb-l">👜 + <b>'+camBolsas+' bolsas ya embolsadas</b> guardadas acá (disponibles para el local)</div>':'')+
-      (pendiente?'<div class="cb-aviso">⏳ Esperando embolsado desde '+NUBE.fechaCam.split('-').reverse().slice(0,2).join('/')+'</div>':'');
-    try{ localStorage.setItem('fdh_stock_actual',JSON.stringify({carnes:NUBE.frz+NUBE.cam,bolsas:Math.round(NUBE.frz/BOLSA),fecha:hoyLocal()})); }catch(e){}
+function renderResumen(){
+  var prodHoyCarnes=produccionHoyCarnes();
+  $('prodBig').textContent=miles(prodHoyCarnes);
+  var camCanastos=Math.round((NUBE.sabido?NUBE.camCarnes:0)/CANASTO);
+  $('camBig').textContent=miles(camCanastos);
+  $('camPeq').textContent='canastos · '+miles(NUBE.sabido?NUBE.camCarnes:0)+' carnes';
+  var envHoyCarnes=envasadoHoyCarnes();
+  $('envBig').textContent=miles(Math.round(envHoyCarnes/BOLSA));
+  $('envPeq').textContent='bolsas · '+miles(envHoyCarnes)+' carnes';
 
-    /* Conteo general = freezers (mapa local) + cámara embolsada (mapa local).
-       Freezer y cámara son depósitos independientes; esto es solo la suma.
-       Se compara contra NUBE.frz porque ESO es lo que ve Ventas (lee
-       StockResultante de la última fila de Producción) — no el mapa de este
-       dispositivo. Si no coinciden, el número de Ventas puede estar
-       desactualizado hasta que se use "Corregir stock". */
-    var totalLocal=mapaBolsas()+camBolsas;
-    var totalLocalCarnes=totalLocal*BOLSA;
-    $('conteoGeneral').innerHTML='🧮 Conteo general (freezers + cámara embolsada): <b>'+miles(totalLocal)+' bolsas</b> · '+miles(totalLocalCarnes)+' carnes'+
-      (totalLocalCarnes!==NUBE.frz
-        ? '<span class="cg-ojo">⚠️ Ventas ve '+miles(NUBE.frz)+' carnes desde la nube — no coincide con este mapa. Usá "Corregir stock" para igualarlo.</span>'
-        : '<span class="cg-ojo" style="color:var(--verde)">✓ Coincide con lo que ve Ventas.</span>');
-  }
-  $('freezers').innerHTML=freezers.map(function(f){
-    var pct=Math.min(100,Math.round(f.ocup/f.cap*100));
-    var col=pct===0?'#555':pct<40?'var(--coral)':pct<75?'var(--amarillo)':'var(--verde)';
-    return '<div class="fz"><div class="fn"><span>❄️ '+f.nombre+'</span><span class="pct">'+pct+'%</span></div>'+
-      '<div class="barra"><div class="relleno" style="width:'+pct+'%;background:'+col+'"></div></div>'+
-      '<div class="cnt"><button class="sec" onclick="ajustarFreezer(\''+f.id+'\',-1)">−</button>'+
-      '<span class="v"><input class="edn" type="number" min="0" value="'+f.ocup+'" onchange="fijarFreezer(\''+f.id+'\',this)"> <small>/ '+f.cap+' bolsas</small></span>'+
-      '<button class="sec" onclick="ajustarFreezer(\''+f.id+'\',1)">+</button></div></div>';
-  }).join('')+
-  '<div class="fz fz-cam"><div class="fn"><span>🧊 Cámara (bolsas embolsadas)</span></div>'+
-    '<div class="cnt"><button class="sec" onclick="ajustarCamB(-1)">−</button>'+
-    '<span class="v"><input class="edn" type="number" min="0" value="'+camBolsas+'" onchange="fijarCamB(this)"> <small>bolsas</small></span>'+
-    '<button class="sec" onclick="ajustarCamB(1)">+</button></div>'+
-    '<div class="fz-nota">excedente cuando los freezers están llenos · disponibles igual</div></div>';
-  var cf=$('capsFila'); if(cf) cf.innerHTML=freezers.map(function(f){
-    return '<div class="campo chico"><label>'+f.nombre+' (tope)</label><input class="edn" type="number" min="1" value="'+f.cap+'" onchange="fijarCap(\''+f.id+'\',this)"></div>';
+  var totalBolsas=totalFreezersBolsas(), totalCarnesFrz=totalBolsas*BOLSA;
+  $('dispBig').textContent=miles(totalCarnesFrz);
+  $('dispPeq').textContent=miles(totalBolsas)+' bolsas';
+  var dias=totalCarnesFrz/VENTA_DIA;
+  $('dispPill').innerHTML=dias<1?'⚠️ Menos de 1 día de venta':'Cubre ~'+dias.toFixed(1)+' días de venta';
+
+  if(NUBE.sabido && totalCarnesFrz!==NUBE.frzCarnes){
+    $('avisoSyncFrz').innerHTML='<div class="aviso rojo">⚠️ Este mapa de freezers ('+miles(totalCarnesFrz)+' carnes) no coincide con lo que ve Ventas ('+miles(NUBE.frzCarnes)+' carnes). Contá los freezers físicamente y corregí cada uno para que quede igual.</div>';
+  } else { $('avisoSyncFrz').innerHTML=''; }
+}
+function renderFreezers(){
+  $('freezersGrid').innerHTML=freezers.map(function(f){
+    return '<div class="fzcard"><h3>❄️ '+f.nombre+'</h3><div class="big">'+miles(f.bolsas)+'</div><div class="peq">bolsas</div>'+
+      '<button class="sec mini" onclick="editarFreezer(\''+f.id+'\')">Editar</button></div>';
   }).join('');
-  var s=sueltasFrz();
-  $('sueltasNota').innerHTML=NUBE.sabido
-    ? (s>0?'Fuera del mapa: <b>'+miles(s)+' carnes</b> ('+(s>=BOLSA?Math.floor(s/BOLSA)+' bolsas sin ubicar':'sueltas')+'). Anotalas escribiendo el número en el freezer o la cámara donde estén.'
-        :s<0?'⚠️ El mapa tiene <b>'+miles(-s)+' carnes más</b> que el total de la nube. Puede ser producción real que la nube todavía no sincronizó — revisalo con Corregir stock si hace falta.'
-        :'✓ El mapa coincide con el total de la nube.')
-    : '';
-  /* embolsado */
-  var hayCam=NUBE.sabido && NUBE.cam>0;
-  $('embResumen').innerHTML=NUBE.sabido
-    ? (hayCam?'<div class="aviso info" style="margin-top:0">🧊 En la cámara hay <b>'+miles(Math.floor(NUBE.cam/CANASTO))+' canastos</b> ('+miles(NUBE.cam)+' carnes). Lugar libre en freezers: <b>'+miles(lugarLibre())+'</b> bolsas.</div>'
-             :'<div class="vacio">La cámara está vacía. Cuando termine un turno de producción, lo que entre va a aparecer acá para embolsar.</div>')
-    : '<div class="vacio">Sin conexión con la nube.</div>';
-  if(hayCam && $('formEmbolsar').classList.contains('oculto')) $('btnEmbolsar').classList.remove('oculto');
-  else $('btnEmbolsar').classList.add('oculto');
+  $('totalFrzBolsas').textContent=miles(totalFreezersBolsas());
+  $('totalFrzCarnes').textContent=miles(totalFreezersBolsas()*BOLSA);
 }
 function renderMovs(){
-  if(!NUBE.sabido && !NUBE.movs.length){ $('movsNube').innerHTML='<div class="vacio">Sin conexión con la nube.</div>'; return; }
-  $('movsNube').innerHTML=NUBE.movs.map(function(m){
+  if(!NUBE.sabido && !NUBE.dataset.length){ $('movsNube').innerHTML='<div class="vacio">Sin conexión con la nube.</div>'; return; }
+  var lista=NUBE.dataset.slice(-25).reverse();
+  $('movsNube').innerHTML=lista.map(function(m){
     var tipo=m.Movimiento||'Parte de producción';
-    var cant=num(m.Cantidad!==''&&m.Cantidad!=null?m.Cantidad:m.CarnesProducidas);
-    var signo, cls;
-    if(/env[ií]o|salida/i.test(tipo)){ signo='−'; cls='menos'; }
-    else if(/ajuste/i.test(tipo)){ signo=(cant>=0?'+':'−'); cls='igual'; cant=Math.abs(cant); }
-    else if(/c[aá]mara/i.test(tipo)){ signo='+'; cls='frio'; }
-    else if(/embols/i.test(tipo)){ signo='→'; cls='frio'; }
-    else { signo='+'; cls='mas'; }
+    var cant=num(m.Cantidad);
+    var esAjuste=tipo==='Ajuste de conteo';
+    var esSalida=/env[ií]o|salida/i.test(tipo);
+    var cls=esAjuste?'edit':(esSalida?'menos':'mas');
+    var signo=esAjuste?(cant>=0?'+':'−'):(esSalida?'−':'+');
     var fecha=String(m.Fecha||'').slice(0,10);
-    var saldos=[];
-    if(m.StockResultante!==''&&m.StockResultante!=null) saldos.push('listas '+miles(num(m.StockResultante)));
-    if(m.CamaraResultante!==''&&m.CamaraResultante!=null&&num(m.CamaraResultante)>0) saldos.push('cámara '+miles(num(m.CamaraResultante)));
-    return '<div class="reg"><b>'+tipo+'</b> <span class="'+cls+'">'+signo+miles(cant)+'</span>'+
-      (saldos.length?' → '+saldos.join(' · '):'')+
-      '<br>'+fecha+(m.Quien?' · '+m.Quien:'')+(m.Destino?' · '+m.Destino:'')+(m.Detalle?'<br><span style="font-size:.74rem">'+m.Detalle+'</span>':'')+'</div>';
+    return '<div class="reg"><b>'+tipo+'</b> <span class="'+cls+'">'+signo+miles(Math.abs(cant))+' carnes</span>'+
+      '<br>'+fecha+(m.Quien?' · '+m.Quien:'')+(m.Detalle?'<br><span style="font-size:.74rem">'+m.Detalle+'</span>':'')+'</div>';
   }).join('')||'<div class="vacio">Sin movimientos todavía.</div>';
 }
 
-/* ===== Insumos ===== */
+/* ===== Insumos (sin cambios de negocio: no estaba pedido tocar esta parte) ===== */
 var insumos=JSON.parse(localStorage.getItem(KI)||'null')||[
  {id:'i1',nombre:'Pastillas de carne',cant:20,minMedio:10,minAlto:5,cat:'prod',impacto:'Sin pastillas no hay producción: impacta directo en ventas y pedidos.'},
  {id:'i2',nombre:'Bolsas para embolsar',cant:12,minMedio:6,minAlto:3,cat:'prod',impacto:'Sin bolsas no se puede embolsar lo producido.'},
@@ -927,35 +785,16 @@ function renderInsumos(){
   $('insHig').innerHTML=hig.map(insCard).join('')||'<div class="vacio">Sin insumos.</div>';
   var malos=insumos.filter(function(i){ return nivel(i)!=='ok'; })
     .sort(function(a,b){ return (nivel(a)==='alto'?0:1)-(nivel(b)==='alto'?0:1); });
+  $('insumosResumenRapido').innerHTML=malos.length
+    ? malos.slice(0,6).map(function(i){ var n=nivel(i);
+        return '<div class="reg">'+(n==='alto'?'🚨':'⚠️')+' <b>'+i.nombre+'</b> — quedan '+i.cant+'</div>'; }).join('')
+      +'<button class="mini sec" style="margin-top:6px" onclick="verInventario()">Ver inventario completo →</button>'
+    : '<div class="aviso verde" style="margin-top:0">✓ Insumos en orden.</div>';
   var pills=malos.length
     ? malos.map(function(i){ var n=nivel(i);
         return '<span class="alerta-pill '+(n==='alto'?'alta':'media')+'" onclick="verInventario()">'+(n==='alto'?'🚨':'⚠️')+' '+i.nombre+' ('+i.cant+')</span>'; }).join('')
-      +'<span class="alerta-pill media" style="animation:none;cursor:pointer" onclick="verInventario()">Ver inventario →</span>'
     : '<span class="alerta-pill ok">✓ Insumos en orden</span>';
-  /* alerta de camara pendiente tambien en la franja */
-  if(NUBE.sabido && NUBE.cam>0 && NUBE.fechaCam && NUBE.fechaCam<hoyLocal()){
-    pills='<span class="alerta-pill frio">⏳ Hay '+miles(Math.floor(NUBE.cam/CANASTO))+' canastos en cámara esperando embolsado</span>'+pills;
-  }
   $('alertas').innerHTML=pills;
-}
-
-/* ===== Contingencias ===== */
-var contingencias=JSON.parse(localStorage.getItem(KC)||'[]');
-function cargarContingencia(){
-  var det=$('conDetalle').value.trim();
-  if(!det){ burgy('Contanos qué pasó. ✍️'); return; }
-  if(!seleccion.conQuien){ burgy('Tocá quién se ocupa. 🙋'); return; }
-  contingencias.unshift({id:Date.now(),fecha:hoyLocal(),hora:ahora(),tipo:$('conTipo').value,detalle:det,quien:seleccion.conQuien});
-  guardarLocal();
-  burgy('Contingencia asignada a '+seleccion.conQuien+'. Queda en el reporte. 📋');
-  $('conDetalle').value='';
-  document.querySelectorAll('[data-g="conQuien"]').forEach(function(e){ e.classList.remove('sel'); });
-  seleccion.conQuien=null; renderContingencias();
-}
-function renderContingencias(){
-  $('listaContingencias').innerHTML=contingencias.slice(0,6).map(function(c){
-    return '<div class="reg"><b>'+c.tipo+'</b> · '+c.quien+' '+c.hora+'<br>'+c.detalle+'</div>';
-  }).join('')||'<div class="vacio">Sin contingencias. ¡Ojalá siga así! 🙌</div>';
 }
 
 /* ===== Vistas ===== */
@@ -963,29 +802,20 @@ function verInventario(){ $('vistaTablero').classList.add('oculto'); $('vistaInv
 function verTablero(){ $('vistaInventario').classList.add('oculto'); $('vistaTablero').classList.remove('oculto'); }
 
 function empezarDeCero(){
-  if(!confirm('¿Seguro que querés empezar de cero?\n\nEsto borra los datos de PRUEBA de este navegador (mapa de freezers, jornadas, insumos, contingencias).\n\nNo borra nada de la nube: el stock y los movimientos del Cuaderno quedan como están.')) return;
-  [KJ,KFZ,KCB,KI,KC,'fdh_freezers_v3','fdh_freezers_v4','fdh_freezers_v5','fdh_jornada_v2','fdh_produccion_v2','fdh_stockbase_v1','fdh_stock_actual','fdh_jornada_v1'].forEach(function(k){ localStorage.removeItem(k); });
+  if(!confirm('¿Seguro que querés empezar de cero?\n\nEsto borra los datos de PRUEBA de este navegador (mapa de freezers, turno, insumos, operador elegido).\n\nNo borra nada de la nube: el stock y los movimientos del Cuaderno quedan como están.')) return;
+  [KFZ,KI,KTURNO,KOP,'fdh_jornada_v3','fdh_freezers_v6','fdh_cambolsas_v1','fdh_conting_v1','fdh_freezers_v3','fdh_freezers_v4','fdh_freezers_v5','fdh_jornada_v2','fdh_produccion_v2','fdh_stockbase_v1','fdh_stock_actual','fdh_jornada_v1'].forEach(function(k){ localStorage.removeItem(k); });
   alert('✓ Listo. Todo limpio. La página se recarga.');
   location.reload();
 }
 
-function render(){ renderStock(); renderMovs(); renderInsumos(); pintarTurno(); }
+function render(){ renderResumen(); renderFreezers(); renderMovs(); renderInsumos(); pintarTurno(); }
 
 /* ===== Arranque ===== */
 $('fechaHoy').textContent=new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-chipGroup('camLimpia',['Sí','No'],'camLimpia','sino');
-chipGroup('camQuien',PERSONAS,'camQuien');
-chipGroup('embQuien',PERSONAS,'embQuien');
-chipGroup('ciLimpia',['Sí','No'],'ciLimpia','sino'); chipGroup('ciConteo',['Sí','No'],'ciConteo','sino'); chipGroup('ciQuien',PERSONAS,'ciQuien');
-chipGroup('conQuien',PERSONAS,'conQuien');
-$('camCanastos').addEventListener('input',espejoCamara);
-$('camSueltas').addEventListener('input',espejoCamara);
-$('embCanastos').addEventListener('input',espejoEmbolsado);
-$('embBolsas').addEventListener('input',espejoEmbolsado);
-render(); renderContingencias();
-pintarCacheSesion();
+pintarOperador();
+render();
 cargarNube();
-/* refresco suave: si Ventas registro un envio, aca se ve solo */
+/* refresco suave: si Ventas registró un envío o alguien más edito, se ve solo */
 setInterval(cargarNube, 90000);
 </script>
 <script>
