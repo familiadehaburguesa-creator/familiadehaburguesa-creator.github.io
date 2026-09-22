@@ -427,7 +427,7 @@ function deudoresAbiertos(){
   var por={};
   D.deudas.forEach(function(f,i){
     var k=limpiaClave(f.Cliente); if(!k) return;
-    var e=por[k]||(por[k]={quien:String(f.Cliente),saldo:0,fecha:'',ultimo:'',cargas:[],pagado:0,
+    var e=por[k]||(por[k]={quien:String(f.Cliente),saldo:0,fecha:'',ultimo:'',cargas:[],pagado:0,pagos:[],
                            ultFecha:'',ultHora:'',fila:-1});
     // HU-01: para ordenar hace falta el movimiento MÁS RECIENTE del cliente, y
     // el número de fila como desempate (no hay IDs: la última fila es la última
@@ -437,6 +437,11 @@ function deudoresAbiertos(){
     e.fila=i;
     if(/cobro/i.test(String(f.Movimiento||''))){
       e.pagado+=num(f.Monto);
+      // HU3: para verlo rápido en Finanzas hace falta el medio de pago de
+      // cada cobro, no solo el total acumulado. Via ya viaja desde Ventas
+      // (guardarCobroDeuda manda 'efectivo' / 'transferencia' / 'Mercado Pago').
+      e.pagos.push({fecha:String(f.Fecha||'').slice(0,10),hora:horaDeNota(f.Nota),
+                    via:String(f.Via||'').trim(),monto:num(f.Monto)});
     } else {
       var fecha=String(f.Fecha||'').slice(0,10);
       if(!e.fecha) e.fecha=fecha;
@@ -446,7 +451,7 @@ function deudoresAbiertos(){
     e.saldo=num(f.SaldoCliente);
     e.ultimo=String(f.Movimiento||'');
     // Saldado: lo anterior ya no es deuda. La próxima arranca de cero.
-    if(e.saldo<=0){ e.fecha=''; e.cargas=[]; e.pagado=0; }
+    if(e.saldo<=0){ e.fecha=''; e.cargas=[]; e.pagado=0; e.pagos=[]; }
   });
   return Object.keys(por).map(function(k){ return por[k]; }).filter(function(d){ return d.saldo>0; });
 }
@@ -699,8 +704,13 @@ function render(){
       return '<div class="t3">📅 '+fery(c.fecha)+' · 🕒 '+(c.hora||'sin hora')+' · 👤 '+(c.usuario||'sin usuario')+
              (d.cargas.length>1?' · '+pesos(c.monto):'')+'</div>';
     }).join('');
-    return '<div class="item"><div><div class="t1">'+d.quien+'</div>'+det+
-      (d.pagado>0?'<div class="t2">ya pagó '+pesos(d.pagado)+'</div>':'')+'</div>'+
+    // HU3: nombre del cliente (d.quien, ya está en el título) + medio de pago
+    // de cada cobro, para identificarlo rápido al revisar los ingresos.
+    var pagosDet=d.pagos.map(function(p){
+      return '<div class="t2">💳 pagó '+pesos(p.monto)+' por '+(p.via||'medio sin registrar')+
+             ' · '+fery(p.fecha)+(p.hora?' '+p.hora:'')+'</div>';
+    }).join('');
+    return '<div class="item"><div><div class="t1">'+d.quien+'</div>'+det+pagosDet+'</div>'+
       '<div class="monto ambar">'+pesos(d.saldo)+'</div></div>';
   }).join('')||'<div class="vacio">Nadie debe nada. 🙌</div>';
   /* gastos (sin fondo) · HU1: cada gasto muestra con qué se pagó */
