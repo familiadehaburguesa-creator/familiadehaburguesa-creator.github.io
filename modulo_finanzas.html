@@ -50,16 +50,6 @@ button.mini{padding:5px 10px;font-size:.8rem;border-radius:7px}
 .nube-estado.ok{background:rgba(62,196,109,.13);color:var(--verde)}
 .nube-estado.error{background:rgba(242,193,78,.13);color:var(--amarillo)}
 
-.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
-.kpi{border-radius:12px;padding:13px;text-align:center;border:1px solid}
-.kpi .n{font-size:1.45rem;font-weight:800;line-height:1;white-space:nowrap}
-.kpi .n.largo{font-size:1.15rem}
-.kpi .t{font-size:.74rem;margin-top:4px}
-.kpi .b{font-size:.68rem;margin-top:2px;opacity:.8}
-.k-verde{background:rgba(62,196,109,.1);border-color:var(--verde);color:var(--verde)}
-.k-celeste{background:rgba(91,184,232,.1);border-color:var(--celeste);color:var(--celeste)}
-.k-ambar{background:rgba(242,193,78,.1);border-color:var(--amarillo);color:var(--amarillo)}
-.k-rojo{background:rgba(255,125,110,.1);border-color:var(--coral);color:var(--coral)}
 .k-violeta{background:rgba(181,138,232,.1);border-color:var(--violeta);color:var(--violeta)}
 
 .doble{display:grid;grid-template-columns:1fr 1fr;gap:14px}
@@ -119,7 +109,7 @@ button.mini{padding:5px 10px;font-size:.8rem;border-radius:7px}
 .aviso.verde{background:rgba(62,196,109,.12);color:var(--verde);border:1px solid var(--verde)}
 .aviso.rojo{background:rgba(255,125,110,.12);color:var(--coral);border:1px solid var(--coral)}
 footer{text-align:center;color:var(--dorado);font-size:.85rem;margin-top:22px;padding:14px;border-top:1px solid #3a1018}
-@media(max-width:880px){.kpis{grid-template-columns:repeat(2,1fr)}.doble{grid-template-columns:1fr}}
+@media(max-width:880px){.doble{grid-template-columns:1fr}}
 .btn-volver-home{display:inline-flex;align-items:center;gap:6px;position:sticky;top:0;z-index:40;background:var(--dorado);color:#2a1800;font-weight:800;text-decoration:none;padding:9px 16px;border-radius:0 0 12px 0;font-size:.88rem;box-shadow:0 2px 10px rgba(0,0,0,.4);margin-bottom:8px}
 .btn-volver-home:hover{background:#f5c75e}
 /* En celular los montos de millones no entran de a tres: una fila por medio de pago, monto entero. */
@@ -219,8 +209,6 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(1) brightness(
 </header>
 <div class="divisor-marca">★</div>
 <div class="bubble"><img class="burgy-mini" src="data:image/jpeg;base64,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" alt="Burgy"><span id="burgyDice">Acá no se carga casi nada: la plata que entra viene sola de los cierres de turno. A mano van los gastos, lo que se guarda en tesorería y los movimientos del fondo. 💰</span></div>
-
-<div class="kpis" id="kpis"></div>
 
 <!-- HU-03: reporte de cierres por rango de fechas -->
 <div class="panel">
@@ -698,17 +686,7 @@ function pintarTotalHoy(){
 }
 
 /* ===== render ===== */
-function kpi(monto,titulo,clase,sub){
-  var txt=pesos(monto);
-  return '<div class="kpi '+clase+'"><div class="n'+(txt.length>=10?' largo':'')+'">'+txt+'</div><div class="t">'+titulo+'</div>'+(sub?'<div class="b">'+sub+'</div>':'')+'</div>';
-}
 function render(){
-  $('kpis').innerHTML=
-    kpi(entroHoy(),'🟢 Entró hoy','k-verde','cierres de turno de Ventas')+
-    kpi(entroMes(),'📅 Entró este mes','k-celeste',D.ventas.filter(function(v){return String(v.Fecha||'').slice(0,7)===mesActual();}).length+' cierres')+
-    kpi(porCobrar(),'📌 Falta cobrar','k-ambar',deudoresAbiertos().length+' deudores · mismo número que el mostrador')+
-    kpi(gastosMes(),'🔴 Salió este mes','k-rojo','gastos + retiros de caja')+
-    '';
   pintarProveedores();
   pintarReporte();
   /* cierres */
