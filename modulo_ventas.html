@@ -1380,7 +1380,12 @@ function sincronizarDeudas(cuandoTermine){
         e.cobros.push({monto: num(f.Monto), via: String(f.Via || ''), quien: String(f.Quien || ''), fecha: fecha, hora: hs});
       } else {
         e.original += num(f.Monto);
-        e.cargas.push({fecha: fecha, hora: hs, usuario: String(f.Quien || ''), monto: num(f.Monto)});
+        // HU2/HU4: para poder borrar o corregir ESTA carga puntual despues,
+        // se guarda tal cual vino de la nube (Deudas no tiene ID de fila; el
+        // MENSAJERO la ubica por estos 7 campos exactos).
+        e.cargas.push({fecha: fecha, hora: hs, usuario: String(f.Quien || ''), monto: num(f.Monto),
+          raw: {Fecha: f.Fecha, Cliente: f.Cliente, Movimiento: f.Movimiento, Monto: num(f.Monto),
+                Via: f.Via || '', Quien: f.Quien || '', Nota: f.Nota || ''}});
         if (!e.fecha){ e.fecha = fecha; e.hora = hs; e.usuario = String(f.Quien || ''); }
         if (f.Nota) e.nota = textoDeNota(f.Nota);
         if (f.Quien) e.turno = String(f.Quien);
@@ -1497,6 +1502,10 @@ function pintarMovs(){
   $('movs').innerHTML = h;
 }
 
+// HU2/HU4: qué carga se está por borrar o corregir (una sola por vez, se
+// muestra inline en la propia tarjeta, sin popups del navegador).
+var CARGA_EN_ACCION = null; // {idDeuda, idxCarga, modo:'borrar'|'editar'}
+
 function pintarDeudas(){
   var lista = deudasAbiertas();
   if (!lista.length){ $('deudas').className = 'vacio'; $('deudas').textContent = 'Nadie quedó debiendo.'; return; }
@@ -1510,9 +1519,19 @@ function pintarDeudas(){
     // HU7: cada carga con su fecha, hora y quién la registró.
     var cargas = (d.cargas && d.cargas.length) ? d.cargas
                : [{fecha: d.fecha, hora: d.hora, usuario: d.usuario || d.turno, monto: d.original}];
-    var t3 = cargas.map(function(c){
-      return '<div class="t3">' + selloTexto(c.fecha, c.hora, c.usuario) +
-             (cargas.length > 1 ? ' \u00b7 ' + pesos(c.monto) : '') + '</div>';
+    var t3 = cargas.map(function(c, i){
+      // HU2/HU4: solo se puede borrar/editar una carga puntual si vino de la
+      // nube con sus 7 campos crudos (raw). La fila resumen de compatibilidad
+      // (cliente sin cargas separadas) no se puede tocar desde ac\u00e1.
+      var iconos = c.raw ?
+        ' <span class="accCarga" data-accion="editar" data-deuda="' + d.id + '" data-idx="' + i + '" title="Corregir el monto">\u270f\ufe0f</span>' +
+        '<span class="accCarga" data-accion="borrar" data-deuda="' + d.id + '" data-idx="' + i + '" title="Borrar, se carg\u00f3 mal">\ud83d\uddd1\ufe0f</span>' : '';
+      var linea = '<div class="t3">' + selloTexto(c.fecha, c.hora, c.usuario) +
+             (cargas.length > 1 ? ' \u00b7 ' + pesos(c.monto) : '') + iconos + '</div>';
+      if (CARGA_EN_ACCION && CARGA_EN_ACCION.idDeuda === d.id && CARGA_EN_ACCION.idxCarga === i){
+        linea += pintarAccionCarga(c);
+      }
+      return linea;
     }).join('');
     var t2 = d.nota || '';
     if (pagado > 0) t2 += (t2 ? ' \u00b7 ' : '') + 'ya pag\u00f3 ' + pesos(pagado) + ' de ' + pesos(d.original);
@@ -1523,9 +1542,98 @@ function pintarDeudas(){
          '<div class="der"><div class="monto">' + pesos(d.saldo) + '</div></div></div>';
   });
   $('deudas').innerHTML = h;
-  Array.prototype.forEach.call($('deudas').querySelectorAll('[data-deuda]'), function(el){
+  Array.prototype.forEach.call($('deudas').querySelectorAll('.item.deudaClic'), function(el){
     el.addEventListener('click', function(){ abrirCobroDeuda(el.getAttribute('data-deuda')); });
   });
+  Array.prototype.forEach.call($('deudas').querySelectorAll('.accCarga'), function(el){
+    el.addEventListener('click', function(ev){
+      ev.stopPropagation();
+      CARGA_EN_ACCION = { idDeuda: el.getAttribute('data-deuda'), idxCarga: Number(el.getAttribute('data-idx')),
+                           modo: el.getAttribute('data-accion') };
+      pintarDeudas();
+    });
+  });
+  Array.prototype.forEach.call($('deudas').querySelectorAll('.accCancelar'), function(el){
+    el.addEventListener('click', function(ev){ ev.stopPropagation(); CARGA_EN_ACCION = null; pintarDeudas(); });
+  });
+  Array.prototype.forEach.call($('deudas').querySelectorAll('.accConfirmarBorrar'), function(el){
+    el.addEventListener('click', function(ev){ ev.stopPropagation(); confirmarBorrarCarga(); });
+  });
+  Array.prototype.forEach.call($('deudas').querySelectorAll('.accGuardarEdicion'), function(el){
+    el.addEventListener('click', function(ev){ ev.stopPropagation(); confirmarEditarCarga(); });
+  });
+}
+
+/** La franja inline que aparece bajo la carga elegida: confirmar el borrado o
+ *  cambiar el monto. Sin confirm()/prompt() del navegador: queda en la propia
+ *  tarjeta, como el resto de la app. */
+function pintarAccionCarga(c){
+  if (CARGA_EN_ACCION.modo === 'borrar'){
+    return '<div class="t2 accInline">¿Borrar esta carga de ' + pesos(c.monto) + '? Se anota en la bitácora del turno.' +
+      ' <span class="accConfirmarBorrar" style="color:#f2a6a4;font-weight:700;cursor:pointer">Sí, borrar</span>' +
+      ' · <span class="accCancelar" style="cursor:pointer;text-decoration:underline">Cancelar</span></div>';
+  }
+  return '<div class="t2 accInline">Nuevo monto: ' +
+    '<input type="number" id="inpNuevoMontoCarga" value="' + Math.round(c.monto) + '" style="width:110px">' +
+    ' <span class="accGuardarEdicion" style="color:#96d9b5;font-weight:700;cursor:pointer">Guardar</span>' +
+    ' · <span class="accCancelar" style="cursor:pointer;text-decoration:underline">Cancelar</span></div>';
+}
+
+function cargaEnAccion_(){
+  if (!CARGA_EN_ACCION) return null;
+  var d = leerDeudas().filter(function(x){ return x.id === CARGA_EN_ACCION.idDeuda; })[0];
+  if (!d || !d.cargas || !d.cargas[CARGA_EN_ACCION.idxCarga]) return null;
+  return { d: d, c: d.cargas[CARGA_EN_ACCION.idxCarga] };
+}
+
+function confirmarBorrarCarga(){
+  var ec = cargaEnAccion_();
+  if (!ec || !ec.c.raw){ CARGA_EN_ACCION = null; pintarDeudas(); return; }
+  var quien = usuarioActivo();
+  eliminarDeudaEnNube(ec.c.raw);
+  if (T && T.abierto){
+    anotar('Borró una carga de deuda · ' + ec.d.quien,
+           pesos(ec.c.monto) + ' · cargada el ' + diaCorto(ec.c.fecha) + ' · la borró ' + quien, '');
+    guardarTurno(); pintarMovs();
+  }
+  CARGA_EN_ACCION = null;
+  sincronizarDeudas();
+}
+
+function confirmarEditarCarga(){
+  var ec = cargaEnAccion_();
+  if (!ec || !ec.c.raw){ CARGA_EN_ACCION = null; pintarDeudas(); return; }
+  var nuevo = ent($('inpNuevoMontoCarga').value);
+  if (nuevo <= 0) return;
+  var quien = usuarioActivo();
+  var viejo = ec.c.monto;
+  editarDeudaEnNube(ec.c.raw, nuevo, quien);
+  if (T && T.abierto){
+    anotar('Corrigió una carga de deuda · ' + ec.d.quien,
+           pesos(viejo) + ' → ' + pesos(nuevo) + ' · lo corrigió ' + quien, '');
+    guardarTurno(); pintarMovs();
+  }
+  CARGA_EN_ACCION = null;
+  sincronizarDeudas();
+}
+
+/** HU2: borra una carga de deuda mal cargada. El MENSAJERO ubica la fila por
+ *  sus 7 campos exactos (no hay ID) y recalcula en cadena el saldo de las
+ *  filas posteriores de ese cliente. mode:'no-cors' = no hay respuesta acá;
+ *  por eso se resincroniza con la nube después de mandarlo. */
+function eliminarDeudaEnNube(raw){
+  try{
+    fetch(NUBE, {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify({accion:'eliminarDeuda', deuda: raw, quien: usuarioActivo()})});
+  }catch(e){}
+}
+
+/** HU4: corrige el monto de una carga de deuda ya cargada. */
+function editarDeudaEnNube(raw, nuevoMonto, quien){
+  try{
+    fetch(NUBE, {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify({accion:'editarDeuda', deuda: raw, nuevoMonto: nuevoMonto, quien: quien})});
+  }catch(e){}
 }
 
 /** '11/09 · 14:32 · cargó Paula' — lo que se ve en cada deuda. */
