@@ -52,17 +52,16 @@ button.mini{padding:5px 10px;font-size:.8rem;border-radius:7px}
 
 .k-violeta{background:rgba(181,138,232,.1);border-color:var(--violeta);color:var(--violeta)}
 
-.doble{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.doble{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:stretch}
 .doble .panel{margin-bottom:14px;display:flex;flex-direction:column}
 .mini-lista{font-size:.82rem;color:var(--gris);max-height:330px;overflow:auto;flex:1}
+.doble .mini-lista{max-height:520px;min-height:0}
 .item{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid #2c2c34;align-items:center}
 .item .t1{font-weight:700;color:var(--crema);font-size:.88rem}
 .item .t2{font-size:.75rem;color:var(--gris);margin-top:1px;line-height:1.4}
 .item .t3{font-size:.8rem;color:#fff;margin-top:2px;line-height:1.4}
 .item .monto{font-weight:800;font-size:.95rem;white-space:nowrap}
 .monto.verde{color:var(--verde)} .monto.rojo{color:var(--coral)} .monto.ambar{color:var(--amarillo)} .monto.violeta{color:var(--violeta)}
-/* HU8: tarjeta de cierre de turno */
-#listaCierres{max-height:520px}
 /* HU12: totalizador del día */
 .hoy{border:1px solid rgba(214,172,90,.55);border-radius:12px;padding:12px 14px;margin-bottom:12px;background:linear-gradient(180deg,rgba(214,172,90,.10),rgba(214,172,90,.03))}
 .hoy-cab{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;flex-wrap:wrap}
@@ -109,7 +108,7 @@ button.mini{padding:5px 10px;font-size:.8rem;border-radius:7px}
 .aviso.verde{background:rgba(62,196,109,.12);color:var(--verde);border:1px solid var(--verde)}
 .aviso.rojo{background:rgba(255,125,110,.12);color:var(--coral);border:1px solid var(--coral)}
 footer{text-align:center;color:var(--dorado);font-size:.85rem;margin-top:22px;padding:14px;border-top:1px solid #3a1018}
-@media(max-width:880px){.doble{grid-template-columns:1fr}}
+@media(max-width:880px){.doble{grid-template-columns:1fr}.doble .mini-lista{max-height:330px}}
 .btn-volver-home{display:inline-flex;align-items:center;gap:6px;position:sticky;top:0;z-index:40;background:var(--dorado);color:#2a1800;font-weight:800;text-decoration:none;padding:9px 16px;border-radius:0 0 12px 0;font-size:.88rem;box-shadow:0 2px 10px rgba(0,0,0,.4);margin-bottom:8px}
 .btn-volver-home:hover{background:#f5c75e}
 /* En celular los montos de millones no entran de a tres: una fila por medio de pago, monto entero. */
