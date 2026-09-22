@@ -1468,7 +1468,13 @@ function pintarKPIs(){
     // El efectivo de arriba ya suma los cobros de deuda: el MP tiene que hacer
     // lo mismo o el panel se contradice consigo mismo.
     kpi(pesos(c.tra + c.mp), 'Cobrado por Mercado Pago', '', 'solo ventas') +
-    kpi(pesos(otrosMP() + otrosEfe()), 'Entró sin ser venta', '', 'señas, cobros de deuda') +
+    // HU1: antes era una sola tarjeta combinada. Se separa por medio de pago
+    // para que el arqueo no mezcle el efectivo (que hay que contar a mano)
+    // con el MP (que se verifica en la app). otrosEfe()/otrosMP() ya vienen
+    // separados desde antes (cobrarDeuda y guardarIngresoPlata los cargan por
+    // vía), así que acá solo se pinta cada uno en su propia tarjeta.
+    kpi(pesos(otrosEfe()), 'Entró sin ser venta', '', 'efectivo · señas, cobros de deuda') +
+    kpi(pesos(otrosMP()), 'Entró sin ser venta', '', 'Mercado Pago · señas, cobros de deuda') +
     // Lo que falta cobrar es el saldo de TODAS las deudas abiertas, no solo
     // las que nacieron en este turno: si ayer alguien quedo debiendo, hoy se
     // le sigue debiendo a la caja.
