@@ -15,7 +15,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="application-name" content="Familia de Hamburguesa">
 <!-- /PWA -->
-<title>Producción · Familia de Hamburguesa</title>
+<title>Fábrica · Familia de Hamburguesa</title>
 <style>
 :root{--rojo:#c8102e;--rojo-osc:#7a0a1c;--negro:#0d0d0f;--carbon:#1a1a1f;--dorado:#e8b54a;--crema:#fff4e3;--verde:#3ec46d;--celeste:#5bb8e8;--coral:#ff7d6e;--amarillo:#f2c14e;--gris:#9b9ba6;--frio:#79c9f0}
 *{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',system-ui,sans-serif}
@@ -67,7 +67,8 @@ button:disabled{opacity:.45;cursor:not-allowed}
 #operadorBox .chips{margin-top:0}
 
 /* ===== Resumen (tarjetas grandes) ===== */
-.resumen{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:14px}
+.resumen{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:14px}
+.ayuda-fz{font-size:.8rem;color:var(--gris);margin-bottom:8px}
 .rcard{background:var(--carbon);border:1px solid #2c2c34;border-radius:14px;padding:16px;text-align:center}
 .rcard h3{font-size:.82rem;color:var(--dorado);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:6px}
 .rcard .big{font-size:2.1rem;font-weight:800;line-height:1}
@@ -78,12 +79,6 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .editbox label{margin-top:0}
 .editbox .fila{margin-top:8px}
 
-/* ===== Freezers ===== */
-.freezers-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px}
-.fzcard{background:var(--carbon);border:1px solid #2c2c34;border-radius:14px;padding:14px;text-align:center}
-.fzcard h3{font-size:.85rem;color:var(--dorado);margin-bottom:6px}
-.fzcard .big{font-size:1.7rem;font-weight:800}
-.fzcard .peq{font-size:.76rem;color:var(--gris);margin-bottom:8px}
 
 .mini-lista{margin-top:4px;font-size:.8rem;color:var(--gris);max-height:520px;overflow:auto}
 .mini-lista .reg{padding:8px 0;border-bottom:1px solid #2c2c34;line-height:1.5}
@@ -133,8 +128,8 @@ input.edn{width:64px;padding:6px 4px;text-align:center;background:#17171d;border
 .aviso.info{background:rgba(91,184,232,.1);color:var(--celeste);border:1px solid var(--celeste)}
 
 footer{text-align:center;color:var(--dorado);font-size:.85rem;margin-top:22px;padding:14px;border-top:1px solid #3a1018}
-@media(max-width:1000px){.resumen{grid-template-columns:repeat(2,1fr)}.freezers-grid{grid-template-columns:repeat(2,1fr)}.doscols{grid-template-columns:1fr}}
-@media(max-width:560px){.resumen{grid-template-columns:1fr}.freezers-grid{grid-template-columns:1fr}}
+@media(max-width:1000px){.doscols{grid-template-columns:1fr}}
+@media(max-width:560px){.resumen{grid-template-columns:1fr}}
 .btn-volver-home{display:inline-flex;align-items:center;gap:6px;position:sticky;top:0;z-index:40;background:var(--dorado);color:#2a1800;font-weight:800;text-decoration:none;padding:9px 16px;border-radius:0 0 12px 0;font-size:.88rem;box-shadow:0 2px 10px rgba(0,0,0,.4);margin-bottom:8px}
 .btn-volver-home:hover{background:#f5c75e}
 .btn-cero{background:rgba(255,125,110,.15);color:var(--coral);border:1px solid var(--coral);font-weight:700;padding:8px 14px;border-radius:10px;cursor:pointer;font-size:.82rem;white-space:nowrap}
@@ -154,9 +149,9 @@ footer{text-align:center;color:var(--dorado);font-size:.85rem;margin-top:22px;pa
 :root{--dorado:#d6ac5a;--negro:#0c0a07;--carbon:#171310;--crema:#fff4e3;--rojo-osc:#1d150c}
 body{background:radial-gradient(1100px 520px at 75% -8%,rgba(214,172,90,.10),transparent 60%),linear-gradient(170deg,#0c0a07 0%,#131008 60%,#1d150c 130%)}
 h1{font-family:'Oswald','Segoe UI',sans-serif;text-transform:uppercase;letter-spacing:2px;font-weight:500}
-.panel,.rcard,.fzcard{background:#171310;border-color:rgba(214,172,90,.22);box-shadow:inset 0 1px 0 rgba(255,244,227,.05)}
+.panel,.rcard{background:#171310;border-color:rgba(214,172,90,.22);box-shadow:inset 0 1px 0 rgba(255,244,227,.05)}
 .panel h2{font-family:'Oswald','Segoe UI',sans-serif;text-transform:uppercase;letter-spacing:1.3px;font-weight:500;padding-bottom:9px;border-bottom:1px solid rgba(214,172,90,.25)}
-.rcard h3,.fzcard h3{font-family:'Oswald','Segoe UI',sans-serif;letter-spacing:1.3px}
+.rcard h3{font-family:'Oswald','Segoe UI',sans-serif;letter-spacing:1.3px}
 button{background:linear-gradient(180deg,#e6c276,#c69838);color:#241a08}
 button:hover{background:linear-gradient(180deg,#efcf8d,#d2a748)}
 header .logowrap{background:transparent;box-shadow:none;padding:0;border-radius:0}
@@ -173,7 +168,7 @@ input::placeholder,textarea::placeholder{color:#a89c8b}
 button.sec{background:#241d12;color:#fff;border:1px solid rgba(214,172,90,.6)}
 button.sec:hover{background:#33291a;color:#fff}
 .sub,.panel .ayuda,.vacio{color:#d8cdb9}
-.rcard .peq,.fzcard .peq{color:#d8cdb9}
+.rcard .peq,.ayuda-fz{color:#d8cdb9}
 </style>
 </head>
 <body>
@@ -182,7 +177,7 @@ button.sec:hover{background:#33291a;color:#fff}
 <header>
   <div class="logowrap"><svg class="emblema" width="64" height="64" viewBox="0 0 120 120" role="img" aria-label="Familia de Hamburguesa"><circle cx="60" cy="60" r="57" fill="#0d0b08" stroke="#d6ac5a" stroke-width="2.4"/><circle cx="60" cy="60" r="51" fill="none" stroke="#d6ac5a" stroke-width="0.8" opacity=".8"/><path d="M44 36 a16 10 0 0 1 32 0 z" fill="#d6ac5a"/><line x1="44" y1="41" x2="76" y2="41" stroke="#d6ac5a" stroke-width="2.6" stroke-linecap="round"/><line x1="46" y1="46.5" x2="74" y2="46.5" stroke="#d6ac5a" stroke-width="4.6" stroke-linecap="round"/><text x="60" y="69" text-anchor="middle" font-family="'Dancing Script',cursive" font-weight="700" font-size="27" fill="#fff4e3">Familia</text><text x="60" y="77.5" text-anchor="middle" font-family="'Oswald','Segoe UI',sans-serif" font-size="6" letter-spacing="3" fill="#d6ac5a">— DE —</text><text x="60" y="89" text-anchor="middle" font-family="'Oswald','Segoe UI',sans-serif" font-weight="600" font-size="10" letter-spacing="0.8" fill="#fff4e3" textLength="58" lengthAdjust="spacingAndGlyphs">HAMBURGUESA</text><rect x="37.5" y="92.5" width="45" height="7" rx="2" fill="#d6ac5a"/><text x="60" y="97.4" text-anchor="middle" font-family="'Oswald','Segoe UI',sans-serif" font-weight="600" font-size="3.7" letter-spacing="0.4" fill="#1a1208" textLength="40" lengthAdjust="spacingAndGlyphs">CASERAS · RICAS · DE VERDAD</text><text x="60" y="107.5" text-anchor="middle" font-size="6.5" fill="#d6ac5a">★</text></svg></div>
   <div>
-    <h1>🏭 Producción · Familia de Hamburguesa</h1>
+    <h1>🏭 Fábrica · Familia de Hamburguesa</h1>
     <div class="sub" id="fechaHoy"></div>
   </div>
   <div class="hdr-btns">
@@ -199,7 +194,7 @@ button.sec:hover{background:#33291a;color:#fff}
 <!-- OPERADOR + TURNO -->
 <div class="panel" id="panelTurno">
   <div class="tt">
-    <h2 style="border:none;padding:0">🔑 Turno de producción</h2>
+    <h2 style="border:none;padding:0">🔑 Turno de fábrica</h2>
     <div class="sub" id="turnoInfo"></div>
   </div>
   <button id="btnIniciarTurno" class="dorado" onclick="iniciarTurno()">Iniciar turno</button>
@@ -211,91 +206,38 @@ button.sec:hover{background:#33291a;color:#fff}
 
 <div id="vistaTablero">
 
-<!-- RESUMEN DEL DIA -->
+<!-- DISPONIBLE PARA VENTA + FREEZERS (un solo total) -->
 <div class="resumen">
-  <div class="rcard">
-    <h3>🥩 Producción de hoy</h3>
-    <div class="big" id="prodBig">0</div>
-    <div class="peq">carnes</div>
-    <div class="fila-btn"><button onclick="abrirCargarProduccion()">Cargar producción</button><button class="sec mini" onclick="toggleEdit('editProd')">Editar</button></div>
-    <div class="editbox oculto" id="editProd">
-      <label>Producción de hoy (canastos)</label>
-      <input type="number" id="inEditProd" min="0">
-      <div class="fila"><button class="dorado" onclick="guardarEdicionProduccion()">Guardar</button><button class="sec" onclick="toggleEdit('editProd')">Cancelar</button></div>
-    </div>
-  </div>
-
-  <div class="rcard">
-    <h3>🧊 En cámara</h3>
-    <div class="big" id="camBig">0</div>
-    <div class="peq" id="camPeq">canastos</div>
-    <div class="fila-btn"><button class="frio" onclick="abrirCargarProduccion()">+ Registrar entrada</button><button class="sec mini" onclick="toggleEdit('editCam')">Editar</button></div>
-    <div class="editbox oculto" id="editCam">
-      <label>Canastos en cámara</label>
-      <input type="number" id="inEditCam" min="0">
-      <div class="fila"><button class="dorado" onclick="guardarEdicionCamara()">Guardar</button><button class="sec" onclick="toggleEdit('editCam')">Cancelar</button></div>
-    </div>
-  </div>
-
-  <div class="rcard">
-    <h3>👜 Envasado</h3>
-    <div class="big" id="envBig">0</div>
-    <div class="peq" id="envPeq">bolsas</div>
-    <div class="fila-btn"><button onclick="abrirEnvasado()">Registrar envasado</button><button class="sec mini" onclick="toggleEdit('editEnv')">Editar</button></div>
-    <div class="editbox oculto" id="editEnv">
-      <label>Envasado de hoy (bolsas)</label>
-      <input type="number" id="inEditEnv" min="0">
-      <div class="fila"><button class="dorado" onclick="guardarEdicionEnvasado()">Guardar</button><button class="sec" onclick="toggleEdit('editEnv')">Cancelar</button></div>
-    </div>
-  </div>
-
   <div class="rcard disp">
     <h3>🛒 Disponible para venta</h3>
-    <div class="big" id="dispBig">0</div>
-    <div class="peq" id="dispPeq">carnes</div>
+    <div class="big" id="dispBig">—</div>
+    <div class="peq" id="dispPeq">bolsas</div>
     <div class="peq" id="dispPill"></div>
   </div>
-</div>
 
-<!-- FORM: cargar producción / entrada a camara -->
-<div class="panel oculto" id="formCargarProd">
-  <h2>🥩 Cargar producción de hoy</h2>
-  <div class="ayuda">1 canasto = 60 carnes. Entra directo a la Cámara de Frío.</div>
-  <div class="fila">
-    <div class="campo chico"><label>Canastos producidos</label><input type="number" id="inCanastos" min="0" oninput="espejoProduccion()"></div>
-  </div>
-  <div class="aviso info" id="equivProd">Poné los canastos y te muestro las carnes.</div>
-  <div id="avisoProd"></div>
-  <div class="fila" style="margin-top:12px">
-    <button class="frio" style="flex:1" onclick="guardarProduccion()">Registrar producción</button>
-    <button class="sec" onclick="cerrarPanel('formCargarProd')">Cancelar</button>
-  </div>
-</div>
-
-<!-- FORM: envasado -->
-<div class="panel oculto" id="formEnvasar">
-  <h2>👜 Registrar envasado</h2>
-  <div class="ayuda">1 bolsa = 50 carnes. Se descuenta de la Cámara de Frío.</div>
-  <div class="fila">
-    <div class="campo chico"><label>Bolsas envasadas</label><input type="number" id="inBolsas" min="0" oninput="espejoEnvasado()"></div>
-  </div>
-  <div class="aviso info" id="equivEnv">Poné las bolsas y te muestro las carnes.</div>
-  <div id="avisoEnv"></div>
-  <div class="fila" style="margin-top:12px">
-    <button class="frio" style="flex:1" onclick="guardarEnvasado()">Registrar envasado</button>
-    <button class="sec" onclick="cerrarPanel('formEnvasar')">Cancelar</button>
+  <div class="rcard">
+    <h3>❄️ Freezers</h3>
+    <div class="ayuda-fz">6 freezers en total · 1 bolsa = 50 carnes</div>
+    <div class="big" id="frzBig">—</div>
+    <div class="peq" id="frzPeq">bolsas</div>
+    <div class="fila-btn"><button class="sec mini" onclick="toggleEdit('editFrz')">Editar</button></div>
+    <div class="editbox oculto" id="editFrz">
+      <label>Contá las bolsas de los 6 freezers y escribí el total</label>
+      <input type="number" id="inEditFrz" min="0" step="1" inputmode="numeric" oninput="espejoFreezers()">
+      <div class="aviso info" id="equivFrz"></div>
+      <div id="avisoFrz"></div>
+      <div class="fila"><button class="dorado" onclick="guardarEdicionFreezers()">Guardar</button><button class="sec" onclick="toggleEdit('editFrz')">Cancelar</button></div>
+    </div>
   </div>
 </div>
 
-<!-- FREEZERS -->
-<div class="panel">
-  <h2>❄️ Freezers</h2>
-  <div class="ayuda">6 freezers, en bolsas. Cargá el número real que ves físicamente — el sistema hace las cuentas.</div>
-  <div class="freezers-grid" id="freezersGrid"></div>
-  <div class="fila" style="justify-content:space-between;margin-top:4px">
-    <div><b id="totalFrzBolsas">0</b> bolsas en total · <span id="totalFrzCarnes">0</span> carnes</div>
-  </div>
-  <div id="avisoSyncFrz"></div>
+<!-- AUDITORIA AUTOMATICA (cada 30 min, la hace el MENSAJERO) -->
+<div class="panel" id="panelAud">
+  <h2>🛡️ Auditoría de stock</h2>
+  <div class="ayuda">Cada 30 minutos el sistema revisa que el stock coincida con el historial de movimientos. Acá ves lo que anotó.</div>
+  <div class="chips" id="audFiltros"></div>
+  <div id="audUltimo"></div>
+  <div class="mini-lista" id="audLista"><div class="vacio">Consultando la nube…</div></div>
 </div>
 
 <div class="doscols">
@@ -339,48 +281,27 @@ button.sec:hover{background:#33291a;color:#fff}
 
 <script>
 /* ============================================================================
-   PRODUCCIÓN v7 — rediseño validado contra HU de Samu (21/09/2026) Y contra
-   el código REAL del MENSAJERO (doPost/doGet, script V21, leído el
-   21/09/2026 — no la copia V18 que había en Drive, que estaba desactualizada).
+   FÁBRICA v8 (antes "Producción"). Vista simplificada: solo "Disponible para
+   venta" y UN total de Freezers en bolsas (1 bolsa = 50 carnes). Se sacaron
+   de la pantalla Producción de hoy, En cámara y Envasado.
 
-   EL SERVIDOR RECALCULA, NO GUARDA LO QUE SE MANDA. En conSaldoDelServidor_
-   (Código.gs, hoja Producción) el saldo lo decide el TEXTO de Movimiento,
-   por regex, con 4 casos reales — no hay un quinto "editar" genérico:
-     /c[aá]mara/i        → suma Cantidad a CamaraResultante. Freezers intacto.
-     /embols/i           → suma Cantidad a StockResultante (freezers, lo que
-                            lee Ventas) y resta SacadoDeCamara de la cámara.
-     /env[ií]o|salida/i  → resta Cantidad: primero de freezers, el resto de
-                            cámara. Es lo que ya usa Ventas al retirar stock.
-     /ajuste/i           → el navegador manda los DOS totales YA CONTADOS
-                            (StockResultante y CamaraResultante absolutos) y
-                            el servidor calcula la diferencia solo.
-   Cualquier otro texto cae en un caso por defecto que suma Cantidad directo
-   a StockResultante sin tocar la cámara — por eso acá NINGUNA acción usa un
-   nombre inventado: "Cargar producción" manda 'Entrada a cámara', "Registrar
-   envasado" manda 'Embolsado', y toda EDICIÓN (RN08/RN09, HU03/HU04/HU05/HU06)
-   manda 'Ajuste de conteo' — el único mecanismo del servidor pensado para
-   corregir un valor sin perder el anterior. El envasado SÍ es lo que hace
-   subir el número que ve Ventas (RN06): no es una carga de freezer aparte.
+   Lo que NO cambia (para no romper Ventas ni el Cuaderno): la hoja del
+   Cuaderno se sigue llamando 'Producción', y el archivo, modulo_produccion.html.
 
-     · Producción se carga en CANASTOS (1 canasto = 60 carnes) → cámara.
-     · Envasado se carga en BOLSAS (1 bolsa = 50 carnes) → descuenta de
-       cámara y suma directo al disponible para venta (StockResultante).
-     · Los 6 FREEZERS son el desglose LOCAL de ese mismo total — el servidor
-       no conoce freezers individuales. Editar uno solo escribe a la nube
-       si el TOTAL cambia; si es una reacomodada entre freezers, queda local.
-       Sin tope de capacidad ni reparto automático inventado.
-     · Toda edición queda en Movimientos con valor anterior → nuevo.
-     · Se sacó Contingencias del front (pedido explícito, RN10).
-   Si Ventas retiró stock o alguien corrigió desde otro dispositivo, el mapa
-   local de freezers de ESTE dispositivo puede no coincidir con el total
-   oficial: se avisa la diferencia en vez de adivinar de qué freezer salió
-   (esa regla no está definida en ningún lado — no se inventa).
+   EL SERVIDOR RECALCULA, NO GUARDA LO QUE SE MANDA (conSaldoDelServidor_,
+   MENSAJERO V21). Acá solo se usa 'Ajuste de conteo': el navegador manda los
+   DOS totales ya contados (StockResultante y CamaraResultante, absolutos) y
+   el servidor calcula la diferencia. La cámara se manda tal cual está.
+   Cuando Ventas trae mercadería manda 'Envío al local' y resta del mismo
+   StockResultante: por eso Freezers y Disponible para venta son el mismo número.
+   El front no recibe respuesta del servidor (no-cors): toda validación
+   (entero, no negativo, operador elegido) ocurre acá.
    ============================================================================ */
-var CANASTO = 60, BOLSA = 50, VENTA_DIA = 4500;
+var BOLSA = 50, VENTA_DIA = 4500;
 var $ = function(id){ return document.getElementById(id); };
 var NUBE_URL='https://script.google.com/macros/s/AKfycbxfraGEgAFUeypW4D9wsEct90sH4DRZjOJsQiky-WZtF41qPOaul9HDlgSjynwHAjpk/exec';
 
-var KFZ='fdh_freezers_v7', KI='fdh_insumos_v2', KTURNO='fdh_turno_v2', KOP='fdh_operador_v1';
+var KFZ='fdh_freezers_v7' /* mapa viejo: solo se limpia */, KI='fdh_insumos_v2', KTURNO='fdh_turno_v2', KOP='fdh_operador_v1';
 
 function num(v){ var n=Number(String(v==null?'':v).replace(/\./g,'').replace(',','.')); return isNaN(n)?0:n; }
 function ent(v){ return Math.max(0, Math.round(num(v))); }
@@ -434,61 +355,42 @@ function cargarNube(){
     render();
   });
 }
-/* ===== "Hoy" (HU02/HU05) =====
-   EL MENSAJERO (doPost, V21) no guarda lo que manda el navegador: lo
-   recalcula en el servidor según el TEXTO de Movimiento, con solo 4
-   patrones reales (conSaldoDelServidor_ en el script):
-     /c[aá]mara/i        → suma Cantidad a CamaraResultante (freezers intacto)
-     /embols/i           → suma Cantidad a StockResultante (freezers) y resta
-                            SacadoDeCamara de CamaraResultante
-     /env[ií]o|salida/i  → resta Cantidad: primero de freezers, el resto de
-                            cámara (lo usa Ventas al retirar mercadería)
-     /ajuste/i           → el navegador manda los DOS totales ya contados
-                            (StockResultante y CamaraResultante) y el
-                            servidor calcula sola la diferencia
-   Cualquier otro texto cae en un caso por defecto que suma Cantidad directo
-   a StockResultante — por eso NINGUNA acción de este módulo puede usar un
-   nombre propio: "Cargar producción" es 'Entrada a cámara', "Envasado" es
-   'Embolsado', y toda EDICIÓN (RN08/RN09) es 'Ajuste de conteo', el único
-   mecanismo del servidor pensado para corregir sin perder el valor
-   anterior. Como ese caso no guarda un texto por tipo de edición, el
-   detalle ("Producción de hoy: 10 → 12 canastos") lo escribe el navegador
-   y se vuelve a leer de ahí para reconstruir el total del día. */
-function produccionHoyCarnes(){
-  var hoy=hoyLocal(), total=0;
-  NUBE.dataset.forEach(function(r){
-    if(String(r.Fecha||'').slice(0,10)!==hoy) return;
-    if(r.Movimiento==='Entrada a cámara') total+=num(r.Cantidad);
-    else if(r.Movimiento==='Ajuste de conteo' && /^Producci[oó]n de hoy:/.test(String(r.Detalle||''))){
-      var m=/→\s*([\d.,]+)\s*canastos/.exec(String(r.Detalle||''));
-      if(m) total=ent(m[1])*CANASTO;
-    }
+/* ===== Auditoría automática (HU4): la escribe el MENSAJERO cada 30 min ===== */
+var AUD={filas:null, filtro:'todo'};
+function cargarAuditoria(){
+  traer('Auditoría', function(r){
+    AUD.filas=(r && r.ok && r.datos)?r.datos.filter(function(x){ return x.Origen==='SISTEMA_AUTO_CHECK'; }):null;
+    renderAuditoria();
   });
-  return Math.max(0,total);
 }
-function envasadoHoyCarnes(){
-  var hoy=hoyLocal(), total=0;
-  NUBE.dataset.forEach(function(r){
-    if(String(r.Fecha||'').slice(0,10)!==hoy) return;
-    if(r.Movimiento==='Embolsado') total+=num(r.Cantidad);
-    else if(r.Movimiento==='Ajuste de conteo' && /^Envasado de hoy:/.test(String(r.Detalle||''))){
-      var m=/→\s*([\d.,]+)\s*bolsas/.exec(String(r.Detalle||''));
-      if(m) total=ent(m[1])*BOLSA;
-    }
-  });
-  return Math.max(0,total);
+function filtroAud(f){ AUD.filtro=f; renderAuditoria(); }
+function renderAuditoria(){
+  $('audFiltros').innerHTML=[['todo','Todos los chequeos'],['mal','Solo discrepancias']].map(function(x){
+    return '<div class="chip'+(AUD.filtro===x[0]?' sel':'')+'" onclick="filtroAud(''+x[0]+'')">'+x[1]+'</div>';
+  }).join('');
+  if(AUD.filas===null){ $('audUltimo').innerHTML=''; $('audLista').innerHTML='<div class="vacio">Sin conexión con la nube.</div>'; return; }
+  if(!AUD.filas.length){ $('audUltimo').innerHTML='<div class="aviso info">Todavía no hay chequeos automáticos registrados.</div>'; $('audLista').innerHTML=''; return; }
+  var u=AUD.filas[AUD.filas.length-1];
+  var bien=u.Estado==='OK';
+  $('audUltimo').innerHTML='<div class="aviso '+(bien?'verde':'rojo')+'">'+(bien?'✓ Stock coherente':'⚠️ '+u.Estado)+' · último chequeo: '+String(u.Fecha).slice(0,10)+' '+String(u.Hora).slice(0,5)+'</div>';
+  var lista=AUD.filas.filter(function(x){ return AUD.filtro==='todo' || x.Estado!=='OK'; }).slice(-30).reverse();
+  $('audLista').innerHTML=lista.map(function(x){
+    var ok=x.Estado==='OK';
+    return '<div class="reg"><b>'+String(x.Fecha).slice(0,10)+' '+String(x.Hora).slice(0,5)+'</b> <span class="'+(ok?'mas':'menos')+'">'+(ok?'OK':x.Severidad+' · '+x.Estado)+'</span>'+
+      '<br>'+miles(num(x.Bolsas))+' bolsas · '+miles(num(x.Carnes))+' carnes<br><span style="font-size:.74rem">'+(x.Detalle||'')+'</span></div>';
+  }).join('')||'<div class="vacio">Sin discrepancias registradas. 👌</div>';
 }
 
-/* ===== Freezers: mapa en BOLSAS de este dispositivo. Sin capacidad maxima
-   ni reparto automatico — el operador carga el numero fisico real. ===== */
-var freezers=JSON.parse(localStorage.getItem(KFZ)||'null')||[1,2,3,4,5,6].map(function(i){
-  return {id:'f'+i, nombre:'Freezer '+i, bolsas:0};
-});
-function totalFreezersBolsas(){ return freezers.reduce(function(s,f){ return s+f.bolsas; },0); }
-function guardarLocal(){
-  localStorage.setItem(KFZ,JSON.stringify(freezers));
-  localStorage.setItem(KI,JSON.stringify(insumos));
+/* ===== Freezers: UN solo total, en BOLSAS (1 bolsa = 50 carnes) =====
+   Lo que se muestra sale de la nube (StockResultante / 50), el mismo número
+   que lee Ventas: no hay mapa local por freezer que pueda desincronizarse.
+   Puede no ser múltiplo de 50 si Ventas retiró carnes sueltas: se muestra con
+   un decimal en vez de redondear. ===== */
+function bolsasDe(carnes){
+  var b=carnes/BOLSA;
+  return Number.isInteger(b)?miles(b):b.toLocaleString('es-AR',{maximumFractionDigits:1});
 }
+function guardarLocal(){ localStorage.setItem(KI,JSON.stringify(insumos)); }
 
 /* ===== Operador (reemplaza un sistema de permisos: usa la lista de
    personas que ya existe en la app, igual que en Ventas/Cierre) ===== */
@@ -508,13 +410,13 @@ function turnoActivoHoy(){ return turno && turno.fecha===hoyLocal(); }
 function iniciarTurno(){
   turno={fecha:hoyLocal(), horaInicio:ahora()};
   localStorage.setItem(KTURNO,JSON.stringify(turno));
-  burgy('Turno iniciado a las '+turno.horaInicio+'. ¡A producir! 🏭');
+  burgy('Turno iniciado a las '+turno.horaInicio+'. ¡A trabajar! 🏭');
   pintarTurno();
 }
 function pintarTurno(){
   var f=new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
   if(turnoActivoHoy()){
-    $('turnoInfo').innerHTML=f+' · <span class="estado-pill">🟢 En producción</span> · Inicio: '+turno.horaInicio;
+    $('turnoInfo').innerHTML=f+' · <span class="estado-pill">🟢 En fábrica</span> · Inicio: '+turno.horaInicio;
     $('btnIniciarTurno').classList.add('oculto');
   } else {
     $('turnoInfo').innerHTML=f+' · <span class="estado-pill apagado">Turno no iniciado</span>';
@@ -527,180 +429,66 @@ function exigirTurno(){
   return false;
 }
 
-/* ===== Edición inline (mostrar/ocultar caja) ===== */
+/* ===== Edición de freezers (mostrar/ocultar caja) ===== */
 function toggleEdit(id){
   var el=$(id);
   var abrir=el.classList.contains('oculto');
-  ['editProd','editCam','editEnv'].forEach(function(e){ $(e).classList.add('oculto'); });
+  if(abrir && !NUBE.sabido){ burgy('Esperá un momento: todavía estoy leyendo el stock de la nube. ☁️'); return; }
+  el.classList.add('oculto');
+  $('avisoFrz').innerHTML='';
   if(abrir){
     el.classList.remove('oculto');
-    if(id==='editProd') $('inEditProd').value=Math.round(produccionHoyCarnes()/CANASTO);
-    if(id==='editCam') $('inEditCam').value=Math.round(NUBE.camCarnes/CANASTO);
-    if(id==='editEnv') $('inEditEnv').value=Math.round(envasadoHoyCarnes()/BOLSA);
+    $('inEditFrz').value=Math.round(NUBE.frzCarnes/BOLSA);
+    espejoFreezers();
   }
 }
-function cerrarPanel(id){ $(id).classList.add('oculto'); }
-
-/* ===== Producción (HU02/HU03) ===== */
-function abrirCargarProduccion(){
-  if(!exigirTurno()) return;
-  $('formCargarProd').classList.remove('oculto');
-  $('inCanastos').value='';
-  espejoProduccion();
-  $('formCargarProd').scrollIntoView({behavior:'smooth',block:'center'});
-}
-function espejoProduccion(){
-  var c=ent($('inCanastos').value), carnes=c*CANASTO;
-  $('equivProd').innerHTML = c>0 ? '<b>'+miles(carnes)+' carnes</b> van a la Cámara de Frío.' : 'Poné los canastos y te muestro las carnes.';
-}
-function guardarProduccion(){
-  var c=ent($('inCanastos').value);
-  if(c<=0){ burgy('Poné cuántos canastos se produjeron hoy. 🥩'); return; }
-  var carnes=c*CANASTO;
-  /* 'Entrada a cámara' matchea /c[aá]mara/i en el servidor: suma Cantidad
-     a CamaraResultante y deja StockResultante como está. */
-  subirNube({Fecha:hoyLocal(), Movimiento:'Entrada a cámara', Cantidad:carnes, CarnesProducidas:carnes,
-    Quien:quien(), Destino:'Cámara de frío', Detalle:c+' canastos ('+miles(carnes)+' carnes) · '+ahora()});
-  NUBE.camCarnes=(NUBE.sabido?NUBE.camCarnes:0)+carnes; NUBE.sabido=true;
-  NUBE.dataset.push({Fecha:hoyLocal(), Movimiento:'Entrada a cámara', Cantidad:carnes, CamaraResultante:NUBE.camCarnes, StockResultante:NUBE.frzCarnes, Quien:quien()});
-  cerrarPanel('formCargarProd'); render();
-  burgy('¡'+c+' canastos registrados, '+quien()+'! Entraron '+miles(carnes)+' carnes a la cámara. 🧊');
-}
-function guardarEdicionProduccion(){
-  var nuevoCanastos=ent($('inEditProd').value);
-  var actualCanastos=Math.round(produccionHoyCarnes()/CANASTO);
-  if(nuevoCanastos===actualCanastos){ toggleEdit('editProd'); return; }
-  var deltaCarnes=(nuevoCanastos-actualCanastos)*CANASTO;
-  var nuevaCam=Math.max(0,(NUBE.sabido?NUBE.camCarnes:0)+deltaCarnes);
-  var detalle='Producción de hoy: '+actualCanastos+' → '+nuevoCanastos+' canastos · '+ahora();
-  /* 'Ajuste de conteo': se mandan los DOS totales absolutos y el servidor
-     calcula la diferencia solo — StockResultante va sin cambios. */
-  subirNube({Fecha:hoyLocal(), Movimiento:'Ajuste de conteo', StockResultante:NUBE.frzCarnes,
-    CamaraResultante:nuevaCam, Quien:quien(), Detalle:detalle});
-  NUBE.camCarnes=nuevaCam; NUBE.sabido=true;
-  NUBE.dataset.push({Fecha:hoyLocal(), Movimiento:'Ajuste de conteo', Cantidad:0, CamaraResultante:nuevaCam, StockResultante:NUBE.frzCarnes, Detalle:detalle, Quien:quien()});
-  toggleEdit('editProd'); render();
-  burgy('Producción de hoy corregida: '+actualCanastos+' → '+nuevoCanastos+' canastos. Queda anotado. ✏️');
+function espejoFreezers(){
+  var t=String($('inEditFrz').value).trim();
+  $('equivFrz').innerHTML = /^\d+$/.test(t)
+    ? '<b>'+miles(Number(t))+' bolsas</b> = '+miles(Number(t)*BOLSA)+' carnes.'
+    : 'Poné las bolsas y te muestro las carnes.';
 }
 
-/* ===== Cámara (HU04): edición directa del stock en cámara ===== */
-function guardarEdicionCamara(){
-  var nuevoCanastos=ent($('inEditCam').value);
-  var actualCanastos=Math.round(NUBE.camCarnes/CANASTO);
-  if(nuevoCanastos===actualCanastos){ toggleEdit('editCam'); return; }
-  var nuevaCam=nuevoCanastos*CANASTO;
-  var detalle='Cámara: '+actualCanastos+' → '+nuevoCanastos+' canastos · '+ahora();
-  subirNube({Fecha:hoyLocal(), Movimiento:'Ajuste de conteo', StockResultante:NUBE.frzCarnes,
-    CamaraResultante:nuevaCam, Quien:quien(), Detalle:detalle});
-  NUBE.camCarnes=nuevaCam; NUBE.sabido=true;
-  NUBE.dataset.push({Fecha:hoyLocal(), Movimiento:'Ajuste de conteo', Cantidad:0, CamaraResultante:nuevaCam, StockResultante:NUBE.frzCarnes, Detalle:detalle, Quien:quien()});
-  toggleEdit('editCam'); render();
-  burgy('Cámara corregida: '+actualCanastos+' → '+nuevoCanastos+' canastos. Queda anotado. ✏️');
-}
-
-/* ===== Envasado (HU05) ===== */
-function abrirEnvasado(){
-  if(!exigirTurno()) return;
-  $('formEnvasar').classList.remove('oculto');
-  $('inBolsas').value='';
-  espejoEnvasado();
-  $('formEnvasar').scrollIntoView({behavior:'smooth',block:'center'});
-}
-function espejoEnvasado(){
-  var b=ent($('inBolsas').value), carnes=b*BOLSA;
-  $('equivEnv').innerHTML = b>0 ? '<b>'+miles(carnes)+' carnes</b> salen de la Cámara de Frío.' : 'Poné las bolsas y te muestro las carnes.';
-}
-function guardarEnvasado(){
-  var b=ent($('inBolsas').value);
-  if(b<=0){ burgy('Poné cuántas bolsas se envasaron. 👜'); return; }
-  var carnes=b*BOLSA;
-  if(NUBE.sabido && carnes>NUBE.camCarnes){
-    $('avisoEnv').innerHTML='<div class="aviso rojo">En la cámara hay '+miles(NUBE.camCarnes)+' carnes y estás envasando '+miles(carnes)+'. Corregí la cantidad o primero ajustá la cámara.</div>';
+/* ===== Freezers (HU2): un solo total editable =====
+   Cada edición se manda como 'Ajuste de conteo' con los DOS totales ya
+   contados (el servidor calcula la diferencia). Lo que se cargó en bolsas
+   queda disponible para venta al instante: es el mismo número. La cámara
+   no se toca. Queda anotado quién, cuándo y valor anterior → nuevo. */
+function guardarEdicionFreezers(){
+  var txt=String($('inEditFrz').value).trim();
+  if(!/^\d+$/.test(txt)){
+    $('avisoFrz').innerHTML='<div class="aviso rojo">Poné un número entero de bolsas (0 o más).</div>';
     return;
   }
-  /* 'Embolsado' matchea /embols/i en el servidor: suma Cantidad a
-     StockResultante (freezers, lo mismo que lee Ventas) y resta
-     SacadoDeCamara de CamaraResultante. Acá es 1 a 1, sin merma. */
-  subirNube({Fecha:hoyLocal(), Movimiento:'Embolsado', Cantidad:carnes, SacadoDeCamara:carnes,
-    Quien:quien(), Destino:'Freezers', Detalle:b+' bolsas ('+miles(carnes)+' carnes) · '+ahora()});
-  NUBE.frzCarnes=(NUBE.sabido?NUBE.frzCarnes:0)+carnes;
-  NUBE.camCarnes=Math.max(0,(NUBE.sabido?NUBE.camCarnes:0)-carnes);
-  NUBE.sabido=true;
-  NUBE.dataset.push({Fecha:hoyLocal(), Movimiento:'Embolsado', Cantidad:carnes, StockResultante:NUBE.frzCarnes, CamaraResultante:NUBE.camCarnes, Quien:quien()});
-  cerrarPanel('formEnvasar'); render();
-  burgy('¡'+b+' bolsas envasadas, '+quien()+'! Cargalas en el freezer donde quedaron y editá ese freezer para que el mapa coincida. 👜');
-}
-function guardarEdicionEnvasado(){
-  var nuevoBolsas=ent($('inEditEnv').value);
-  var actualBolsas=Math.round(envasadoHoyCarnes()/BOLSA);
-  if(nuevoBolsas===actualBolsas){ toggleEdit('editEnv'); return; }
-  var deltaCarnes=(nuevoBolsas-actualBolsas)*BOLSA;
-  var nuevaFrz=Math.max(0,(NUBE.sabido?NUBE.frzCarnes:0)+deltaCarnes);
-  var nuevaCam=Math.max(0,(NUBE.sabido?NUBE.camCarnes:0)-deltaCarnes);
-  var detalle='Envasado de hoy: '+actualBolsas+' → '+nuevoBolsas+' bolsas · '+ahora();
-  subirNube({Fecha:hoyLocal(), Movimiento:'Ajuste de conteo', StockResultante:nuevaFrz,
-    CamaraResultante:nuevaCam, Quien:quien(), Detalle:detalle});
-  NUBE.frzCarnes=nuevaFrz; NUBE.camCarnes=nuevaCam; NUBE.sabido=true;
-  NUBE.dataset.push({Fecha:hoyLocal(), Movimiento:'Ajuste de conteo', Cantidad:deltaCarnes, StockResultante:nuevaFrz, CamaraResultante:nuevaCam, Detalle:detalle, Quien:quien()});
-  toggleEdit('editEnv'); render();
-  burgy('Envasado de hoy corregido: '+actualBolsas+' → '+nuevoBolsas+' bolsas. Queda anotado. ✏️');
-}
-
-/* ===== Freezers (HU06): mapa local por dispositivo (el servidor no conoce
-   freezers individuales, solo el total). Cada edición cambia el total en la
-   misma medida y se empuja a la nube como 'Ajuste de conteo' — es el único
-   mecanismo real para corregir el stock disponible sin perder el valor
-   anterior. Sin tope de capacidad ni
-   reparto automático: no están definidos por el negocio. ===== */
-function editarFreezer(id){
-  var f=freezers.find(function(x){ return x.id===id; });
-  var actual=f.bolsas;
-  var txt=prompt(f.nombre+' — bolsas reales (ahora: '+actual+')', actual);
-  if(txt===null) return;
-  var nuevo=ent(txt);
-  if(nuevo===actual) return;
-  var totalAntes=totalFreezersBolsas();
-  f.bolsas=nuevo; guardarLocal();
-  var totalDespues=totalFreezersBolsas();
-  render();
-  var nuevaFrzCarnes=totalDespues*BOLSA;
-  var detalle=f.nombre+': '+actual+' → '+nuevo+' bolsas · total freezers: '+totalAntes+' → '+totalDespues+' bolsas · '+ahora();
-  subirNube({Fecha:hoyLocal(), Movimiento:'Ajuste de conteo', StockResultante:nuevaFrzCarnes,
-    CamaraResultante:NUBE.camCarnes, Quien:quien(), Detalle:detalle});
-  NUBE.frzCarnes=nuevaFrzCarnes; NUBE.sabido=true;
-  NUBE.dataset.push({Fecha:hoyLocal(), Movimiento:'Ajuste de conteo', Cantidad:nuevaFrzCarnes-totalAntes*BOLSA, StockResultante:nuevaFrzCarnes, CamaraResultante:NUBE.camCarnes, Detalle:detalle, Quien:quien()});
-  render();
-  burgy(f.nombre+' corregido: '+actual+' → '+nuevo+' bolsas. Queda anotado. ✏️');
+  if(!operador){
+    $('avisoFrz').innerHTML='<div class="aviso rojo">Elegí arriba quién sos en "Operador de hoy", así queda anotado quién hizo el cambio.</div>';
+    return;
+  }
+  var nuevo=Number(txt), nuevasCarnes=nuevo*BOLSA, antesCarnes=NUBE.frzCarnes;
+  if(nuevasCarnes===antesCarnes){ toggleEdit('editFrz'); return; }
+  var detalle='Freezers: '+bolsasDe(antesCarnes)+' → '+nuevo+' bolsas ('+miles(antesCarnes)+' → '+miles(nuevasCarnes)+' carnes) · '+ahora();
+  subirNube({Fecha:hoyLocal(), Movimiento:'Ajuste de conteo', StockResultante:nuevasCarnes,
+    CamaraResultante:NUBE.camCarnes, Quien:operador, Detalle:detalle});
+  NUBE.frzCarnes=nuevasCarnes; NUBE.sabido=true;
+  NUBE.dataset.push({Fecha:hoyLocal(), Movimiento:'Ajuste de conteo', Cantidad:nuevasCarnes-antesCarnes, StockResultante:nuevasCarnes, CamaraResultante:NUBE.camCarnes, Detalle:detalle, Quien:operador});
+  toggleEdit('editFrz'); render();
+  burgy('Freezers: '+bolsasDe(antesCarnes)+' → '+nuevo+' bolsas. Queda anotado a nombre de '+operador+'. ✏️');
 }
 
 /* ===== Render ===== */
 function renderResumen(){
-  var prodHoyCarnes=produccionHoyCarnes();
-  $('prodBig').textContent=miles(prodHoyCarnes);
-  var camCanastos=Math.round((NUBE.sabido?NUBE.camCarnes:0)/CANASTO);
-  $('camBig').textContent=miles(camCanastos);
-  $('camPeq').textContent='canastos · '+miles(NUBE.sabido?NUBE.camCarnes:0)+' carnes';
-  var envHoyCarnes=envasadoHoyCarnes();
-  $('envBig').textContent=miles(Math.round(envHoyCarnes/BOLSA));
-  $('envPeq').textContent='bolsas · '+miles(envHoyCarnes)+' carnes';
-
-  var totalBolsas=totalFreezersBolsas(), totalCarnesFrz=totalBolsas*BOLSA;
-  $('dispBig').textContent=miles(totalCarnesFrz);
-  $('dispPeq').textContent=miles(totalBolsas)+' bolsas';
-  var dias=totalCarnesFrz/VENTA_DIA;
+  if(!NUBE.sabido){
+    $('dispBig').textContent='—'; $('frzBig').textContent='—';
+    $('dispPeq').textContent='bolsas'; $('frzPeq').textContent='bolsas';
+    $('dispPill').innerHTML=''; return;
+  }
+  var carnes=NUBE.frzCarnes;
+  $('dispBig').textContent=bolsasDe(carnes);
+  $('dispPeq').textContent='bolsas · '+miles(carnes)+' carnes';
+  $('frzBig').textContent=bolsasDe(carnes);
+  $('frzPeq').textContent='bolsas · '+miles(carnes)+' carnes';
+  var dias=carnes/VENTA_DIA;
   $('dispPill').innerHTML=dias<1?'⚠️ Menos de 1 día de venta':'Cubre ~'+dias.toFixed(1)+' días de venta';
-
-  if(NUBE.sabido && totalCarnesFrz!==NUBE.frzCarnes){
-    $('avisoSyncFrz').innerHTML='<div class="aviso rojo">⚠️ Este mapa de freezers ('+miles(totalCarnesFrz)+' carnes) no coincide con lo que ve Ventas ('+miles(NUBE.frzCarnes)+' carnes). Contá los freezers físicamente y corregí cada uno para que quede igual.</div>';
-  } else { $('avisoSyncFrz').innerHTML=''; }
-}
-function renderFreezers(){
-  $('freezersGrid').innerHTML=freezers.map(function(f){
-    return '<div class="fzcard"><h3>❄️ '+f.nombre+'</h3><div class="big">'+miles(f.bolsas)+'</div><div class="peq">bolsas</div>'+
-      '<button class="sec mini" onclick="editarFreezer(\''+f.id+'\')">Editar</button></div>';
-  }).join('');
-  $('totalFrzBolsas').textContent=miles(totalFreezersBolsas());
-  $('totalFrzCarnes').textContent=miles(totalFreezersBolsas()*BOLSA);
 }
 function renderMovs(){
   if(!NUBE.sabido && !NUBE.dataset.length){ $('movsNube').innerHTML='<div class="vacio">Sin conexión con la nube.</div>'; return; }
@@ -808,15 +596,15 @@ function empezarDeCero(){
   location.reload();
 }
 
-function render(){ renderResumen(); renderFreezers(); renderMovs(); renderInsumos(); pintarTurno(); }
+function render(){ renderResumen(); renderMovs(); renderInsumos(); pintarTurno(); }
 
 /* ===== Arranque ===== */
 $('fechaHoy').textContent=new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 pintarOperador();
 render();
-cargarNube();
+cargarNube(); cargarAuditoria();
 /* refresco suave: si Ventas registró un envío o alguien más edito, se ve solo */
-setInterval(cargarNube, 90000);
+setInterval(function(){ cargarNube(); cargarAuditoria(); }, 90000);
 </script>
 <script>
 /* PWA: registro del service worker (red primero, no cachea HTML viejo) */

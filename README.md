@@ -23,7 +23,7 @@ Los módulos:
 - `index.html` / `home_familia_hamburguesa.html` — ingreso y menú
 - `modulo_ventas.html` — apertura y cierre de turno, ventas, fiados, conteo de caja
 - `modulo_finanzas.html` — gastos, tesorería, fondo de inversión, deudores, reporte por período
-- `modulo_produccion.html` — producción de carnes, stock, cámara
+- `modulo_produccion.html` — módulo Fábrica (antes Producción): stock de freezers en bolsas / disponible para venta
 - `modulo_tablero.html` — objetivos y acumulados (solo lectura)
 
 ---

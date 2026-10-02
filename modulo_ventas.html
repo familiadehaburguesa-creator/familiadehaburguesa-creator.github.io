@@ -2744,17 +2744,15 @@ function guardarIngreso(){
         confirmarIngreso(que, c, null, 'no se pudo descontar de la fábrica: no hay parte cargado');
         return;
       }
-      var disp = f.listas + f.camara;
-      if (c > disp){
-        $('avisoIngreso').innerHTML = '<div class="aviso rojo">No alcanza: entre freezers (<b>' +
-          miles(f.listas) + '</b> listas) y cámara (<b>' + miles(f.camara) + '</b>) hay <b>' + miles(disp) +
-          '</b> carnes y estás cargando <b>' + miles(c) + '</b>. Si de verdad llegó esa cantidad, primero actualizá el parte de fábrica.</div>';
+      // La fábrica solo entrega lo que tiene en los freezers ("Disponible
+      // para venta"). Nunca se deja un saldo negativo.
+      if (c > f.listas){
+        $('avisoIngreso').innerHTML = '<div class="aviso rojo">Stock insuficiente en Fábrica para realizar la venta/salida: en los freezers hay <b>' +
+          miles(f.listas) + '</b> carnes y estás cargando <b>' + miles(c) +
+          '</b>. Si de verdad llegó esa cantidad, primero actualizá los freezers en Fábrica.</div>';
         return;
       }
-      // Sale de los freezers primero; si no alcanza, el resto es de la cámara
-      // (lo embolsan a día vencido). El servidor hace la misma partición.
-      var deFrz = Math.min(c, f.listas), deCam = c - deFrz;
-      confirmarIngreso(que, c, {listas: f.listas - deFrz, camara: f.camara - deCam, deCamara: deCam}, '');
+      confirmarIngreso(que, c, {listas: f.listas - c, camara: f.camara, deCamara: 0}, '');
     });
     return;
   }
