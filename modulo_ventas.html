@@ -481,6 +481,20 @@ input[type=date],select{min-height:44px}
 .deuLinea.deuda{background:var(--rojoF);color:#f2c7c5}
 .deuLinea.pago{background:var(--verdeF);color:#b9e6cd}
 .deuBtn{margin-top:10px}
+/* Llamar la atención sin gritar: el selector de vía late hasta que lo tocan; el nombre
+   obligatorio titila mientras está vacío. Con "reducir movimiento" queda solo el resaltado. */
+label.obligatorio::after{content:" *";color:#ff7a6e;font-weight:800}
+@keyframes viaLate{0%,100%{box-shadow:0 0 0 0 rgba(224,117,44,.0);border-color:var(--borde)}50%{box-shadow:0 0 0 5px rgba(224,117,44,.45);border-color:var(--marca)}}
+@keyframes nombreTitila{0%,100%{box-shadow:0 0 0 0 rgba(217,83,79,0);border-color:var(--rojo)}50%{box-shadow:0 0 0 4px rgba(217,83,79,.55);border-color:#ff7a6e}}
+@keyframes sacudir{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-7px)}40%,80%{transform:translateX(7px)}}
+#dcVia.atencion{animation:viaLate 1.4s ease-in-out infinite;border-color:var(--marca)}
+#dcPersona.falta{animation:nombreTitila 1s ease-in-out infinite;border:1px solid var(--rojo)}
+#dcPersona.sacudir{animation:sacudir .45s ease-in-out 1}
+@media (prefers-reduced-motion:reduce){
+  #dcVia.atencion,#dcPersona.falta,#dcPersona.sacudir{animation:none}
+  #dcVia.atencion{box-shadow:0 0 0 3px rgba(224,117,44,.45)}
+  #dcPersona.falta{box-shadow:0 0 0 3px rgba(217,83,79,.55)}
+}
 </style>
 </head>
 <body>
@@ -898,11 +912,10 @@ input[type=date],select{min-height:44px}
       </div>
       <div class="botonera" style="margin-bottom:12px">
         <button class="btn gris chico" id="btnPagaTodo">Paga todo</button>
-        <button class="btn gris chico" id="btnPagaMitad">Paga la mitad</button>
       </div>
       <div class="campo">
-        <label for="dcPersona" id="lblDcPersona">Persona que entrega el efectivo</label>
-        <input id="dcPersona" type="text" maxlength="60" autocomplete="off" placeholder="Nombre de quien paga">
+        <label for="dcPersona" id="lblDcPersona" class="obligatorio">Persona que entrega el efectivo</label>
+        <input id="dcPersona" type="text" maxlength="60" autocomplete="off" required aria-required="true" placeholder="Nombre de quien paga (obligatorio)">
       </div>
       <div class="aviso info" id="dcResta"></div>
       <div class="campo">
@@ -3146,6 +3159,8 @@ function abrirCobroDeuda(id){
   ponerNumero('dcMonto', d.saldo);
   $('dcVia').value = 'efe';
   $('dcPersona').value = '';
+  $('dcPersona').classList.add('falta'); $('dcPersona').classList.remove('sacudir');
+  $('dcVia').classList.add('atencion');   // late hasta que el usuario lo toque
   $('dcQuien').value = T.quien;
   $('avisoCobroDeuda').innerHTML = '';
   notaMontoDeuda();
@@ -3201,6 +3216,9 @@ function guardarCobroDeuda(){
   }
   var persona = limpiaTexto($('dcPersona').value);
   if (!persona){
+    var campoP = $('dcPersona');
+    campoP.classList.remove('sacudir'); void campoP.offsetWidth; campoP.classList.add('sacudir');
+    try{ campoP.focus(); }catch(e){}
     $('avisoCobroDeuda').innerHTML = '<div class="aviso rojo">' + (via === 'mp'
       ? 'Poné el nombre del titular de la cuenta de Mercado Pago.'
       : 'Poné el nombre de la persona que entrega el efectivo.') + '</div>';
@@ -3697,14 +3715,19 @@ function iniciar(){
 
   $('dcMonto').addEventListener('input', notaMontoDeuda);
   $('dcVia').addEventListener('change', notaMontoDeuda);
+  ['focus','change','mousedown','touchstart'].forEach(function(ev){
+    $('dcVia').addEventListener(ev, function(){ $('dcVia').classList.remove('atencion'); });
+  });
+  $('dcPersona').addEventListener('input', function(){
+    $('dcPersona').classList.remove('sacudir');
+    $('dcPersona').classList.toggle('falta', !limpiaTexto($('dcPersona').value));
+    if (limpiaTexto($('dcPersona').value)) $('avisoCobroDeuda').innerHTML = '';
+  });
   $('tabPorCobrar').addEventListener('click', function(){ DEU_TAB = 'por'; pintarDeudas(); });
   $('tabSaldados').addEventListener('click', function(){ DEU_TAB = 'sal'; pintarDeudas(); });
   $('buscaDeudas').addEventListener('input', pintarDeudas);
   $('btnPagaTodo').addEventListener('click', function(){
     if (deudaEnCurso){ ponerNumero('dcMonto', deudaEnCurso.saldo); notaMontoDeuda(); }
-  });
-  $('btnPagaMitad').addEventListener('click', function(){
-    if (deudaEnCurso){ ponerNumero('dcMonto', Math.round(num(deudaEnCurso.saldo)/2)); notaMontoDeuda(); }
   });
   $('btnGuardarCobroDeuda').addEventListener('click', guardarCobroDeuda);
   $('btnCancelarCobroDeuda').addEventListener('click', function(){ deudaEnCurso = null; mostrar('pTurno'); });
