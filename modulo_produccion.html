@@ -182,6 +182,7 @@ button.sec:hover{background:#33291a;color:#fff}
   </div>
   <div class="hdr-btns">
     <span class="nube-estado cargando" id="nubeEstado">☁️ Consultando la nube…</span>
+    <button class="mini sec oculto" id="btnReintentar" onclick="reintentarNube()">🔄 Reintentar</button>
     <button class="sec" id="btnInventario" onclick="verInventario()">🧰 Inventario</button>
     <button onclick="empezarDeCero()" class="btn-cero" title="Borra los datos de prueba de este navegador">🧹 Empezar de cero</button>
   </div>
@@ -307,6 +308,9 @@ function num(v){ var n=Number(String(v==null?'':v).replace(/\./g,'').replace(','
 function ent(v){ return Math.max(0, Math.round(num(v))); }
 function miles(n){ return Number(n||0).toLocaleString('es-AR'); }
 function hoyLocal(){ var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+/* Sheets guarda las horas con base 30/12/1899 ("1899-12-30T18:21:48.000Z"): se
+   extrae HH:mm del texto, SIN new Date() (corre 3 horas). */
+function soloHora(v){ var m=/(\d{1,2}):(\d{2})/.exec(String(v==null?'':v)); return m?m[1].padStart(2,'0')+':'+m[2]:''; }
 function ahora(){ return new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}); }
 function burgy(m){ $('burgyDice').textContent=m; }
 
@@ -331,7 +335,21 @@ function subirNube(fila){
       body:JSON.stringify({hoja:'Producción',fila:fila})});
   }catch(e){}
 }
-function nubeEstado(cls,txt){ var e=$('nubeEstado'); e.className='nube-estado '+cls; e.textContent=txt; }
+function nubeEstado(cls,txt){
+  var e=$('nubeEstado'); e.className='nube-estado '+cls; e.textContent=txt;
+  $('btnReintentar').classList.toggle('oculto',cls!=='error');
+}
+var cargandoNube=false;
+/* Reintento manual: vuelve a pedir todo sin recargar la pagina ni perder el turno. */
+function reintentarNube(){
+  if(cargandoNube) return;
+  $('movsNube').innerHTML='<div class="vacio">Consultando la nube…</div>';
+  $('audLista').innerHTML='<div class="vacio">Consultando la nube…</div>';
+  cargarNube(); cargarAuditoria();
+}
+function avisoErrorNube(){
+  return '<div class="vacio">Error de conexión con la nube. <button class="mini sec" onclick="reintentarNube()">🔄 Reintentar</button></div>';
+}
 
 /* frzCarnes = carnes disponibles (freezers) · camCarnes = carnes en cámara.
    dataset = todas las filas (para sumar "hoy"); movs = ventana reciente
@@ -347,9 +365,11 @@ function aplicarDatosNube(d){
   NUBE.sabido=true;
 }
 function cargarNube(){
+  cargandoNube=true;
   nubeEstado('cargando','☁️ Consultando la nube…');
   traer('Producción', function(r){
-    if(!r || !r.ok || !r.datos){ nubeEstado('error','⚠️ Sin conexión con la nube'); render(); return; }
+    cargandoNube=false;
+    if(!r || !r.ok || !r.datos){ nubeEstado('error','⚠️ Error de conexión con la nube'); render(); return; }
     aplicarDatosNube(r.datos);
     nubeEstado('ok','☁️ Nube al día');
     render();
@@ -366,17 +386,17 @@ function cargarAuditoria(){
 function filtroAud(f){ AUD.filtro=f; renderAuditoria(); }
 function renderAuditoria(){
   $('audFiltros').innerHTML=[['todo','Todos los chequeos'],['mal','Solo discrepancias']].map(function(x){
-    return '<div class="chip'+(AUD.filtro===x[0]?' sel':'')+'" onclick="filtroAud(''+x[0]+'')">'+x[1]+'</div>';
+    return '<div class="chip'+(AUD.filtro===x[0]?' sel':'')+'" onclick="filtroAud(\''+x[0]+'\')">'+x[1]+'</div>';
   }).join('');
-  if(AUD.filas===null){ $('audUltimo').innerHTML=''; $('audLista').innerHTML='<div class="vacio">Sin conexión con la nube.</div>'; return; }
+  if(AUD.filas===null){ $('audUltimo').innerHTML=''; $('audLista').innerHTML=avisoErrorNube(); return; }
   if(!AUD.filas.length){ $('audUltimo').innerHTML='<div class="aviso info">Todavía no hay chequeos automáticos registrados.</div>'; $('audLista').innerHTML=''; return; }
   var u=AUD.filas[AUD.filas.length-1];
   var bien=u.Estado==='OK';
-  $('audUltimo').innerHTML='<div class="aviso '+(bien?'verde':'rojo')+'">'+(bien?'✓ Stock coherente':'⚠️ '+u.Estado)+' · último chequeo: '+String(u.Fecha).slice(0,10)+' '+String(u.Hora).slice(0,5)+'</div>';
+  $('audUltimo').innerHTML='<div class="aviso '+(bien?'verde':'rojo')+'">'+(bien?'✓ Stock coherente':'⚠️ '+u.Estado)+' · último chequeo: '+String(u.Fecha).slice(0,10)+' '+soloHora(u.Hora)+'</div>';
   var lista=AUD.filas.filter(function(x){ return AUD.filtro==='todo' || x.Estado!=='OK'; }).slice(-30).reverse();
   $('audLista').innerHTML=lista.map(function(x){
     var ok=x.Estado==='OK';
-    return '<div class="reg"><b>'+String(x.Fecha).slice(0,10)+' '+String(x.Hora).slice(0,5)+'</b> <span class="'+(ok?'mas':'menos')+'">'+(ok?'OK':x.Severidad+' · '+x.Estado)+'</span>'+
+    return '<div class="reg"><b>'+String(x.Fecha).slice(0,10)+' '+soloHora(x.Hora)+'</b> <span class="'+(ok?'mas':'menos')+'">'+(ok?'OK':x.Severidad+' · '+x.Estado)+'</span>'+
       '<br>'+miles(num(x.Bolsas))+' bolsas · '+miles(num(x.Carnes))+' carnes<br><span style="font-size:.74rem">'+(x.Detalle||'')+'</span></div>';
   }).join('')||'<div class="vacio">Sin discrepancias registradas. 👌</div>';
 }
@@ -491,7 +511,7 @@ function renderResumen(){
   $('dispPill').innerHTML=dias<1?'⚠️ Menos de 1 día de venta':'Cubre ~'+dias.toFixed(1)+' días de venta';
 }
 function renderMovs(){
-  if(!NUBE.sabido && !NUBE.dataset.length){ $('movsNube').innerHTML='<div class="vacio">Sin conexión con la nube.</div>'; return; }
+  if(!NUBE.sabido && !NUBE.dataset.length){ $('movsNube').innerHTML=avisoErrorNube(); return; }
   var lista=NUBE.dataset.slice(-25).reverse();
   $('movsNube').innerHTML=lista.map(function(m){
     var tipo=m.Movimiento||'Parte de producción';
