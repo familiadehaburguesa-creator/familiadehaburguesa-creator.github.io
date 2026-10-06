@@ -221,7 +221,15 @@ button.sec:hover{background:#33291a;color:#fff}
     <div class="ayuda-fz">6 freezers en total · 1 bolsa = 50 carnes</div>
     <div class="big" id="frzBig">—</div>
     <div class="peq" id="frzPeq">bolsas</div>
-    <div class="fila-btn"><button class="sec mini" onclick="toggleEdit('editFrz')">Editar</button></div>
+    <div class="fila-btn"><button class="dorado mini" onclick="toggleProd()">➕ Registrar producción</button> <button class="sec mini" onclick="toggleEdit('editFrz')">Editar</button></div>
+    <div class="editbox oculto" id="editProd">
+      <label>Ingrese la producción a añadir (bolsas/carnes)</label>
+      <div class="ayuda-fz">Stock actual previo: <b id="prodPrevio">—</b></div>
+      <input type="number" id="inProd" min="0" step="1" inputmode="numeric" placeholder="Bolsas producidas hoy" oninput="espejoProd()">
+      <div class="aviso info" id="equivProd"></div>
+      <div id="avisoProd"></div>
+      <div class="fila"><button class="dorado" onclick="guardarProduccion()">Guardar el parte</button><button class="sec" onclick="toggleProd()">Cancelar</button></div>
+    </div>
     <div class="editbox oculto" id="editFrz">
       <label>Contá las bolsas de los 6 freezers y escribí el total</label>
       <input type="number" id="inEditFrz" min="0" step="1" inputmode="numeric" oninput="espejoFreezers()">
@@ -493,6 +501,55 @@ function guardarEdicionFreezers(){
   NUBE.dataset.push({Fecha:hoyLocal(), Movimiento:'Ajuste de conteo', Cantidad:nuevasCarnes-antesCarnes, StockResultante:nuevasCarnes, CamaraResultante:NUBE.camCarnes, Detalle:detalle, Quien:operador});
   toggleEdit('editFrz'); render();
   burgy('Freezers: '+bolsasDe(antesCarnes)+' → '+nuevo+' bolsas. Queda anotado a nombre de '+operador+'. ✏️');
+}
+
+/* ===== Parte diario: la producción SE SUMA al stock (no lo pisa) =====
+   Se manda como 'Ajuste de conteo' con el total ya sumado (Stock_Nuevo =
+   Stock_Previo + Ingreso): es el único tipo que el servidor ya acepta con
+   totales absolutos, y el servidor calcula la diferencia. "Editar" queda
+   para corregir un conteo; esto es para cargar lo producido. ===== */
+function toggleProd(){
+  var el=$('editProd');
+  var abrir=el.classList.contains('oculto');
+  if(abrir && !NUBE.sabido){ burgy('Esperá un momento: todavía estoy leyendo el stock de la nube. ☁️'); return; }
+  el.classList.add('oculto');
+  $('avisoProd').innerHTML='';
+  if(abrir){
+    el.classList.remove('oculto');
+    $('prodPrevio').textContent=bolsasDe(NUBE.frzCarnes)+' bolsas ('+miles(NUBE.frzCarnes)+' carnes)';
+    $('inProd').value='';
+    espejoProd();
+  }
+}
+function espejoProd(){
+  var t=String($('inProd').value).trim();
+  $('equivProd').innerHTML = /^\d+$/.test(t)
+    ? '<b>'+bolsasDe(NUBE.frzCarnes)+'</b> (actual) + <b>'+miles(Number(t))+'</b> (ingreso) = <b>'+bolsasDe(NUBE.frzCarnes+Number(t)*BOLSA)+' bolsas</b> · '+miles(NUBE.frzCarnes+Number(t)*BOLSA)+' carnes en total.'
+    : 'Escribí las bolsas producidas y te muestro cómo queda el total.';
+}
+function guardarProduccion(){
+  var txt=String($('inProd').value).trim();
+  if(txt==='' || /^0+$/.test(txt)){
+    $('avisoProd').innerHTML='<div class="aviso rojo">No se registraron nuevos ingresos de producción.</div>';
+    burgy('No se registraron nuevos ingresos de producción.');
+    return;
+  }
+  if(!/^\d+$/.test(txt)){
+    $('avisoProd').innerHTML='<div class="aviso rojo">Poné un número entero de bolsas.</div>';
+    return;
+  }
+  if(!operador){
+    $('avisoProd').innerHTML='<div class="aviso rojo">Elegí arriba quién sos en "Operador de hoy", así queda anotado quién cargó la producción.</div>';
+    return;
+  }
+  var ingreso=Number(txt), ingresoCarnes=ingreso*BOLSA, antesCarnes=NUBE.frzCarnes, nuevasCarnes=antesCarnes+ingresoCarnes;
+  var detalle='Ingreso de producción: +'+miles(ingreso)+' bolsas (+'+miles(ingresoCarnes)+' carnes) · Freezers: '+bolsasDe(antesCarnes)+' → '+bolsasDe(nuevasCarnes)+' bolsas · '+ahora();
+  subirNube({Fecha:hoyLocal(), Movimiento:'Ajuste de conteo', StockResultante:nuevasCarnes,
+    CamaraResultante:NUBE.camCarnes, Quien:operador, Detalle:detalle});
+  NUBE.frzCarnes=nuevasCarnes; NUBE.sabido=true;
+  NUBE.dataset.push({Fecha:hoyLocal(), Movimiento:'Ajuste de conteo', Cantidad:ingresoCarnes, StockResultante:nuevasCarnes, CamaraResultante:NUBE.camCarnes, Detalle:detalle, Quien:operador});
+  toggleProd(); render();
+  burgy('Sumé '+miles(ingreso)+' bolsas: ahora hay '+bolsasDe(nuevasCarnes)+' en freezers. Queda anotado a nombre de '+operador+'. ➕');
 }
 
 /* ===== Render ===== */

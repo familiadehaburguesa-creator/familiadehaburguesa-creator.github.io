@@ -461,6 +461,41 @@ input[type=date],select{min-height:44px}
   .linea-stock .nu{font-size:13px}
 }
 </style>
+<style id="deudasUI">
+.deuTabs{display:flex;gap:8px;margin-bottom:10px}
+.deuTabs .btn{flex:1;width:auto}
+.deuTabs .btn.on{background:var(--marca);color:#fff;border-color:var(--marca)}
+.deuBusca{width:100%;margin-bottom:10px;padding:10px 12px;border-radius:10px;border:1px solid var(--borde);background:var(--panel2);color:var(--texto);font-size:15px}
+.deu{border:1px solid var(--borde);border-radius:12px;margin-bottom:8px;background:var(--panel2);overflow:hidden}
+.deuCab{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 12px;cursor:pointer}
+.deuCab .t1{font-size:14.5px;font-weight:700}
+.deuCab .t2{font-size:12px;color:var(--suave);margin-top:2px}
+.deuCab .der{text-align:right;font-variant-numeric:tabular-nums}
+.deuCab .monto{font-size:15px;font-weight:800}
+.deuCab .flecha{color:var(--suave);font-size:12px}
+.deuCuerpo{padding:4px 12px 12px;border-top:1px solid var(--borde)}
+.deuBarra{height:8px;border-radius:6px;background:var(--rojoF);overflow:hidden;margin:8px 0 4px}
+.deuBarra>i{display:block;height:100%;background:var(--verde)}
+.deuResumen{font-size:12px;color:var(--suave);margin-bottom:8px}
+.deuLinea{font-size:12.5px;padding:6px 8px;border-radius:8px;margin-top:5px}
+.deuLinea.deuda{background:var(--rojoF);color:#f2c7c5}
+.deuLinea.pago{background:var(--verdeF);color:#b9e6cd}
+.deuBtn{margin-top:10px}
+/* Llamar la atención sin gritar: el selector de vía late hasta que lo tocan; el nombre
+   obligatorio titila mientras está vacío. Con "reducir movimiento" queda solo el resaltado. */
+label.obligatorio::after{content:" *";color:#ff7a6e;font-weight:800}
+@keyframes viaLate{0%,100%{box-shadow:0 0 0 0 rgba(224,117,44,.0);border-color:var(--borde)}50%{box-shadow:0 0 0 5px rgba(224,117,44,.45);border-color:var(--marca)}}
+@keyframes nombreTitila{0%,100%{box-shadow:0 0 0 0 rgba(217,83,79,0);border-color:var(--rojo)}50%{box-shadow:0 0 0 4px rgba(217,83,79,.55);border-color:#ff7a6e}}
+@keyframes sacudir{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-7px)}40%,80%{transform:translateX(7px)}}
+#dcVia.atencion{animation:viaLate 1.4s ease-in-out infinite;border-color:var(--marca)}
+#dcPersona.falta{animation:nombreTitila 1s ease-in-out infinite;border:1px solid var(--rojo)}
+#dcPersona.sacudir{animation:sacudir .45s ease-in-out 1}
+@media (prefers-reduced-motion:reduce){
+  #dcVia.atencion,#dcPersona.falta,#dcPersona.sacudir{animation:none}
+  #dcVia.atencion{box-shadow:0 0 0 3px rgba(224,117,44,.45)}
+  #dcPersona.falta{box-shadow:0 0 0 3px rgba(217,83,79,.55)}
+}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -591,6 +626,11 @@ input[type=date],select{min-height:44px}
 
     <div class="caja">
       <h2>Falta cobrar</h2>
+      <div class="deuTabs">
+        <button type="button" class="btn gris chico on" id="tabPorCobrar">Por cobrar</button>
+        <button type="button" class="btn gris chico" id="tabSaldados">Historial / Saldados</button>
+      </div>
+      <input type="search" id="buscaDeudas" class="deuBusca" placeholder="Buscar cliente…" autocomplete="off">
       <div id="deudas" class="vacio">Nadie quedó debiendo.</div>
     </div>
 
@@ -872,8 +912,12 @@ input[type=date],select{min-height:44px}
       </div>
       <div class="botonera" style="margin-bottom:12px">
         <button class="btn gris chico" id="btnPagaTodo">Paga todo</button>
-        <button class="btn gris chico" id="btnPagaMitad">Paga la mitad</button>
       </div>
+      <div class="campo">
+        <label for="dcPersona" id="lblDcPersona" class="obligatorio">Persona que entrega el efectivo</label>
+        <input id="dcPersona" type="text" maxlength="60" autocomplete="off" required aria-required="true" placeholder="Nombre de quien paga (obligatorio)">
+      </div>
+      <div class="aviso info" id="dcResta"></div>
       <div class="campo">
         <label for="dcQuien">¿Quién está cobrando?</label>
         <select id="dcQuien"></select>
@@ -1029,7 +1073,7 @@ var GENTE = ['Pablo','Yami','Cielo','Paula','Mara','Soporte','Valen'];
 // de cada fila; con eso se arma el link directo al evento.
 var CALENDARIO = '919b78a49a29ebfa942650df011e34e9d55a4b8a2acef4f6a63886fa58e44f2b@group.calendar.google.com';
 
-var K_TURNO = 'fdh_turno_v1', K_PRECIOS = 'fdh_precios_v1', K_DEUDAS = 'fdh_deudas_v1';
+var K_TURNO = 'fdh_turno_v1', K_PRECIOS = 'fdh_precios_v1', K_DEUDAS = 'fdh_deudas_v1', K_SALDADOS = 'fdh_saldados_v1';
 
 var T = null;          // turno activo
 var PRECIOS = {};
@@ -1317,6 +1361,26 @@ function leerDeudas(){
 }
 function guardarDeudas(l){ try{ localStorage.setItem(K_DEUDAS, JSON.stringify(l)); }catch(e){} }
 
+/* Clientes que cancelaron el 100%: salen de "Por cobrar" y quedan acá. Se
+   reconstruyen de la nube en cada sincronización; lo local solo cubre el
+   ratito entre el cobro y la sincronización. */
+function leerSaldados(){
+  try{ var l = JSON.parse(localStorage.getItem(K_SALDADOS) || '[]'); return Array.isArray(l) ? l : []; }
+  catch(e){ return []; }
+}
+function guardarSaldados(l){ try{ localStorage.setItem(K_SALDADOS, JSON.stringify(l.slice(0, 200))); }catch(e){} }
+
+/** Lo que el cobro deja escrito en la Nota (el MENSAJERO no tiene columnas
+ *  para pagador ni para parcial/total, así que viaja ahí, igual que la hora):
+ *  'Pago Parcial de $40.000 por Ana sobre la deuda del 12/09. Saldo Restante: $60.000 · 14:32 · ...' */
+function parseNotaCobro(n){
+  var m = /^Pago (Parcial|Total) de \$([\d.]+) por (.+?) sobre (.+?)\. Saldo Restante: \$([\d.]+)/
+          .exec(String(n || '').split('\u00b7')[0].trim());
+  return m ? {parcial: m[1] === 'Parcial', persona: m[3], ref: m[4], resta: num(m[5])} : {};
+}
+/** Sin '·' ni saltos de línea: rompen el formato de la Nota. */
+function limpiaTexto(t){ return String(t || '').replace(/[\u00b7\r\n]+/g, ' ').replace(/\s+/g, ' ').trim(); }
+
 /** Las que todavía tienen saldo. Es lo que se ve en "Falta cobrar". */
 function deudasAbiertas(){
   return leerDeudas().filter(function(d){ return num(d.saldo) > 0; });
@@ -1366,7 +1430,7 @@ function anotarDeuda(quien, monto, nota, sello, detalle){
 function sincronizarDeudas(cuandoTermine){
   traer('Deudas', function(r){
     if (!r || !r.ok || !r.datos){ if (cuandoTermine) cuandoTermine(false); return; }
-    var porCliente = {};
+    var porCliente = {}, saldados = [];
     r.datos.forEach(function(f){
       var clave = limpiaClave(f.Cliente);
       if (!clave) return;
@@ -1377,7 +1441,9 @@ function sincronizarDeudas(cuandoTermine){
       var fecha = String(f.Fecha || '').slice(0,10);
       var hs = horaDeNota(f.Nota);
       if (/cobro/i.test(String(f.Movimiento || ''))){
-        e.cobros.push({monto: num(f.Monto), via: String(f.Via || ''), quien: String(f.Quien || ''), fecha: fecha, hora: hs});
+        var pn = parseNotaCobro(f.Nota);
+        e.cobros.push({monto: num(f.Monto), via: String(f.Via || ''), quien: String(f.Quien || ''), fecha: fecha, hora: hs,
+                       persona: pn.persona || '', parcial: pn.parcial, resta: pn.resta});
       } else {
         e.original += num(f.Monto);
         // HU2/HU4: para poder borrar o corregir ESTA carga puntual despues,
@@ -1394,12 +1460,20 @@ function sincronizarDeudas(cuandoTermine){
       // Si el cliente quedó en cero, lo anterior ya está saldado: la próxima
       // deuda arranca de nuevo (fecha, hora y quién la cargó son los de ella).
       if (e.saldo <= 0){
+        // Lo que se pagó entero va al Historial / Saldados. Una carga borrada
+        // o corregida a cero NO cuenta: sin cobros no hay cancelación.
+        if (e.cobros.length && e.original > 0){
+          saldados.push({id: 's:' + clave + ':' + fecha + ':' + hs + ':' + saldados.length, quien: e.quien,
+            original: e.original, fechaSaldo: fecha, horaSaldo: hs, cargas: e.cargas, cobros: e.cobros});
+        }
         e.original = 0; e.cargas = []; e.cobros = [];
         e.fecha = ''; e.hora = ''; e.usuario = ''; e.nota = '';
       }
     });
     var libro = Object.keys(porCliente).map(function(k){ return porCliente[k]; });
     guardarDeudas(libro);
+    saldados.sort(function(a, b){ return (b.fechaSaldo + (b.horaSaldo || '')) < (a.fechaSaldo + (a.horaSaldo || '')) ? -1 : 1; });
+    guardarSaldados(saldados);
     pintarDeudas(); pintarKPIs();
     if (cuandoTermine) cuandoTermine(true);
   });
@@ -1506,44 +1580,105 @@ function pintarMovs(){
 // muestra inline en la propia tarjeta, sin popups del navegador).
 var CARGA_EN_ACCION = null; // {idDeuda, idxCarga, modo:'borrar'|'editar'}
 
+var DEU_TAB = 'por';      // 'por' = Por cobrar · 'sal' = Historial / Saldados
+var DEU_ABIERTAS = {};    // id de tarjeta -> true (acordeón desplegado)
+
+/** Deudas y pagos de un cliente en un solo historial, en orden cronológico. */
+function lineasDeCliente(d){
+  var cargas = (d.cargas && d.cargas.length) ? d.cargas
+             : [{fecha: d.fecha, hora: d.hora, usuario: d.usuario || d.turno, monto: d.original}];
+  var l = [];
+  cargas.forEach(function(c, i){ l.push({t: 'deuda', c: c, i: i, k: (c.fecha || '') + ' ' + (c.hora || '')}); });
+  (d.cobros || []).forEach(function(c){ l.push({t: 'pago', c: c, k: (c.fecha || '') + ' ' + (c.hora || '')}); });
+  // sort estable: a igual fecha/hora la deuda va antes que el pago
+  return l.map(function(x, n){ x.n = n; return x; })
+          .sort(function(a, b){ return a.k < b.k ? -1 : a.k > b.k ? 1 : a.n - b.n; });
+}
+
+function textoPago(c){
+  var nombres = {efe:'efectivo', tra:'transferencia', mp:'Mercado Pago'};
+  var tipo = c.parcial === true ? 'Pago parcial' : (c.parcial === false ? 'Pago total' : 'Pago');
+  return '💳 ' + tipo + ' ' + pesos(c.monto) + ' · ' + (nombres[c.via] || c.via || 'medio sin registrar') +
+         (c.persona ? ' · pagó ' + c.persona : '') +
+         ' · ' + diaCorto(c.fecha) + (c.hora ? ' ' + c.hora : '') +
+         (c.quien ? ' · lo cobró ' + c.quien : '') +
+         (c.parcial === true && c.resta >= 0 && c.resta !== undefined && !isNaN(c.resta) ? ' · resta ' + pesos(c.resta) : '');
+}
+
 function pintarDeudas(){
-  var lista = deudasAbiertas();
-  if (!lista.length){ $('deudas').className = 'vacio'; $('deudas').textContent = 'Nadie quedó debiendo.'; return; }
+  var porTab = DEU_TAB === 'por';
+  var abiertas = deudasAbiertas(), saldados = leerSaldados();
+  $('tabPorCobrar').classList.toggle('on', porTab);
+  $('tabSaldados').classList.toggle('on', !porTab);
+  $('tabPorCobrar').textContent = 'Por cobrar (' + abiertas.length + ')';
+  $('tabSaldados').textContent = 'Historial / Saldados (' + saldados.length + ')';
+
+  var q = limpiaClave($('buscaDeudas').value || '');
+  var lista = porTab ? abiertas : saldados;
+  if (q) lista = lista.filter(function(d){ return limpiaClave(d.quien).indexOf(q) >= 0; });
+  if (!lista.length){
+    $('deudas').className = 'vacio';
+    $('deudas').textContent = q ? 'Ningún cliente coincide con esa búsqueda.'
+                                : (porTab ? 'Nadie quedó debiendo.' : 'Todavía no hay deudas saldadas.');
+    return;
+  }
   $('deudas').className = '';
-  var hoy = hoyLocal();
   var h = '';
   lista.forEach(function(d){
-    // Una deuda de otro dia se marca con la fecha: no es lo mismo "quedo
-    // debiendo recien" que "debe desde hace una semana".
-    var pagado = num(d.original) - num(d.saldo);
-    // HU7: cada carga con su fecha, hora y quién la registró.
-    var cargas = (d.cargas && d.cargas.length) ? d.cargas
-               : [{fecha: d.fecha, hora: d.hora, usuario: d.usuario || d.turno, monto: d.original}];
-    var t3 = cargas.map(function(c, i){
-      // HU2/HU4: solo se puede borrar/editar una carga puntual si vino de la
-      // nube con sus 7 campos crudos (raw). La fila resumen de compatibilidad
-      // (cliente sin cargas separadas) no se puede tocar desde ac\u00e1.
-      var iconos = c.raw ?
-        ' <span class="accCarga" data-accion="editar" data-deuda="' + d.id + '" data-idx="' + i + '" title="Corregir el monto">\u270f\ufe0f</span>' +
-        '<span class="accCarga" data-accion="borrar" data-deuda="' + d.id + '" data-idx="' + i + '" title="Borrar, se carg\u00f3 mal">\ud83d\uddd1\ufe0f</span>' : '';
-      var linea = '<div class="t3">' + selloTexto(c.fecha, c.hora, c.usuario) +
-             (cargas.length > 1 ? ' \u00b7 ' + pesos(c.monto) : '') + iconos + '</div>';
-      if (CARGA_EN_ACCION && CARGA_EN_ACCION.idDeuda === d.id && CARGA_EN_ACCION.idxCarga === i){
-        linea += pintarAccionCarga(c);
+    var ultimoPago = (d.cobros && d.cobros.length) ? d.cobros[d.cobros.length - 1] : null;
+    // La clave es el cliente, no el id: el id cambia al sincronizar con la nube
+    // y la tarjeta se cerraría sola.
+    var key = porTab ? limpiaClave(d.quien) : d.id;
+    var abierta = !!DEU_ABIERTAS[key] || (CARGA_EN_ACCION && CARGA_EN_ACCION.idDeuda === d.id);
+    var pagado = Math.max(0, num(d.original) - num(d.saldo));
+    var sub = porTab
+      ? (ultimoPago ? 'último pago: ' + diaCorto(ultimoPago.fecha) : 'sin pagos todavía')
+      : 'saldó el ' + diaCorto(d.fechaSaldo) + (d.horaSaldo ? ' ' + d.horaSaldo : '');
+    var monto = porTab ? d.saldo : d.original;
+    h += '<div class="deu" data-deuda="' + d.id + '">' +
+         '<div class="deuCab" data-tog="' + key + '">' +
+           '<div class="izq"><div class="t1">' + d.quien + '</div><div class="t2">' + sub + '</div></div>' +
+           '<div class="der"><div class="monto">' + pesos(monto) + '</div><div class="flecha">' + (abierta ? '▴' : '▾') + '</div></div>' +
+         '</div>';
+    if (abierta){
+      h += '<div class="deuCuerpo">';
+      if (porTab){
+        var pct = num(d.original) > 0 ? Math.min(100, Math.round(pagado / num(d.original) * 100)) : 0;
+        h += '<div class="deuBarra"><i style="width:' + pct + '%"></i></div>' +
+             '<div class="deuResumen">Original ' + pesos(d.original) + ' − pagado ' + pesos(pagado) +
+             ' = <b>resta ' + pesos(d.saldo) + '</b></div>';
+      } else {
+        h += '<div class="deuResumen">Deuda de ' + pesos(d.original) + ' cancelada por completo.</div>';
       }
-      return linea;
-    }).join('');
-    var t2 = d.nota || '';
-    if (pagado > 0) t2 += (t2 ? ' \u00b7 ' : '') + 'ya pag\u00f3 ' + pesos(pagado) + ' de ' + pesos(d.original);
-    h += '<div class="item deudaClic" data-deuda="' + d.id + '">' +
-         '<div class="izq"><div class="t1">' + d.quien + '</div>' + t3 +
-         (t2 ? '<div class="t2">' + t2 + '</div>' : '') +
-         '<div class="linkcal">Cobrar</div></div>' +
-         '<div class="der"><div class="monto">' + pesos(d.saldo) + '</div></div></div>';
+      lineasDeCliente(d).forEach(function(x){
+        if (x.t === 'pago'){ h += '<div class="deuLinea pago">' + textoPago(x.c) + '</div>'; return; }
+        var c = x.c, i = x.i, cargas = d.cargas || [];
+        // HU2/HU4: solo se puede borrar/editar una carga puntual si vino de la
+        // nube con sus 7 campos crudos (raw).
+        var iconos = (porTab && c.raw) ?
+          ' <span class="accCarga" data-accion="editar" data-deuda="' + d.id + '" data-idx="' + i + '" title="Corregir el monto">✏️</span>' +
+          '<span class="accCarga" data-accion="borrar" data-deuda="' + d.id + '" data-idx="' + i + '" title="Borrar, se cargó mal">🗑️</span>' : '';
+        h += '<div class="deuLinea deuda">🧾 Deuda ' + pesos(c.monto) + ' · ' + selloTexto(c.fecha, c.hora, c.usuario) + iconos + '</div>';
+        if (porTab && CARGA_EN_ACCION && CARGA_EN_ACCION.idDeuda === d.id && CARGA_EN_ACCION.idxCarga === i){
+          h += pintarAccionCarga(c);
+        }
+      });
+      if (porTab && d.nota) h += '<div class="deuResumen" style="margin-top:8px">' + d.nota + '</div>';
+      if (porTab) h += '<button type="button" class="btn verde chico deuBtn" data-cobrar="' + d.id + '">Cobrar</button>';
+      h += '</div>';
+    }
+    h += '</div>';
   });
   $('deudas').innerHTML = h;
-  Array.prototype.forEach.call($('deudas').querySelectorAll('.item.deudaClic'), function(el){
-    el.addEventListener('click', function(){ abrirCobroDeuda(el.getAttribute('data-deuda')); });
+  Array.prototype.forEach.call($('deudas').querySelectorAll('[data-tog]'), function(el){
+    el.addEventListener('click', function(){
+      var id = el.getAttribute('data-tog');
+      if (DEU_ABIERTAS[id]) delete DEU_ABIERTAS[id]; else DEU_ABIERTAS[id] = true;
+      pintarDeudas();
+    });
+  });
+  Array.prototype.forEach.call($('deudas').querySelectorAll('[data-cobrar]'), function(el){
+    el.addEventListener('click', function(){ abrirCobroDeuda(el.getAttribute('data-cobrar')); });
   });
   Array.prototype.forEach.call($('deudas').querySelectorAll('.accCarga'), function(el){
     el.addEventListener('click', function(ev){
@@ -3023,6 +3158,9 @@ function abrirCobroDeuda(id){
 
   ponerNumero('dcMonto', d.saldo);
   $('dcVia').value = 'efe';
+  $('dcPersona').value = '';
+  $('dcPersona').classList.add('falta'); $('dcPersona').classList.remove('sacudir');
+  $('dcVia').classList.add('atencion');   // late hasta que el usuario lo toque
   $('dcQuien').value = T.quien;
   $('avisoCobroDeuda').innerHTML = '';
   notaMontoDeuda();
@@ -3034,6 +3172,12 @@ function notaMontoDeuda(){
   if (!deudaEnCurso) return;
   var m = ent($('dcMonto').value), saldo = num(deudaEnCurso.saldo);
   var el = $('dcNotaMonto');
+  var esMP = $('dcVia').value === 'mp';
+  $('lblDcPersona').textContent = esMP ? 'Titular / pagador de la cuenta de Mercado Pago' : 'Persona que entrega el efectivo';
+  $('dcPersona').placeholder = esMP ? 'Nombre del titular de la transferencia' : 'Nombre de quien paga';
+  $('dcResta').innerHTML = (m > 0 && m <= saldo)
+    ? 'Saldo restante: <b>' + pesos(saldo - m) + '</b> (debe ' + pesos(saldo) + ' − paga ' + pesos(m) + ')'
+    : 'Saldo actual: <b>' + pesos(saldo) + '</b>';
   if (m <= 0){ el.textContent = 'Poné cuánto te está pagando.'; el.style.color = ''; return; }
   if (m > saldo){ el.textContent = 'Es más de lo que debe. Debe ' + pesos(saldo) + '.'; el.style.color = '#f2a6a4'; return; }
   if (m === saldo){ el.textContent = 'Paga todo y queda saldado.'; el.style.color = '#96d9b5'; return; }
@@ -3070,6 +3214,17 @@ function guardarCobroDeuda(){
       pesos(saldo) + '.</div>';
     return;
   }
+  var persona = limpiaTexto($('dcPersona').value);
+  if (!persona){
+    var campoP = $('dcPersona');
+    campoP.classList.remove('sacudir'); void campoP.offsetWidth; campoP.classList.add('sacudir');
+    try{ campoP.focus(); }catch(e){}
+    $('avisoCobroDeuda').innerHTML = '<div class="aviso rojo">' + (via === 'mp'
+      ? 'Poné el nombre del titular de la cuenta de Mercado Pago.'
+      : 'Poné el nombre de la persona que entrega el efectivo.') + '</div>';
+    return;
+  }
+  var parcial = m < saldo;
 
   // 1) Se descuenta del libro de deudas y queda el registro de quien cobro.
   var lista = leerDeudas();
@@ -3077,10 +3232,13 @@ function guardarCobroDeuda(){
     if (lista[i].id !== deudaEnCurso.id) continue;
     lista[i].saldo = num(lista[i].saldo) - m;
     lista[i].cobros = lista[i].cobros || [];
-    lista[i].cobros.push({monto:m, via:via, quien:quien, fecha:hoyLocal(), hora:hora(), turno:T.quien});
+    lista[i].cobros.push({monto:m, via:via, quien:quien, fecha:hoyLocal(), hora:hora(), turno:T.quien,
+                          persona:persona, parcial:parcial, resta:saldo - m});
     break;
   }
   guardarDeudas(lista);
+  var nombreDeudor = deudaEnCurso.quien, originalDeuda = num(deudaEnCurso.original) || saldo;
+  var fechaDeuda = deudaEnCurso.fecha, cobrosPrevios = (deudaEnCurso.cobros || []).slice();
 
   // 2) Entra a la caja del turno que lo cobra. Solo el efectivo toca la caja
   //    fisica; transferencia y Mercado Pago se registran aparte.
@@ -3090,16 +3248,42 @@ function guardarCobroDeuda(){
 
   var nombres = {efe:'efectivo', tra:'transferencia', mp:'Mercado Pago'};
   var queda = saldo - m;
+  var etiqueta = parcial ? 'Parcial' : 'Total';
+  var refDeuda = fechaDeuda ? 'la deuda del ' + String(fechaDeuda).split('-').slice(1).reverse().join('/') : 'la deuda abierta';
+  // Se deja 'Movimiento: Cobro' tal cual: el MENSAJERO calcula el saldo por ese
+  // nombre. Parcial/Total, pagador y referencia viajan en la Nota (parseNotaCobro
+  // los lee de vuelta); la hora va en su propio tramo, como siempre.
   // El cobro tambien baja el saldo del cliente en la nube.
   guardarEnNube('Deudas', {
-    Fecha: hoyLocal(), Cliente: deudaEnCurso.quien, Movimiento: 'Cobro',
+    Fecha: hoyLocal(), Cliente: nombreDeudor, Movimiento: 'Cobro',
     Monto: m, Via: nombres[via] || via, Quien: quien,
-    Nota: 'lo cobró ' + quien + ' a las ' + hora() + ' · turno de ' + T.quien
+    Nota: 'Pago ' + etiqueta + ' de ' + pesos(m) + ' por ' + persona + ' sobre ' + refDeuda +
+          '. Saldo Restante: ' + pesos(queda) + ' \u00b7 ' + hora() + ' \u00b7 lo cobró ' + quien + ' \u00b7 turno de ' + T.quien
   });
-  anotar('Cobró una deuda · ' + deudaEnCurso.quien,
-         nombres[via] + ' · lo cobró ' + quien +
-         (queda > 0 ? ' · le queda debiendo ' + pesos(queda) : ' · quedó saldado'),
+  anotar('Cobró una deuda · ' + nombreDeudor,
+         nombres[via] + ' · pagó ' + persona + ' · lo cobró ' + quien +
+         (queda > 0 ? ' · pago parcial, le queda debiendo ' + pesos(queda) : ' · quedó saldado'),
          pesos(m));
+  // Resumen para Tesorería (viaja en Observacion / PagadoresMP al cerrar el turno).
+  if (via === 'mp'){
+    T.pagadoresMP = T.pagadoresMP || [];
+    T.pagadoresMP.push(nombreDeudor + ' (Pagador MP: ' + persona + ') ' + pesos(m) + ' [' + etiqueta + ']');
+  } else {
+    T.obsCobros = T.obsCobros || [];
+    T.obsCobros.push('[Cobro Deuda ' + etiqueta + '] Cliente: ' + nombreDeudor + ' | Entregó: ' + persona +
+                     ' | Monto: ' + pesos(m) + ' | Resta: ' + pesos(queda));
+  }
+  if (queda <= 0){
+    T.obsCobros = T.obsCobros || [];
+    T.obsCobros.push('[Deuda saldada] ' + nombreDeudor + ' saldó la totalidad de su deuda (' + pesos(originalDeuda) +
+                     ') el ' + diaCorto(hoyLocal()) + ' ' + hora());
+    anotar('Deuda saldada · ' + nombreDeudor, 'Saldó la totalidad de su deuda (' + pesos(originalDeuda) + ')', pesos(originalDeuda));
+    var sal = leerSaldados();
+    sal.unshift({id: 's:' + limpiaClave(nombreDeudor) + ':' + Date.now(), quien: nombreDeudor, original: originalDeuda,
+      fechaSaldo: hoyLocal(), horaSaldo: hora(), cargas: [],
+      cobros: cobrosPrevios.concat([{monto:m, via:via, quien:quien, fecha:hoyLocal(), hora:hora(), persona:persona, parcial:false, resta:0}])});
+    guardarSaldados(sal);
+  }
 
   guardarTurno();
   deudaEnCurso = null;
@@ -3308,7 +3492,7 @@ function confirmarCierre(){
     ventas_cantidad: contarMovs('Venta en el Negocio'),
     entregas_pedidos_cantidad: contarMovs('Entregó pedido'),
     // Columnas nuevas AL FINAL de la hoja Ventas (MENSAJERO V19):
-    Observacion: ($('zObs') ? ($('zObs').value || '').trim() : ''),          // HU-07
+    Observacion: [($('zObs') ? ($('zObs').value || '').trim() : '')].concat(T.obsCobros || []).filter(Boolean).join(' | '),  // HU-07 + cobros de deuda
     EfectivoContado: (T.contado ? T.contado.caja : ''),                       // HU-04
     MPContado: (T.contado ? T.contado.mp : ''),                               // HU-04
     PagadoresMP: (T.pagadoresMP || []).join(' · '),                           // HU-05
@@ -3530,11 +3714,20 @@ function iniciar(){
   $('btnCancelarIngPlata').addEventListener('click', function(){ mostrar('pTurno'); });
 
   $('dcMonto').addEventListener('input', notaMontoDeuda);
+  $('dcVia').addEventListener('change', notaMontoDeuda);
+  ['focus','change','mousedown','touchstart'].forEach(function(ev){
+    $('dcVia').addEventListener(ev, function(){ $('dcVia').classList.remove('atencion'); });
+  });
+  $('dcPersona').addEventListener('input', function(){
+    $('dcPersona').classList.remove('sacudir');
+    $('dcPersona').classList.toggle('falta', !limpiaTexto($('dcPersona').value));
+    if (limpiaTexto($('dcPersona').value)) $('avisoCobroDeuda').innerHTML = '';
+  });
+  $('tabPorCobrar').addEventListener('click', function(){ DEU_TAB = 'por'; pintarDeudas(); });
+  $('tabSaldados').addEventListener('click', function(){ DEU_TAB = 'sal'; pintarDeudas(); });
+  $('buscaDeudas').addEventListener('input', pintarDeudas);
   $('btnPagaTodo').addEventListener('click', function(){
     if (deudaEnCurso){ ponerNumero('dcMonto', deudaEnCurso.saldo); notaMontoDeuda(); }
-  });
-  $('btnPagaMitad').addEventListener('click', function(){
-    if (deudaEnCurso){ ponerNumero('dcMonto', Math.round(num(deudaEnCurso.saldo)/2)); notaMontoDeuda(); }
   });
   $('btnGuardarCobroDeuda').addEventListener('click', guardarCobroDeuda);
   $('btnCancelarCobroDeuda').addEventListener('click', function(){ deudaEnCurso = null; mostrar('pTurno'); });
