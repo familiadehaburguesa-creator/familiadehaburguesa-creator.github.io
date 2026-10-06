@@ -368,6 +368,11 @@ function miles(n){ return Number(n||0).toLocaleString('es-AR'); }
 function pesos(n){ return '$'+miles(n); }
 function hoyLocal(){ var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function mesActual(){ return hoyLocal().slice(0,7); }
+/* Cobro de deuda: pagador y referencia viajan en la Nota (Ventas la arma). */
+function parseNotaCobro(n){
+  var m=/^Pago (Parcial|Total) de \$([\d.]+) por (.+?) sobre (.+?)\. Saldo Restante: \$([\d.]+)/.exec(String(n||'').split('\u00b7')[0].trim());
+  return m?{parcial:m[1]==='Parcial',persona:m[3],ref:m[4],resta:num(m[5])}:{};
+}
 function fery(f){ var p=String(f||'').slice(0,10).split('-'); return p.length===3?(Number(p[2])+'/'+Number(p[1])):String(f||''); }
 function limpiaClave(s){ return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim().toLowerCase(); }
 function burgy(m){ $('burgyDice').textContent=m; }
@@ -440,8 +445,10 @@ function deudoresAbiertos(){
       // HU3: para verlo rápido en Finanzas hace falta el medio de pago de
       // cada cobro, no solo el total acumulado. Via ya viaja desde Ventas
       // (guardarCobroDeuda manda 'efectivo' / 'transferencia' / 'Mercado Pago').
+      var pn=parseNotaCobro(f.Nota);
       e.pagos.push({fecha:String(f.Fecha||'').slice(0,10),hora:horaDeNota(f.Nota),
-                    via:String(f.Via||'').trim(),monto:num(f.Monto)});
+                    via:String(f.Via||'').trim(),monto:num(f.Monto),persona:pn.persona||'',
+                    parcial:(pn.parcial===undefined?(num(f.SaldoCliente)>0):pn.parcial)});
     } else {
       var fecha=String(f.Fecha||'').slice(0,10);
       if(!e.fecha) e.fecha=fecha;
@@ -666,6 +673,32 @@ function tarjetaCierre(v){
   '</div>';
 }
 
+/* Escenario 4: lo que el cierre debe poder abrir. La hoja Deudas no guarda el
+   turno, solo la fecha: si hubo dos turnos el mismo día, ambos ven la misma lista. */
+function desgloseDeudasDelDia(v){
+  var dia=String(v.Fecha||'').slice(0,10);
+  var filas=D.deudas.filter(function(f){ return String(f.Fecha||'').slice(0,10)===dia; });
+  var nuevas=filas.filter(function(f){ return !/cobro/i.test(String(f.Movimiento||'')); });
+  var cobros=filas.filter(function(f){ return /cobro/i.test(String(f.Movimiento||'')); });
+  if(!nuevas.length && !cobros.length) return '';
+  var h='<div class="c-ops" style="display:block">';
+  if(nuevas.length){
+    h+='<div class="c-nota"><b>Ventas a crédito del día</b></div>'+nuevas.map(function(f){
+      return '<div class="c-nota">• '+(f.Cliente||'Sin nombre')+' · sumó '+pesos(num(f.Monto))+' a Debe</div>';
+    }).join('');
+  }
+  if(cobros.length){
+    h+='<div class="c-nota" style="margin-top:6px"><b>Cobros de deuda del día</b></div>'+cobros.map(function(f){
+      var pn=parseNotaCobro(f.Nota), total=num(f.SaldoCliente)<=0;
+      return '<div class="c-nota">• '+(f.Cliente||'Sin nombre')+' · '+pesos(num(f.Monto))+' por '+(String(f.Via||'').trim()||'medio sin registrar')+
+        (pn.persona?' · pagó '+pn.persona:' · pagador sin registrar')+
+        (pn.ref?' · sobre '+pn.ref:'')+
+        ' · '+(total?'cancelación total':'pago parcial, resta '+pesos(num(f.SaldoCliente)))+'</div>';
+    }).join('');
+  }
+  return h+'</div>';
+}
+
 /* ===== HU12: totalizador del día vigente (solo cierres de HOY) ===== */
 function totalesHoy(){
   var t={efe:0, mp:0, deb:0, total:0, turnos:0};
@@ -707,7 +740,8 @@ function render(){
     // HU3: nombre del cliente (d.quien, ya está en el título) + medio de pago
     // de cada cobro, para identificarlo rápido al revisar los ingresos.
     var pagosDet=d.pagos.map(function(p){
-      return '<div class="t2">💳 pagó '+pesos(p.monto)+' por '+(p.via||'medio sin registrar')+
+      return '<div class="t2">💳 '+(p.parcial?'pago parcial ':'pago total ')+pesos(p.monto)+' por '+(p.via||'medio sin registrar')+
+             (p.persona?' · pagó '+p.persona:'')+
              ' · '+fery(p.fecha)+(p.hora?' '+p.hora:'')+'</div>';
     }).join('');
     return '<div class="item"><div><div class="t1">'+d.quien+'</div>'+det+pagosDet+'</div>'+
@@ -844,6 +878,7 @@ function pintarReporte(){
     if(String(v.PagadoresMP||'').trim()){
       h+='<div class="c-ops"><span class="c-nota">Pagaron por MP: '+v.PagadoresMP+'</span></div>';
     }
+    h+=desgloseDeudasDelDia(v);
     h+='</div>';
   });
 
