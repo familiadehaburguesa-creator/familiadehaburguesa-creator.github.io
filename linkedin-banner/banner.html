@@ -1,0 +1,39 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Banner</title>
+<style>
+*{box-sizing:border-box;margin:0}
+body{width:1584px;height:396px;overflow:hidden;background:#0b1f33;font-family:Inter,sans-serif;position:relative}
+.bg{position:absolute;inset:0;background:
+ radial-gradient(900px 400px at 85% 120%,#14597a 0%,transparent 60%),
+ linear-gradient(120deg,#0b1f33 0%,#0e2c47 100%)}
+.grid{position:absolute;inset:0;opacity:.07;background-image:linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px);background-size:44px 44px}
+h1{position:absolute;left:440px;top:62px;width:1050px;color:#fff;font-size:46px;line-height:1.12;font-weight:800;letter-spacing:-.5px}
+h1 em{font-style:normal;color:#4fd1c5}
+.sub{position:absolute;left:440px;top:196px;color:#b7c9d9;font-size:21px;font-weight:500;letter-spacing:.2px}
+.sub b{color:#fff;font-weight:600}.sub i{color:#4fd1c5;font-style:normal;margin:0 10px}
+svg{position:absolute;left:0;top:0}
+</style></head><body>
+<div class="bg"></div><div class="grid"></div>
+<h1>Traduzco necesidades de negocio<br>en <em>productos que generan valor</em></h1>
+<div class="sub"><b>Business Analyst</b><i>·</i>Product Owner<i>·</i>Agile<i>·</i>IA aplicada a Negocio</div>
+<svg width="1584" height="396" id="s"></svg>
+<script>
+const labels=["Necesidad","Backlog","Producto","Valor"];
+const x0=470,x1=1330,y=318,n=4,xs=labels.map((_,i)=>x0+(x1-x0)*i/(n-1));
+const s=document.getElementById('s');
+let h=`<line x1="${x0}" y1="${y}" x2="${x1}" y2="${y}" stroke="#2c4b66" stroke-width="3"/>`;
+xs.forEach((x,i)=>{h+=`<circle id="r${i}" cx="${x}" cy="${y}" r="16" fill="none" stroke="#4fd1c5" stroke-width="3" opacity="0"/>
+<circle cx="${x}" cy="${y}" r="9" fill="#4fd1c5"/>
+<text x="${x}" y="${y+44}" fill="#d6e4f0" font-size="18" font-weight="600" text-anchor="middle" font-family="Inter">${labels[i]}</text>`});
+h+=`<circle id="p" cx="${x0}" cy="${y}" r="7" fill="#fff"/>`;
+s.innerHTML=h;
+window.setT=function(t){ // t in [0,1): loop
+  const p=document.getElementById('p');
+  const pos=t*1.25; // pulse travels then rests briefly
+  const f=Math.min(pos,1);
+  p.setAttribute('cx',x0+(x1-x0)*f); p.setAttribute('opacity',pos>1?Math.max(0,1-(pos-1)*4):1);
+  xs.forEach((x,i)=>{const d=Math.abs(f-i/(n-1));const a=pos>1.0&&i<n-1?0:Math.max(0,1-d*6);
+    const r=document.getElementById('r'+i);r.setAttribute('opacity',a);r.setAttribute('r',16+ (1-a)*10);});
+  if(pos>1){const r=document.getElementById('r3');const a=Math.max(0,1-(pos-1)*4);r.setAttribute('opacity',a);}
+};
+setT(0);
+</script></body></html>
