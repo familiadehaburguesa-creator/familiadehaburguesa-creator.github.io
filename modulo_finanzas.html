@@ -691,7 +691,7 @@ function desgloseDeudasDelDia(v){
     h+='<div class="c-nota" style="margin-top:6px"><b>Cobros de deuda del día</b></div>'+cobros.map(function(f){
       var pn=parseNotaCobro(f.Nota), total=num(f.SaldoCliente)<=0;
       return '<div class="c-nota">• '+(f.Cliente||'Sin nombre')+' · '+pesos(num(f.Monto))+' por '+(String(f.Via||'').trim()||'medio sin registrar')+
-        (pn.persona?' · pagó '+pn.persona:' · pagador sin registrar')+
+        (pn.persona?(/mercado/i.test(String(f.Via||''))?' · Mercado Pago (Titular MP: '+pn.persona+')':' · pagó '+pn.persona):' · pagador sin registrar')+
         (pn.ref?' · sobre '+pn.ref:'')+
         ' · '+(total?'cancelación total':'pago parcial, resta '+pesos(num(f.SaldoCliente)))+'</div>';
     }).join('');
@@ -741,7 +741,7 @@ function render(){
     // de cada cobro, para identificarlo rápido al revisar los ingresos.
     var pagosDet=d.pagos.map(function(p){
       return '<div class="t2">💳 '+(p.parcial?'pago parcial ':'pago total ')+pesos(p.monto)+' por '+(p.via||'medio sin registrar')+
-             (p.persona?' · pagó '+p.persona:'')+
+             (p.persona?(/mercado/i.test(p.via)?' · Titular MP: '+p.persona:' · pagó '+p.persona):'')+
              ' · '+fery(p.fecha)+(p.hora?' '+p.hora:'')+'</div>';
     }).join('');
     return '<div class="item"><div><div class="t1">'+d.quien+'</div>'+det+pagosDet+'</div>'+
