@@ -320,17 +320,22 @@
        flotando fuera de su caja, pisando la de abajo. Sin flex:1 esta caja
        mide lo que necesita su contenido, y si no entra, scrollea la columna
        entera (ver overflow-y:auto en #pTurno .col más arriba). */
-    #pTurno .col > .caja:has(#movs),
-    #pTurno .col > .caja:has(#deudas){min-height:0;display:flex;flex-direction:column;flex:1}
-    #movs, #deudas{overflow-y:auto;min-height:0;flex:1}
+    #pTurno .col > .caja:has(#movs){min-height:0;display:flex;flex-direction:column;flex:1}
+    #movs{overflow-y:auto;min-height:0;flex:1}
     #pTurno #btnCerrar{margin-top:9px}
 
     /* Las demás pantallas también entran sin scroll */
-    #pApertura, #pVenta, #pCierre, #pIngreso, #pAjusteStock, #pRetiro, #pCobrarDeuda{
+    #pApertura, #pVenta, #pCierre, #pIngreso, #pAjusteStock, #pRetiro, #pCobrarDeuda, #pFaltaCobrar{
       overflow-y:auto;min-height:0;flex:1;
     }
     /* Las pantallas de un solo formulario no necesitan todo el ancho. */
-    #pCobrarDeuda > .caja{max-width:680px}
+    #pCobrarDeuda > .caja{max-width:1200px;margin-left:auto;margin-right:auto}
+    #pFaltaCobrar{width:100%;max-width:1200px;margin:0 auto}
+    /* HU-FC-02: dos columnas, formulario a la izquierda e historial a la derecha */
+    .cobroGrid{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start}
+    #dcHistorial{max-height:400px;overflow-y:auto;min-height:0}
+    #dcHistorial .hr:first-child{display:none}
+    #dcColIzq .cierre{margin-top:6px}
     #pApertura{display:grid;grid-template-columns:1fr 1fr;gap:13px;align-items:start}
     #pVenta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;align-content:start}
     #pVenta > .caja{margin-bottom:0}
@@ -481,6 +486,22 @@ input[type=date],select{min-height:44px}
 .deuLinea.deuda{background:var(--rojoF);color:#f2c7c5}
 .deuLinea.pago{background:var(--verdeF);color:#b9e6cd}
 .deuBtn{margin-top:10px}
+.fcCab{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+.fcCab h2{margin:0}
+.fcTotal{font-size:13px;color:var(--suave)}
+.fcTotal b{font-size:22px;color:#f2a6a4;margin-left:6px;font-variant-numeric:tabular-nums}
+.fcFila{display:grid;grid-template-columns:2fr 1.2fr 1.2fr auto;gap:12px;align-items:center;padding:11px 12px;cursor:pointer}
+.fcFila .t1{font-size:15px;font-weight:700}
+.fcFila .t2{font-size:12.5px;color:var(--suave)}
+.fcFila .monto{font-size:16px;font-weight:800;font-variant-numeric:tabular-nums}
+.fcFila .flecha{color:var(--suave);font-size:12px;margin-left:6px}
+.fcFila .btn{width:auto;padding:0 18px}
+#btnIrFaltaCobrar{width:100%;margin-top:4px}
+.kpi.clic{cursor:pointer}
+@media (max-width:767px){
+  .cobroGrid{grid-template-columns:1fr}
+  .fcFila{grid-template-columns:1fr 1fr}
+}
 /* Llamar la atención sin gritar: el selector de vía late hasta que lo tocan; el nombre
    obligatorio titila mientras está vacío. Con "reducir movimiento" queda solo el resaltado. */
 label.obligatorio::after{content:" *";color:#ff7a6e;font-weight:800}
@@ -626,12 +647,8 @@ label.obligatorio::after{content:" *";color:#ff7a6e;font-weight:800}
 
     <div class="caja">
       <h2>Falta cobrar</h2>
-      <div class="deuTabs">
-        <button type="button" class="btn gris chico on" id="tabPorCobrar">Por cobrar</button>
-        <button type="button" class="btn gris chico" id="tabSaldados">Historial / Saldados</button>
-      </div>
-      <input type="search" id="buscaDeudas" class="deuBusca" placeholder="Buscar cliente…" autocomplete="off">
-      <div id="deudas" class="vacio">Nadie quedó debiendo.</div>
+      <div class="deuResumen" id="resumenFaltaCobrar">Nadie quedó debiendo.</div>
+      <button type="button" class="btn chico" id="btnIrFaltaCobrar">Falta cobrar</button>
     </div>
 
     </div>
@@ -891,42 +908,66 @@ label.obligatorio::after{content:" *";color:#ff7a6e;font-weight:800}
     </div>
   </section>
 
+  <!-- ================= FALTA COBRAR (pantalla completa) ================= -->
+  <section id="pFaltaCobrar" class="oculto">
+    <div class="caja">
+      <div class="fcCab">
+        <h2>Falta cobrar</h2>
+        <div class="fcTotal">Total pendiente<b id="fcTotalPend">$0</b></div>
+        <button type="button" class="btn gris chico" id="btnVolverVentas" style="width:auto;padding:0 16px">← Volver a Ventas</button>
+      </div>
+      <div class="deuTabs">
+        <button type="button" class="btn gris chico on" id="tabPorCobrar">Por cobrar</button>
+        <button type="button" class="btn gris chico" id="tabSaldados">Historial / Saldados</button>
+      </div>
+      <input type="search" id="buscaDeudas" class="deuBusca" placeholder="Buscar cliente…" autocomplete="off">
+      <div id="deudas" class="vacio">Nadie quedó debiendo.</div>
+    </div>
+  </section>
+
   <!-- ================= COBRAR UNA DEUDA ================= -->
   <section id="pCobrarDeuda" class="oculto">
     <div class="caja">
       <h2>Cobrar lo que debían</h2>
-      <div id="deudaQuien" class="aviso info"></div>
-      <div class="fila">
-        <div>
-          <label for="dcMonto">¿Cuánto te paga ahora?</label>
-          <div class="conpeso"><span>$</span><input id="dcMonto" value="0"></div>
-          <div class="nota" id="dcNotaMonto"></div>
+      <div class="cobroGrid">
+        <div id="dcColIzq">
+          <div id="deudaQuien" class="aviso info"></div>
+          <div class="fila">
+            <div>
+              <label for="dcMonto">¿Cuánto te paga ahora?</label>
+              <div class="conpeso"><span>$</span><input id="dcMonto" value="0"></div>
+              <div class="nota" id="dcNotaMonto"></div>
+            </div>
+            <div>
+              <label for="dcVia">¿Cómo te paga?</label>
+              <select id="dcVia">
+                <option value="efe">Efectivo</option>
+                <option value="mp">Mercado Pago</option>
+                <option value="tra">Transferencia</option>
+              </select>
+            </div>
+          </div>
+          <div class="botonera" style="margin-bottom:12px">
+            <button class="btn gris chico" id="btnPagaTodo">Paga todo</button>
+          </div>
+          <div class="campo">
+            <label for="dcPersona" id="lblDcPersona" class="obligatorio">Persona que entrega el efectivo</label>
+            <input id="dcPersona" type="text" maxlength="60" autocomplete="off" required aria-required="true" placeholder="Nombre de quien paga (obligatorio)">
+          </div>
+          <div class="aviso info" id="dcResta"></div>
+          <div class="campo">
+            <label for="dcQuien">¿Quién está cobrando?</label>
+            <select id="dcQuien"></select>
+          </div>
+          <div id="avisoCobroDeuda"></div>
+          <div class="cierre">
+            <button class="btn verde" id="btnGuardarCobroDeuda">Listo, cobrado</button>
+            <button class="btn gris chico" id="btnCancelarCobroDeuda">Cancelar</button>
+          </div>
         </div>
-        <div>
-          <label for="dcVia">¿Cómo te paga?</label>
-          <select id="dcVia">
-            <option value="efe">Efectivo</option>
-            <option value="mp">Mercado Pago</option>
-          </select>
+        <div id="dcColDer">
+          <div id="dcHistorial"></div>
         </div>
-      </div>
-      <div class="botonera" style="margin-bottom:12px">
-        <button class="btn gris chico" id="btnPagaTodo">Paga todo</button>
-      </div>
-      <div class="campo">
-        <label for="dcPersona" id="lblDcPersona" class="obligatorio">Persona que entrega el efectivo</label>
-        <input id="dcPersona" type="text" maxlength="60" autocomplete="off" required aria-required="true" placeholder="Nombre de quien paga (obligatorio)">
-      </div>
-      <div class="aviso info" id="dcResta"></div>
-      <div class="campo">
-        <label for="dcQuien">¿Quién está cobrando?</label>
-        <select id="dcQuien"></select>
-      </div>
-      <div id="dcHistorial"></div>
-      <div id="avisoCobroDeuda"></div>
-      <div class="cierre">
-        <button class="btn verde" id="btnGuardarCobroDeuda">Listo, cobrado</button>
-        <button class="btn gris chico" id="btnCancelarCobroDeuda">Cancelar</button>
       </div>
     </div>
   </section>
@@ -1491,7 +1532,7 @@ function cargarPrecios(){
 /* ---------------------- pantallas ---------------------- */
 
 function mostrar(cual){
-  ['pApertura','pTurno','pVenta','pCalendario','pIngreso','pAjusteStock','pRetiro','pIngresoPlata','pCobrarDeuda','pCierre','pCerrado'].forEach(function(p){
+  ['pApertura','pTurno','pVenta','pCalendario','pIngreso','pAjusteStock','pRetiro','pIngresoPlata','pFaltaCobrar','pCobrarDeuda','pCierre','pCerrado'].forEach(function(p){
     ver(p, p === cual);
   });
   window.scrollTo(0,0);
@@ -1504,14 +1545,14 @@ function mostrar(cual){
  * se puede olvidar del separador de miles. Si ya viene como texto (un importe
  * armado con pesos(), por ejemplo) se respeta tal cual.
  */
-function kpi(n, t, clase, sub){
+function kpi(n, t, clase, sub, id){
   var txt = (typeof n === 'number') ? miles(n) : n;
   // El CSS no puede medir cuánto ocupa un texto, así que el tamaño de fuente
   // se decide acá por la cantidad de caracteres. "$1.250.000" son 10: con la
   // fuente grande se cortaba contra el borde de la tarjeta.
   var largo = String(txt).length;
   var tam = largo >= 10 ? ' xlargo' : (largo >= 8 ? ' largo' : '');
-  return '<div class="kpi ' + (clase||'') + '"><div class="n' + tam + '">' + txt + '</div>' +
+  return '<div' + (id ? ' id="' + id + '"' : '') + ' class="kpi ' + (clase||'') + '"><div class="n' + tam + '">' + txt + '</div>' +
          '<div class="t">' + t + '</div>' +
          (sub ? '<div class="b">' + sub + '</div>' : '') + '</div>';
 }
@@ -1558,7 +1599,7 @@ function pintarKPIs(){
     // las que nacieron en este turno: si ayer alguien quedo debiendo, hoy se
     // le sigue debiendo a la caja.
     // Va a fila entera: es el único de los tres que pide una acción.
-    kpi(pesos(porCobrar), 'Falta cobrar', porCobrar > 0 ? 'rojo ancho' : 'ancho');
+    kpi(pesos(porCobrar), 'Falta cobrar', (porCobrar > 0 ? 'rojo ancho' : 'ancho') + ' clic', 'tocá para ver quién debe', 'kpiFaltaCobrar');
 }
 
 /* ---------------------- movimientos ---------------------- */
@@ -1611,6 +1652,10 @@ function pintarDeudas(){
   $('tabPorCobrar').classList.toggle('on', porTab);
   $('tabSaldados').classList.toggle('on', !porTab);
   $('tabPorCobrar').textContent = 'Por cobrar (' + abiertas.length + ')';
+  $('fcTotalPend').textContent = pesos(totalPorCobrar());
+  $('resumenFaltaCobrar').textContent = abiertas.length
+    ? pesos(totalPorCobrar()) + ' · ' + abiertas.length + (abiertas.length === 1 ? ' cliente' : ' clientes')
+    : 'Nadie quedó debiendo.';
   $('tabSaldados').textContent = 'Historial / Saldados (' + saldados.length + ')';
 
   var q = limpiaClave($('buscaDeudas').value || '');
@@ -1636,9 +1681,12 @@ function pintarDeudas(){
       : 'saldó el ' + diaCorto(d.fechaSaldo) + (d.horaSaldo ? ' ' + d.horaSaldo : '');
     var monto = porTab ? d.saldo : d.original;
     h += '<div class="deu" data-deuda="' + d.id + '">' +
-         '<div class="deuCab" data-tog="' + key + '">' +
-           '<div class="izq"><div class="t1">' + d.quien + '</div><div class="t2">' + sub + '</div></div>' +
-           '<div class="der"><div class="monto">' + pesos(monto) + '</div><div class="flecha">' + (abierta ? '▴' : '▾') + '</div></div>' +
+         '<div class="fcFila" data-tog="' + key + '">' +
+           '<div><div class="t1">' + d.quien + '</div><div class="t2">' + sub + '</div></div>' +
+           '<div><div class="t2">' + (porTab ? 'Saldo pendiente' : 'Deuda cancelada') + '</div><div class="monto">' + pesos(monto) + '</div></div>' +
+           '<div class="t2">' + (ultimoPago ? 'Último pago ' + diaCorto(ultimoPago.fecha) + ' · ' + pesos(ultimoPago.monto) : 'Sin pagos') + '</div>' +
+           '<div>' + (porTab ? '<button type="button" class="btn verde chico" data-cobrar="' + d.id + '">Registrar cobro</button>' : '') +
+           '<span class="flecha">' + (abierta ? '▴' : '▾') + '</span></div>' +
          '</div>';
     if (abierta){
       h += '<div class="deuCuerpo">';
@@ -1664,7 +1712,6 @@ function pintarDeudas(){
         }
       });
       if (porTab && d.nota) h += '<div class="deuResumen" style="margin-top:8px">' + d.nota + '</div>';
-      if (porTab) h += '<button type="button" class="btn verde chico deuBtn" data-cobrar="' + d.id + '">Cobrar</button>';
       h += '</div>';
     }
     h += '</div>';
@@ -1678,7 +1725,7 @@ function pintarDeudas(){
     });
   });
   Array.prototype.forEach.call($('deudas').querySelectorAll('[data-cobrar]'), function(el){
-    el.addEventListener('click', function(){ abrirCobroDeuda(el.getAttribute('data-cobrar')); });
+    el.addEventListener('click', function(ev){ ev.stopPropagation(); abrirCobroDeuda(el.getAttribute('data-cobrar')); });
   });
   Array.prototype.forEach.call($('deudas').querySelectorAll('.accCarga'), function(el){
     el.addEventListener('click', function(ev){
@@ -3173,8 +3220,11 @@ function notaMontoDeuda(){
   var m = ent($('dcMonto').value), saldo = num(deudaEnCurso.saldo);
   var el = $('dcNotaMonto');
   var esMP = $('dcVia').value === 'mp';
-  $('lblDcPersona').textContent = esMP ? 'Titular / pagador de la cuenta de Mercado Pago' : 'Persona que entrega el efectivo';
-  $('dcPersona').placeholder = esMP ? 'Nombre del titular de la transferencia' : 'Nombre de quien paga';
+  var esTra = $('dcVia').value === 'tra';
+  $('lblDcPersona').textContent = esMP ? 'Titular / pagador de la cuenta de Mercado Pago'
+    : (esTra ? 'Titular de la transferencia' : 'Persona que entrega el efectivo');
+  $('dcPersona').placeholder = esMP ? 'Nombre del titular de la cuenta de Mercado Pago'
+    : (esTra ? 'Nombre del titular de la transferencia' : 'Nombre de quien paga');
   $('dcResta').innerHTML = (m > 0 && m <= saldo)
     ? 'Saldo restante: <b>' + pesos(saldo - m) + '</b> (debe ' + pesos(saldo) + ' − paga ' + pesos(m) + ')'
     : 'Saldo actual: <b>' + pesos(saldo) + '</b>';
@@ -3186,9 +3236,9 @@ function notaMontoDeuda(){
 }
 
 function pintarHistorialDeuda(d){
-  if (!d.cobros || !d.cobros.length){ $('dcHistorial').innerHTML = ''; return; }
+  if (!d.cobros || !d.cobros.length){ $('dcHistorial').innerHTML = '<div class="nota">Todavía no pagó nada.</div>'; return; }
   var nombres = {efe:'efectivo', tra:'transferencia', mp:'Mercado Pago'};
-  var h = '<div class="hr"></div><div class="nota" style="margin-bottom:6px">Ya había pagado:</div>';
+  var h = '<div class="nota" style="margin-bottom:6px">Ya había pagado:</div>';
   d.cobros.forEach(function(c){
     h += '<div class="item"><div class="izq"><div class="t2">' +
          diaCorto(c.fecha) + ' ' + c.hora + ' · ' + (nombres[c.via] || c.via) +
@@ -3220,8 +3270,8 @@ function guardarCobroDeuda(){
     campoP.classList.remove('sacudir'); void campoP.offsetWidth; campoP.classList.add('sacudir');
     try{ campoP.focus(); }catch(e){}
     $('avisoCobroDeuda').innerHTML = '<div class="aviso rojo">' + (via === 'mp'
-      ? 'Poné el nombre del titular de la cuenta de Mercado Pago.'
-      : 'Poné el nombre de la persona que entrega el efectivo.') + '</div>';
+      ? 'Por favor, ingresá el titular de la cuenta de Mercado Pago'
+      : (via === 'tra' ? 'Poné el nombre del titular de la transferencia.' : 'Poné el nombre de la persona que entrega el efectivo.')) + '</div>';
     return;
   }
   var parcial = m < saldo;
@@ -3258,16 +3308,19 @@ function guardarCobroDeuda(){
     Fecha: hoyLocal(), Cliente: nombreDeudor, Movimiento: 'Cobro',
     Monto: m, Via: nombres[via] || via, Quien: quien,
     Nota: 'Pago ' + etiqueta + ' de ' + pesos(m) + ' por ' + persona + ' sobre ' + refDeuda +
-          '. Saldo Restante: ' + pesos(queda) + ' \u00b7 ' + hora() + ' \u00b7 lo cobró ' + quien + ' \u00b7 turno de ' + T.quien
+          '. Saldo Restante: ' + pesos(queda) + ' \u00b7 ' + hora() + ' \u00b7 lo cobró ' + quien + ' \u00b7 turno de ' + T.quien +
+          (via === 'mp' ? ' \u00b7 Titular MP: ' + persona : '')
   });
   anotar('Cobró una deuda · ' + nombreDeudor,
-         nombres[via] + ' · pagó ' + persona + ' · lo cobró ' + quien +
+         (parcial ? 'Pago parcial ' : 'Pago total ') + pesos(m) + ' · ' +
+         (via === 'mp' ? 'Mercado Pago (Titular MP: ' + persona + ')' : nombres[via] + ' · pagó ' + persona) +
+         ' · Cobró: ' + quien +
          (queda > 0 ? ' · pago parcial, le queda debiendo ' + pesos(queda) : ' · quedó saldado'),
          pesos(m));
   // Resumen para Tesorería (viaja en Observacion / PagadoresMP al cerrar el turno).
   if (via === 'mp'){
     T.pagadoresMP = T.pagadoresMP || [];
-    T.pagadoresMP.push(nombreDeudor + ' (Pagador MP: ' + persona + ') ' + pesos(m) + ' [' + etiqueta + ']');
+    T.pagadoresMP.push(nombreDeudor + ' (Titular MP: ' + persona + ') ' + pesos(m) + ' [' + etiqueta + ']');
   } else {
     T.obsCobros = T.obsCobros || [];
     T.obsCobros.push('[Cobro Deuda ' + etiqueta + '] Cliente: ' + nombreDeudor + ' | Entregó: ' + persona +
@@ -3288,7 +3341,7 @@ function guardarCobroDeuda(){
   guardarTurno();
   deudaEnCurso = null;
   pintarKPIs(); pintarMovs(); pintarDeudas();
-  mostrar('pTurno');
+  mostrar('pFaltaCobrar');
 }
 
 /* ---------------------- cierre ---------------------- */
@@ -3730,7 +3783,12 @@ function iniciar(){
     if (deudaEnCurso){ ponerNumero('dcMonto', deudaEnCurso.saldo); notaMontoDeuda(); }
   });
   $('btnGuardarCobroDeuda').addEventListener('click', guardarCobroDeuda);
-  $('btnCancelarCobroDeuda').addEventListener('click', function(){ deudaEnCurso = null; mostrar('pTurno'); });
+  $('btnCancelarCobroDeuda').addEventListener('click', function(){ deudaEnCurso = null; pintarDeudas(); mostrar('pFaltaCobrar'); });
+  $('btnIrFaltaCobrar').addEventListener('click', function(){ pintarDeudas(); mostrar('pFaltaCobrar'); });
+  $('btnVolverVentas').addEventListener('click', function(){ mostrar('pTurno'); });
+  $('kpiVentas').addEventListener('click', function(ev){
+    if (ev.target.closest && ev.target.closest('#kpiFaltaCobrar')){ pintarDeudas(); mostrar('pFaltaCobrar'); }
+  });
 
   $('btnComparar').addEventListener('click', comparar);
   $('btnConfirmarCierre').addEventListener('click', confirmarCierre);
