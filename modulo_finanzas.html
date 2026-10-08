@@ -1470,8 +1470,9 @@ try{ var c=JSON.parse(localStorage.getItem(K_CACHE)||'null');
 render();
 cargarNube();
 // Con la pestaña oculta no se consulta la nube (cada consulta baja todas las hojas); al
-// volver, si pasaron más de 30 s, se trae lo último.
-setInterval(function(){ if(!document.hidden) cargarNube(); }, 90000);
+// volver, si pasaron más de 30 s, se trae lo último. Con la pestaña a la vista se refresca solo
+// cada 60 minutos (decisión del dueño); en cualquier momento está el botón "Actualizar".
+setInterval(function(){ if(!document.hidden) cargarNube(); }, 3600000);
 setInterval(pintarHace, 30000);
 // HU12: al volver a la pestaña (o a la app instalada) se trae lo último,
 // así un turno recién cerrado aparece en el total del día sin esperar.
