@@ -3424,6 +3424,9 @@ function abrirCierre(){
   ver('cajaResultado', false);
   espejoCierre();
   chequearPasos();
+  // El cierre se arma con el turno local; lo unico que viene de la nube es el "Queda por cobrar" del
+  // resumen final: se actualiza al abrir el cierre para que no se vea un numero viejo.
+  sincronizarDeudas();
   mostrar('pCierre');
 }
 
