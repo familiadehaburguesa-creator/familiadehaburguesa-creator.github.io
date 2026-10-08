@@ -895,6 +895,10 @@ label.obligatorio::after{content:" *";color:#ff7a6e;font-weight:800}
         <select id="ipVia"></select>
       </div>
       <div class="campo">
+        <label for="ipTitular" id="lblIpTitular">Titular de la cuenta de Mercado Pago</label>
+        <input id="ipTitular" type="text" maxlength="60" autocomplete="off" placeholder="Nombre de quien pagó">
+      </div>
+      <div class="campo">
         <label for="ipMotivo">¿De qué es?</label>
         <select id="ipMotivo"></select>
       </div>
@@ -1251,23 +1255,37 @@ function esDeHoy(v){
 
 /* ---------------------- nube ---------------------- */
 
-var cbN = 0;
+/* ESCRITURAS cuenta los envios al Cuaderno; ENTREGADO guarda el ultimo pedido de cada hoja
+   que ya entrego datos. Sirven para descartar respuestas viejas (ver traer). */
+var cbN = 0, ESCRITURAS = 0, ENTREGADO = {};
 function traer(hoja, ok){
-  var nombre = 'fdhcb' + (++cbN);
-  var listo = false;
-  window[nombre] = function(r){ listo = true; try{ ok(r); }catch(e){} limpiar(); };
+  var seq = ++cbN, nombre = 'fdhcb' + seq, e0 = ESCRITURAS;
+  var listo = false, avisado = false;
+  window[nombre] = function(r){
+    listo = true;
+    // Una respuesta se descarta si (a) ya llego otra MAS NUEVA de la misma hoja
+    // (por ejemplo, el reintento) o (b) llego tarde, despues del aviso de error, y mientras
+    // tanto esta pantalla escribio algo en el Cuaderno: seria un dato anterior a ese cambio.
+    var vieja = (ENTREGADO[hoja || ''] || 0) > seq || (avisado && ESCRITURAS !== e0);
+    if (!vieja){ ENTREGADO[hoja || ''] = seq; try{ ok(r); }catch(e){} }
+    limpiar();
+  };
   var s = document.createElement('script');
   s.src = NUBE + (hoja ? '?hoja=' + encodeURIComponent(hoja) + '&' : '?') + 'callback=' + nombre;
-  s.onerror = function(){ if(!listo){ ok(null); limpiar(); } };
+  s.onerror = avisar;
   document.head.appendChild(s);
-  setTimeout(function(){ if(!listo){ ok(null); limpiar(); } }, 12000);
+  // El aviso de error sale a los 20 s, pero el callback sigue vivo hasta los 35 s: si la
+  // nube contesta tarde, el dato se aprovecha y la pantalla se recupera sola.
+  setTimeout(avisar, 20000);
+  setTimeout(function(){ if(!listo) limpiar(); }, 35000);
+  function avisar(){ if(listo || avisado) return; avisado = true; try{ ok(null); }catch(e){} }
   function limpiar(){ try{ delete window[nombre]; }catch(e){} if(s.parentNode) s.parentNode.removeChild(s); }
 }
 
 /** POST al Cuaderno. No se puede confirmar (respuesta opaca), así que se avisa. */
 function guardarEnNube(hoja, fila, aviso){
   try{
-    fetch(NUBE, {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain'},
+    fetch((ESCRITURAS++, NUBE), {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain'},
                  body: JSON.stringify({hoja:hoja, fila:fila})})
       .catch(function(){ if(aviso) aviso(false); });
   }catch(e){ if(aviso) aviso(false); }
@@ -1287,7 +1305,7 @@ function marcarEntregadoEnNube(f){
   var num = numeroPedido(f);
   if (!marca && !num) return false;
   try{
-    fetch(NUBE, {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain'},
+    fetch((ESCRITURAS++, NUBE), {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain'},
       body: JSON.stringify({
         // "Pedido Entregado" textual: la columna Estado de la planilla tiene
         // validacion de datos y rechaza cualquier otro texto.
@@ -1805,7 +1823,7 @@ function confirmarEditarCarga(){
  *  por eso se resincroniza con la nube después de mandarlo. */
 function eliminarDeudaEnNube(raw){
   try{
-    fetch(NUBE, {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain'},
+    fetch((ESCRITURAS++, NUBE), {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain'},
       body: JSON.stringify({accion:'eliminarDeuda', deuda: raw, quien: usuarioActivo()})});
   }catch(e){}
 }
@@ -1813,7 +1831,7 @@ function eliminarDeudaEnNube(raw){
 /** HU4: corrige el monto de una carga de deuda ya cargada. */
 function editarDeudaEnNube(raw, nuevoMonto, quien){
   try{
-    fetch(NUBE, {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain'},
+    fetch((ESCRITURAS++, NUBE), {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain'},
       body: JSON.stringify({accion:'editarDeuda', deuda: raw, nuevoMonto: nuevoMonto, quien: quien})});
   }catch(e){}
 }
@@ -2755,7 +2773,11 @@ function finalizarVenta(){
   // las ventas una por una: por eso se acumulan acá y viajan en una sola celda.
   if (mp > 0){
     T.pagadoresMP = T.pagadoresMP || [];
-    T.pagadoresMP.push($('mpQuien').value.trim() + ' ' + pesos(mp));
+    // Tipo de operación entre llaves, al final: "Titular $monto {HH:MM Venta local}" o
+    // "{HH:MM Entrega de pedido: Cliente}". Se limpian ·, | y llaves por los separadores del resumen.
+    var detMP = venta.pedido ? 'Entrega de pedido: ' + (campo(venta.pedido,'nombre','apellido') || 'Pedido') : 'Venta local';
+    detMP = detMP.replace(/[\u00b7\r\n]+/g, ' ').replace(/[{}|]/g, ' ').replace(/\s+/g, ' ').trim();
+    T.pagadoresMP.push($('mpQuien').value.trim() + ' ' + pesos(mp) + ' {' + hora() + ' ' + detMP + '}');
     $('mpQuien').value = '';
   }
 
@@ -3055,7 +3077,7 @@ function gastoManualIgual(c){
 /** Pide al MENSAJERO (V16) que anule un gasto: no lo borra, lo marca ANULADO. */
 function anularGastoEnNube(g, motivo){
   try{
-    fetch(NUBE, {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain'},
+    fetch((ESCRITURAS++, NUBE), {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain'},
       body: JSON.stringify({accion:'anularGasto',
         gasto:{Categoria:g.Categoria, Monto:num(g.Monto), Detalle:String(g.Detalle || '')},
         quien: usuarioActivo() || (T && T.quien) || '', motivo: motivo})});
@@ -3090,7 +3112,15 @@ function llenarIngresoPlata(){
     return '<option>' + m + '</option>'; }).join('');
 }
 
+function rotuloIpTitular(){
+  var mp = $('ipVia').value === 'MP';
+  $('lblIpTitular').textContent = mp ? 'Titular de la cuenta de Mercado Pago (obligatorio)' : 'Quién entregó la plata (opcional)';
+  $('ipTitular').placeholder = mp ? 'Nombre del titular de la cuenta' : 'Nombre de quien entregó';
+}
+
 function abrirIngresoPlata(){
+  $('ipTitular').value = '';
+  rotuloIpTitular();
   ponerNumero('ipMonto', 0);
   $('ipDetalle').value = '';
   $('avisoIngPlata').innerHTML = '';
@@ -3106,6 +3136,7 @@ function guardarIngresoPlata(){
   if (!via) falta.push('si fue en efectivo o por Mercado Pago');
   if (!motivo) falta.push('de qué es');
   if (!$('ipQuien').value) falta.push('quién lo registra');
+  if (via === 'MP' && !limpiaTexto($('ipTitular').value)) falta.push('el titular de la cuenta de Mercado Pago');
   if (falta.length){
     $('avisoIngPlata').innerHTML = '<div class="aviso rojo">Falta ' +
       falta.join(', ').replace(/,([^,]*)$/, ' y$1') + '.</div>';
@@ -3116,6 +3147,13 @@ function guardarIngresoPlata(){
   else { T.otrosIng.mp += m; }
 
   var det = motivo + ($('ipDetalle').value.trim() ? ' · ' + $('ipDetalle').value.trim() : '');
+  // Trazabilidad: antes la seña solo quedaba sumada dentro del total del cierre. Ahora
+  // también viaja en la Observacion del cierre, con su motivo, quién la registró y la hora.
+  var lt = function(t){ return limpiaTexto(t).replace(/\|/g, '/'); };
+  T.obsCobros = T.obsCobros || [];
+  T.obsCobros.push('[Entró plata] ' + (via === 'EFECTIVO' ? 'Efectivo' : 'Mercado Pago') + ' ' + pesos(m) +
+                   ' | ' + lt(det) + (lt($('ipTitular').value) ? ' | Titular: ' + lt($('ipTitular').value) : '') +
+                   ' | Registró: ' + lt($('ipQuien').value) + ' | ' + hora());
   anotar('Entró plata', pesos(m) + ' · ' + (via === 'EFECTIVO' ? 'efectivo' : 'Mercado Pago') +
          ' · ' + det + ' · ' + $('ipQuien').value, '');
   guardarTurno();
@@ -3448,7 +3486,7 @@ function comparar(){
   h += '<div class="item"><div class="izq"><div class="t1">Se vendió en el turno</div>' +
        '<div class="t2">Efectivo ' + pesos(T.cobros.efe) +
        ' · Mercado Pago ' + pesos(T.cobros.tra + T.cobros.mp) +
-       ' · Quedó debiendo ' + pesos(T.cobros.deb) + '</div></div>' +
+       ' · Se suma a Falta cobrar ' + pesos(T.cobros.deb) + '</div></div>' +
        '<div class="der"><div class="monto">' + pesos(T.ventas) + '</div></div></div>';
 
   if (T.entr.carne + T.entr.panJ + T.entr.panS + T.entr.che + T.entr.pack > 0){
@@ -3764,6 +3802,7 @@ function iniciar(){
   $('btnCancelarRetiro').addEventListener('click', function(){ mostrar('pTurno'); });
   $('btnIngPlata').addEventListener('click', abrirIngresoPlata);
   $('btnGuardarIngPlata').addEventListener('click', guardarIngresoPlata);
+  $('ipVia').addEventListener('change', rotuloIpTitular);
   $('btnCancelarIngPlata').addEventListener('click', function(){ mostrar('pTurno'); });
 
   $('dcMonto').addEventListener('input', notaMontoDeuda);
