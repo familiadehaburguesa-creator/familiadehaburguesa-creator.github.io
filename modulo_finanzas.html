@@ -423,7 +423,9 @@ function traerTodo(ok){
   var nombre='fdhfin'+(++cbN), listo=false, avisado=false;
   window[nombre]=function(r){ listo=true; try{ ok(r); }catch(e){} limpiar(); };
   var s=document.createElement('script');
-  s.src=NUBE_URL+'?callback='+nombre;
+  /* Solo las 5 hojas que Finanzas usa (MENSAJERO Version 26+, ?hojas=). Un script viejo
+     ignora el parametro y devuelve todo: sigue funcionando, solo que mas pesado. */
+  s.src=NUBE_URL+'?hojas=Ventas,Deudas,Gastos,Fondos,Tesoreria&callback='+nombre;
   s.onerror=avisar;
   document.head.appendChild(s);
   /* El aviso de error sale a los 20 s, pero el callback sigue vivo hasta los 35 s: si la nube
