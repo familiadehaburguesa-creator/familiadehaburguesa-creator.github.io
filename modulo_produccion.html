@@ -681,7 +681,10 @@ pintarOperador();
 render();
 cargarNube(); cargarAuditoria();
 /* refresco suave: si Ventas registró un envío o alguien más edito, se ve solo */
-setInterval(function(){ cargarNube(); cargarAuditoria(); }, 90000);
+var ULT_REFRESCO=Date.now();
+function refrescarSiVisible(){ if(document.hidden) return; ULT_REFRESCO=Date.now(); cargarNube(); cargarAuditoria(); }
+setInterval(refrescarSiVisible, 90000);   // con la pestaña oculta no se consulta la nube
+document.addEventListener('visibilitychange', function(){ if(!document.hidden && Date.now()-ULT_REFRESCO>30000) refrescarSiVisible(); });
 </script>
 <script>
 /* PWA: registro del service worker (red primero, no cachea HTML viejo) */
