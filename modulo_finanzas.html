@@ -102,6 +102,43 @@ button.mini{padding:5px 10px;font-size:.8rem;border-radius:7px}
 .c-nota{font-size:.76rem;color:#d8cdb9;font-style:italic}
 .c-obs{display:block;margin-top:9px;padding:8px 11px;border-left:3px solid var(--amarillo);background:rgba(242,193,78,.09);border-radius:0 8px 8px 0;font-size:.85rem;line-height:1.35;color:var(--crema)}
 .c-obs b{color:var(--amarillo)}
+/* Tarjeta de cierre en 2 columnas: totales a la izquierda, detalle a la derecha */
+.cx-grid{display:grid;grid-template-columns:minmax(260px,2fr) minmax(0,3fr);gap:14px;align-items:start;margin-top:10px}
+@media(max-width:899px){.cx-grid{grid-template-columns:1fr}}
+.cx-sec{background:#171310;border:1px solid #2c2c34;border-radius:10px;padding:9px 11px;margin-bottom:10px}
+.cx-sec>h3{font-family:'Oswald','Segoe UI',sans-serif;font-weight:600;font-size:.72rem;letter-spacing:1.2px;text-transform:uppercase;color:var(--dorado);margin:0 0 7px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.cx-sec>h3 .n{color:var(--gris);font-weight:400;letter-spacing:0;text-transform:none;font-size:.75rem}
+.cx-sec .c-medios{margin-top:0}
+.cx-kv{display:grid;grid-template-columns:1fr auto;gap:4px 10px;font-size:.82rem}
+.cx-kv span:nth-child(odd){color:var(--gris)}
+.cx-kv span:nth-child(even){text-align:right;font-weight:700;color:#fff;font-variant-numeric:tabular-nums}
+.cx-tabla{width:100%;border-collapse:collapse;font-size:.8rem;color:#fff}
+.cx-tabla th{font-size:.68rem;color:var(--gris);font-weight:600;text-align:left;padding:3px 6px;border-bottom:1px solid #2c2c34}
+.cx-tabla td{padding:5px 6px;border-bottom:1px solid rgba(44,44,52,.7);vertical-align:top}
+.cx-tabla tr:last-child td{border-bottom:0}
+.cx-tabla .m{text-align:right;font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap}
+.cx-tabla .cli{font-weight:700}
+.cx-sub{display:block;color:var(--gris);font-size:.7rem;font-weight:400}
+.cx-scroll{max-height:280px;overflow-y:auto}
+.cx-badge{display:inline-block;padding:1px 8px;border-radius:99px;font-size:.68rem;font-weight:700;white-space:nowrap}
+.cx-b-efe{background:rgba(62,196,109,.15);color:var(--verde)}
+.cx-b-mp{background:rgba(91,184,232,.15);color:var(--celeste)}
+.cx-b-tra{background:rgba(242,193,78,.15);color:var(--amarillo)}
+.cx-b-tot{background:rgba(62,196,109,.15);color:var(--verde)}
+.cx-b-par{background:rgba(255,125,110,.15);color:var(--coral)}
+.cx-tit{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;padding:2px 0 2px 10px;margin:2px 0 2px 2px;border-left:2px solid #2c2c34;font-size:.78rem;color:#fff}
+.cx-tit b{font-weight:700}
+.cx-tit .cx-sub{display:block}
+.cx-tit .m{font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums}
+.cx-tit-h{display:flex;justify-content:space-between;font-size:.68rem;color:var(--gris);border-bottom:1px solid #2c2c34;padding:2px 0;margin-bottom:2px}
+.cx-tit.falta{border-left-color:var(--amarillo)}
+.cx-sep{height:1px;background:#2c2c34;margin:8px 0}
+.cx-dos{display:grid;grid-template-columns:1fr 1fr;gap:4px 14px;font-size:.82rem;margin-top:4px}
+.cx-dos span{color:var(--gris)}
+.cx-dos b{float:right;color:#fff;font-variant-numeric:tabular-nums}
+.cx-sub-t{font-size:.68rem;color:var(--gris);text-transform:uppercase;letter-spacing:.8px;margin:2px 0 4px}
+.cx-auto summary{cursor:pointer;color:var(--gris);font-size:.74rem}
+.cx-auto div{font-size:.72rem;color:#d8cdb9;margin-top:5px;line-height:1.4}
 .vacio{color:var(--gris);font-size:.82rem;font-style:italic;padding:6px 2px}
 .solo-lectura{display:inline-block;font-size:.68rem;font-weight:800;padding:2px 10px;border-radius:11px;background:rgba(91,184,232,.14);color:var(--celeste);margin-left:6px}
 .aviso{border-radius:9px;padding:9px 13px;font-size:.85rem;font-weight:600;margin-top:9px}
@@ -504,6 +541,15 @@ function vigentesDesdeCorte(){ return vigentes().filter(despuesDelCorte); }
 function soloHora(v){
   var s=String(v==null?'':v).trim();
   if(!s) return '';
+  var full=s.match(/^(\d{4})-\d{2}-\d{2}T(\d{2}):(\d{2}):?(\d{2})?/);
+  if(full && +full[1]<1900){
+    /* Una hora suelta en Sheets es una fecha-hora con base 30/12/1899. Al serializarla
+       sale en UTC con el huso historico de Buenos Aires de 1899 (-4:16:48): la celda
+       dice 15:08 y llega "1899-12-30T19:24:48.000Z". Se devuelve la hora de la celda. */
+    var t=(+full[2])*3600+(+full[3])*60+(+full[4]||0)-(4*3600+16*60+48);
+    t=((t%86400)+86400)%86400;
+    return ('0'+Math.floor(t/3600)).slice(-2)+':'+('0'+Math.floor((t%3600)/60)).slice(-2);
+  }
   var iso=s.match(/T(\d{2}:\d{2})/);   if(iso) return iso[1];
   var hm=s.match(/^(\d{1,2}):(\d{2})/); if(hm) return ('0'+hm[1]).slice(-2)+':'+hm[2];
   return '';
@@ -664,7 +710,7 @@ function tarjetaCierre(v){
     '<div class="c-medios">'+
       '<div class="c-medio efe"><span class="c-et">Efectivo</span><span class="c-m">'+pesos(efe)+'</span></div>'+
       '<div class="c-medio mp"><span class="c-et">Mercado Pago</span><span class="c-m">'+pesos(mp)+'</span></div>'+
-      '<div class="c-medio deb'+(deb>0?' hay':'')+'"><span class="c-et">Debe</span><span class="c-m">'+pesos(deb)+'</span></div>'+
+      '<div class="c-medio deb'+(deb>0?' hay':'')+'"><span class="c-et">Se sumó al listado</span><span class="c-m">'+pesos(deb)+'</span></div>'+
     '</div>'+
     '<div class="c-ops">'+(viejo
       ? '<span class="c-nota">Ventas y entregas de pedidos: cierre anterior al conteo</span>'
@@ -673,30 +719,162 @@ function tarjetaCierre(v){
   '</div>';
 }
 
-/* Escenario 4: lo que el cierre debe poder abrir. La hoja Deudas no guarda el
-   turno, solo la fecha: si hubo dos turnos el mismo día, ambos ven la misma lista. */
-function desgloseDeudasDelDia(v){
-  var dia=String(v.Fecha||'').slice(0,10);
-  var filas=D.deudas.filter(function(f){ return String(f.Fecha||'').slice(0,10)===dia; });
-  var nuevas=filas.filter(function(f){ return !/cobro/i.test(String(f.Movimiento||'')); });
-  var cobros=filas.filter(function(f){ return /cobro/i.test(String(f.Movimiento||'')); });
-  if(!nuevas.length && !cobros.length) return '';
-  var h='<div class="c-ops" style="display:block">';
-  if(nuevas.length){
-    h+='<div class="c-nota"><b>Ventas a crédito del día</b></div>'+nuevas.map(function(f){
-      return '<div class="c-nota">• '+(f.Cliente||'Sin nombre')+' · sumó '+pesos(num(f.Monto))+' a Debe</div>';
-    }).join('');
+/* Escenario 4 + turno: lo que el cierre debe poder abrir.
+   La hoja Deudas no guarda el turno, solo la fecha. El turno de cada movimiento
+   se deduce de la Nota: la HORA (horaDeNota) contra HoraApertura/HoraCierre del
+   cierre, y "turno de X" como respaldo cuando falta hora o el cierre es viejo
+   y no tiene horario. Lo que no se puede asignar a ningún turno NO se esconde:
+   va al bloque "sin turno asignado". */
+function escH(t){ return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function turnoDeNota(n){
+  var m=/·\s*turno de ([^·]+?)\s*(?:·|$)/i.exec(String(n||''));
+  return m?m[1].trim():'';
+}
+function diaMenos1(d){
+  var p=d.split('-'), t=new Date(Date.UTC(+p[0],+p[1]-1,+p[2]-1));
+  return t.toISOString().slice(0,10);
+}
+/* Ventana real del turno como "AAAA-MM-DD HH:MM". Un turno que cierra pasada la
+   medianoche (17:32 a 01:09) se fecha el dia del cierre, pero empezo el anterior. */
+function rangoCierre(v){
+  var ap=soloHora(v.HoraApertura), ci=soloHora(v.HoraCierre), d=String(v.Fecha||'').slice(0,10);
+  if(!ap||!ci||!d) return null;
+  return {ini:(ap<=ci?d:diaMenos1(d))+' '+ap, fin:d+' '+ci};
+}
+/* Hora de un movimiento: la del formato nuevo (" · HH:MM ·") o la del viejo ("a las HH:MM"). */
+function horaMov(f){
+  var h=horaDeNota(f.Nota);
+  if(h) return h;
+  var m=/a las (\d{1,2}:\d{2})/i.exec(String(f.Nota||''));
+  return m?m[1].padStart(5,'0'):'';
+}
+function turnoDeMov(f,res){
+  var dia=String(f.Fecha||'').slice(0,10), hr=horaMov(f), tn=limpiaClave(turnoDeNota(f.Nota));
+  if(hr){
+    var t=dia+' '+hr;
+    for(var k=0;k<res.length;k++){
+      var r=rangoCierre(res[k].v);
+      if(r&&t>=r.ini&&t<=r.fin) return res[k];
+    }
   }
-  if(cobros.length){
-    h+='<div class="c-nota" style="margin-top:6px"><b>Cobros de deuda del día</b></div>'+cobros.map(function(f){
-      var pn=parseNotaCobro(f.Nota), total=num(f.SaldoCliente)<=0;
-      return '<div class="c-nota">• '+(f.Cliente||'Sin nombre')+' · '+pesos(num(f.Monto))+' por '+(String(f.Via||'').trim()||'medio sin registrar')+
-        (pn.persona?(/mercado/i.test(String(f.Via||''))?' · Mercado Pago (Titular MP: '+pn.persona+')':' · pagó '+pn.persona):' · pagador sin registrar')+
-        (pn.ref?' · sobre '+pn.ref:'')+
-        ' · '+(total?'cancelación total':'pago parcial, resta '+pesos(num(f.SaldoCliente)))+'</div>';
-    }).join('');
+  var mismoDia=res.filter(function(c){ return String(c.v.Fecha||'').slice(0,10)===dia; });
+  var pool=hr?mismoDia.filter(function(c){ return !rangoCierre(c.v); }):mismoDia;
+  if(tn){
+    var por=pool.filter(function(c){ return limpiaClave(c.v.QuienCerro)===tn; });
+    if(por.length===1) return por[0];
   }
-  return h+'</div>';
+  if(mismoDia.length===1 && !rangoCierre(mismoDia[0].v)) return mismoDia[0];
+  return null;
+}
+/* todos: TODOS los cierres (un turno puede cerrar otro dia) · filas: movimientos del rango
+   mostrados: los cierres que se dibujan. Lo que cae en un turno no mostrado, o en ninguno, va a "sin". */
+function asignarMovsATurnos(todos,filas,mostrados){
+  var res=todos.map(function(v){ return {v:v,nuevas:[],cobros:[]}; });
+  res.sort(function(a,b){
+    var ra=rangoCierre(a.v), rb=rangoCierre(b.v);
+    return (ra?ra.ini:String(a.v.Fecha||'').slice(0,10)+' 99:99')<(rb?rb.ini:String(b.v.Fecha||'').slice(0,10)+' 99:99')?-1:1;
+  });
+  var sin={nuevas:[],cobros:[]};
+  filas.forEach(function(f){
+    var dest=turnoDeMov(f,res);
+    var esCobro=/cobro/i.test(String(f.Movimiento||''));
+    var clave=esCobro?'cobros':'nuevas';
+    if(dest && mostrados.indexOf(dest.v)>=0) dest[clave].push(f); else sin[clave].push(f);
+  });
+  var porHora=function(a,b){ var x=horaMov(a),y=horaMov(b); return x===y?0:(x<y?-1:1); };
+  res.forEach(function(c){ c.nuevas.sort(porHora); c.cobros.sort(porHora); });
+  sin.nuevas.sort(porHora); sin.cobros.sort(porHora);
+  return {res:res,sin:sin,de:function(v){ return res.filter(function(c){ return c.v===v; })[0]||{nuevas:[],cobros:[]}; }};
+}
+function badgeMedio(via){
+  var t=String(via||'').trim();
+  if(!t) return '<span class="cx-sub">medio sin registrar</span>';
+  var c=/mercado/i.test(t)?'mp':(/transf/i.test(t)?'tra':(/efect/i.test(t)?'efe':''));
+  return '<span class="cx-badge'+(c?' cx-b-'+c:'')+'">'+escH(t.charAt(0).toUpperCase()+t.slice(1))+'</span>';
+}
+function tablaCobros(cobros,saldadas){
+  saldadas=saldadas||{};
+  var tot=cobros.reduce(function(a,f){ return a+num(f.Monto); },0);
+  var h='<div class="cx-sec"><h3>Cobros de deuda <span class="n">'+cobros.length+(cobros.length===1?' cobro':' cobros')+' · '+pesos(tot)+'</span></h3>'+
+    '<div class="cx-scroll"><table class="cx-tabla"><tr><th>Cliente</th><th class="m">Monto</th><th>Medio</th><th>Titular / Pagó</th><th>Estado</th></tr>';
+  cobros.forEach(function(f){
+    var pn=parseNotaCobro(f.Nota), total=num(f.SaldoCliente)<=0, mp=/mercado/i.test(String(f.Via||'')), hr=horaMov(f);
+    h+='<tr><td class="cli">'+escH(f.Cliente||'Sin nombre')+
+         '<span class="cx-sub">'+(hr?hr+' hs':'')+(pn.ref?(hr?' · ':'')+'sobre '+escH(pn.ref):'')+
+         (total&&saldadas[limpiaClave(f.Cliente)]?' · saldó su deuda de '+escH(saldadas[limpiaClave(f.Cliente)]):'')+'</span></td>'+
+       '<td class="m">'+pesos(num(f.Monto))+'</td>'+
+       '<td>'+badgeMedio(f.Via)+'</td>'+
+       '<td>'+(pn.persona?(mp?'Titular MP: ':'Pagó: ')+escH(pn.persona):'<span class="cx-sub">pagador sin registrar</span>')+'</td>'+
+       '<td>'+(total?'<span class="cx-badge cx-b-tot">Total</span>':'<span class="cx-badge cx-b-par">Parcial · resta '+pesos(num(f.SaldoCliente))+'</span>')+'</td></tr>';
+  });
+  return h+'</table></div></div>';
+}
+function tablaCredito(nuevas){
+  var tot=nuevas.reduce(function(a,f){ return a+num(f.Monto); },0);
+  var h='<div class="cx-sec"><h3>Ventas que se suman a Falta cobrar <span class="n">'+nuevas.length+' · '+pesos(tot)+'</span></h3>'+
+    '<div class="cx-scroll"><table class="cx-tabla"><tr><th>Cliente</th><th class="m">Se sumó al listado</th></tr>';
+  nuevas.forEach(function(f){
+    var hr=horaMov(f);
+    h+='<tr><td class="cli">'+escH(f.Cliente||'Sin nombre')+(hr?'<span class="cx-sub">'+hr+' hs</span>':'')+'</td>'+
+       '<td class="m">'+pesos(num(f.Monto))+'</td></tr>';
+  });
+  return h+'</table></div></div>';
+}
+/* Observacion = nota del operador + líneas automáticas "[Cobro Deuda …] | [Deuda saldada] …".
+   Las automáticas traen "|" adentro, así que se corta por el marcador, no por "|". */
+function partirObservacion(s){
+  s=String(s||'').trim();
+  if(!s) return {op:'',auto:[]};
+  var i=s.search(/\[(?:Cobro Deuda (?:Parcial|Total)|Deuda saldada|Entró plata)\]/);
+  if(i<0) return {op:s,auto:[]};
+  return {op:s.slice(0,i).replace(/\s*\|\s*$/,'').trim(),
+          auto:s.slice(i).split(/ \| (?=\[(?:Cobro Deuda|Deuda saldada|Entró plata)\])/)};
+}
+/* "Entró plata" (señas y otros ingresos): viaja en la Observacion como
+   "[Entró plata] Mercado Pago $104.000 | motivo | Registró: X | HH:MM". */
+var RE_ENTRO=/^\[Entró plata\] (.+?) (\$[\d.]+) \| (.*?)(?: \| Titular: (.*?))? \| Registró: (.*?) \| (\d{1,2}:\d{2})$/;
+function tablaEntroPlata(lineas){
+  var filas=lineas.map(function(l){
+    var m=RE_ENTRO.exec(l);
+    return m?{via:m[1],monto:m[2],det:m[3],tit:m[4]||'',quien:m[5],hr:m[6]}:{raw:l};
+  });
+  var h='<div class="cx-sec"><h3>Entró plata <span class="n">señas y otros ingresos · '+filas.length+'</span></h3>'+
+    '<div class="cx-scroll"><table class="cx-tabla"><tr><th>Medio</th><th class="m">Monto</th><th>Motivo</th><th>Titular / Pagó</th><th>Registró</th></tr>';
+  filas.forEach(function(x){
+    if(x.raw){ h+='<tr><td colspan="5">'+escH(x.raw)+'</td></tr>'; return; }
+    h+='<tr><td>'+badgeMedio(x.via)+'</td><td class="m">'+escH(x.monto)+'</td><td>'+escH(x.det)+'</td>'+
+       '<td>'+(x.tit?escH(x.tit):'<span class="cx-sub">sin dato</span>')+'</td>'+
+       '<td>'+escH(x.quien)+'<span class="cx-sub">'+escH(x.hr)+' hs</span></td></tr>';
+  });
+  return h+'</table></div></div>';
+}
+function partirPagadoresMP(s){
+  return String(s||'').split(' · ').map(function(t){ return t.trim(); }).filter(Boolean).map(function(t){
+    var m=/^(.*?)\s*(?:\(Titular MP: (.+?)\))?\s*(\$[\d.]+)(?:\s*\[(Parcial|Total)\])?(?:\s*\{(?:(\d{1,2}:\d{2}) )?(.*)\})?$/.exec(t);
+    return (m&&m[1])?{cli:m[1],tit:m[2]||'',monto:m[3],est:m[4]||'',hr:m[5]||'',det:m[6]||''}:{raw:t};
+  });
+}
+function tablaPagadoresMP(lista){
+  var h='<div class="cx-sec"><h3>Pagaron por MP <span class="n">'+lista.length+(lista.length===1?' pago':' pagos')+'</span></h3>'+
+    '<div class="cx-scroll"><table class="cx-tabla"><tr><th>Cliente</th><th>Detalle</th><th>Titular / Pagó</th><th class="m">Monto</th></tr>';
+  lista.forEach(function(x){
+    if(x.raw){ h+='<tr><td colspan="4">'+escH(x.raw)+'</td></tr>'; return; }
+    var cliente='', detalle='', titular='';
+    if(x.tit){                       /* "cliente (Titular MP: X) $monto [Total]" = cobro de deuda */
+      cliente=x.cli; titular=x.tit; detalle='Cobro de deuda'+(x.est?' · '+x.est:'');
+    } else {                         /* venta: el nombre es el titular; el cliente y el detalle vienen entre llaves */
+      titular=x.cli;
+      var d=x.det||'', m;
+      if((m=/^Entrega de pedido(?:: (.+))?$/.exec(d))||(m=/^Pedido de (.+?)(?::.*)?$/.exec(d))){ cliente=m[1]||'—'; detalle='Entrega de pedido'; }
+      else if(/^(Venta local|Mostrador)/.test(d)){ cliente='—'; detalle='Venta local'; }
+      else { detalle=d; }
+    }
+    h+='<tr><td class="cli">'+(cliente?escH(cliente):'<span class="cx-sub">sin dato</span>')+(x.hr?'<span class="cx-sub">'+escH(x.hr)+' hs</span>':'')+'</td>'+
+       '<td>'+(detalle?escH(detalle):'<span class="cx-sub">sin detalle</span>')+'</td>'+
+       '<td>'+escH(titular)+'</td>'+
+       '<td class="m">'+escH(x.monto)+'</td></tr>';
+  });
+  return h+'</table></div></div>';
 }
 
 /* ===== HU12: totalizador del día vigente (solo cierres de HOY) ===== */
@@ -718,7 +896,7 @@ function pintarTotalHoy(){
     '<div class="hoy-medios">'+
       '<div class="hoy-m efe"><span class="c-et">Efectivo</span><span class="hoy-v">'+pesos(t.efe)+'</span></div>'+
       '<div class="hoy-m mp"><span class="c-et">Mercado Pago</span><span class="hoy-v">'+pesos(t.mp)+'</span></div>'+
-      '<div class="hoy-m deb'+(t.deb>0?' hay':'')+'"><span class="c-et">Debe</span><span class="hoy-v">'+pesos(t.deb)+'</span></div>'+
+      '<div class="hoy-m deb'+(t.deb>0?' hay':'')+'"><span class="c-et">Se sumó al listado</span><span class="hoy-v">'+pesos(t.deb)+'</span></div>'+
     '</div></div>';
 }
 
@@ -835,52 +1013,107 @@ function pintarReporte(){
   /* --- 1. turnos --- */
   h+='<div class="bloque-tit" style="margin-top:6px">Turnos del período'+(SOLO_OBS?' (solo con observación)':'')+'</div>';
   if(!cierresMostrados.length) h+='<div class="vacio">'+(SOLO_OBS?'Ninguno en este rango tiene observación.':'Sin cierres en el rango.')+'</div>';
+  var asig=asignarMovsATurnos(D.ventas,deudas,cierres);
   cierresMostrados.slice().reverse().forEach(function(v){
     var ho=soloHora(v.HoraApertura), hc=soloHora(v.HoraCierre);
     var rango=(ho||hc) ? (ho||'—')+' a '+(hc||'—')+' hs' : 'sin horario registrado';
     var sa=[v.AperturaCarne,v.AperturaPanJ,v.AperturaPanS,v.AperturaChe,v.AperturaPack];
     var sc=[v.CierreCarne,v.CierrePanJ,v.CierrePanS,v.CierreChe,v.CierrePack];
     var hayS=sa.some(hayDato)||sc.some(hayDato);
-    h+='<div class="cierre"><div class="c-cab">'+
-       '<div class="c-quien">'+fery(v.Fecha)+' · <b>'+(v.QuienCerro||'—')+'</b> · '+rango+'</div>'+
-       '<div class="c-total">'+pesos(num(v.Total))+'</div></div>'+
-       '<div class="c-medios">'+
+    var obsP=partirObservacion(v.Observacion);
+    var mov=asig.de(v);
+    var pagMP=partirPagadoresMP(v.PagadoresMP);
+    var izq='', der='';
+    var tiles='<div class="cx-sec" style="margin-top:10px"><h3>Cómo se cobró</h3><div class="c-medios">'+
          '<div class="c-medio efe"><span class="c-et">Efectivo</span><span class="c-m">'+pesos(num(v.Efectivo))+'</span></div>'+
          '<div class="c-medio mp"><span class="c-et">Mercado Pago</span><span class="c-m">'+pesos(num(v.MercadoPago)+num(v.Transferencia))+'</span></div>'+
-         '<div class="c-medio deb'+(debeDeCierre(v)>0?' hay':'')+'"><span class="c-et">Debe</span><span class="c-m">'+pesos(debeDeCierre(v))+'</span></div>'+
-       '</div>';
-    // La observación va PRIMERO y con su propio bloque, no mezclada como una
-    // línea gris más: es lo único que un socio escribió a mano para avisar
-    // algo puntual, y hoy se perdía entre stock/MP/caja contada.
-    var obs=String(v.Observacion||'').trim();
-    if(obs){
-      h+='<div class="c-obs" data-obs="1">📝 <b>Observación:</b> '+obs+'</div>';
-    }
+         '<div class="c-medio deb'+(debeDeCierre(v)>0?' hay':'')+'"><span class="c-et">Se sumó al listado</span><span class="c-m">'+pesos(debeDeCierre(v))+'</span></div>'+
+         '</div></div>';
+    // Las líneas automáticas "[Cobro Deuda …] / [Deuda saldada] / [Entró plata]" ya se
+    // muestran como tablas. Solo se imprime el texto original de las que NO se pudieron
+    // reflejar (para que no se pierda nada); si todas están reflejadas, no se muestra nada.
+    var saldadas={}, sobran=[], entro=[];
+    var hayCobro=function(cli,monto){ return mov.cobros.some(function(c){ return limpiaClave(c.Cliente)===limpiaClave(cli)&&(monto==null||pesos(num(c.Monto))===monto); }); };
+    obsP.auto.forEach(function(l){
+      var m;
+      if((m=/^\[Cobro Deuda (?:Parcial|Total)\] Cliente: (.+?) \| Entregó: .*? \| Monto: (\$[\d.]+) \| Resta: \$[\d.]+$/.exec(l))){
+        if(!hayCobro(m[1],m[2])) sobran.push(l);
+      } else if((m=/^\[Deuda saldada\] (.+?) saldó la totalidad de su deuda \((\$[\d.]+)\) el .+$/.exec(l))){
+        if(hayCobro(m[1],null)) saldadas[limpiaClave(m[1])]=m[2]; else sobran.push(l);
+      } else if(RE_ENTRO.test(l)){ entro.push(l); }
+      else { sobran.push(l); }
+    });
+    /* Arqueo: quién puso cada peso que entró y no es venta. Sale de los cobros de deuda
+       del turno (Pagó / Titular MP) y de las señas ("Entró plata", con su titular). Lo que
+       no se puede atribuir a una persona se muestra como "Sin detalle de titular". */
+    /* Una línea por persona, con su importe UNA sola vez (sin renglón de total aparte). */
+    var filasIngreso=function(){
+      var it=[];
+      mov.cobros.forEach(function(c){
+        var via=String(c.Via||''), pn=parseNotaCobro(c.Nota);
+        it.push({n:pn.persona||'', medio:via, concepto:'Cobro de deuda · '+(c.Cliente||'Sin nombre'), monto:num(c.Monto), dig:/mercado|transf/i.test(via)});
+      });
+      entro.forEach(function(l){
+        var m=RE_ENTRO.exec(l); if(!m) return;
+        it.push({n:m[4]||'', medio:m[1], concepto:m[3], monto:num(m[2]), dig:/mercado|transf/i.test(m[1])});
+      });
+      return it;
+    };
+    var cont='', otros='';
     if(hayDato(v.EfectivoContado)||hayDato(v.MPContado)){
-      h+='<div class="c-ops"><span class="c-op">Contó en caja: <b>'+pesos(num(v.EfectivoContado))+'</b></span>'+
-         '<span class="c-op">Contó en MP: <b>'+pesos(num(v.MPContado))+'</b></span></div>';
+      cont='<span>Contó en caja</span><span>'+pesos(num(v.EfectivoContado))+'</span>'+
+           '<span>Contó en MP</span><span>'+pesos(num(v.MPContado))+'</span>';
     }
     // Cobros de deuda / señas que entraron y NO son venta de este turno. Van
     // aparte de "Efectivo"/"Mercado Pago" de arriba (que son solo ventas) para
     // no duplicar la cuenta, pero si no se muestran acá quedan invisibles: es
     // plata real que entró a la caja y el conteo del cierre la espera.
-    if(num(v.OtrosIngresosEfe)>0||num(v.OtrosIngresosMP)>0){
-      h+='<div class="c-ops"><span class="c-nota">💰 Entró sin ser venta (señas, cobros de deuda): '+
-         (num(v.OtrosIngresosEfe)>0?'efectivo <b>'+pesos(num(v.OtrosIngresosEfe))+'</b>':'')+
-         (num(v.OtrosIngresosEfe)>0&&num(v.OtrosIngresosMP)>0?' · ':'')+
-         (num(v.OtrosIngresosMP)>0?'MP <b>'+pesos(num(v.OtrosIngresosMP))+'</b>':'')+
-         '</span></div>';
+    var oEfe=num(v.OtrosIngresosEfe), oMP=num(v.OtrosIngresosMP);
+    if(oEfe>0||oMP>0){
+      var its=filasIngreso(), sEfe=0, sMP=0;
+      its.forEach(function(x){ if(x.dig) sMP+=x.monto; else sEfe+=x.monto; });
+      // Lo que no se puede atribuir a una persona se muestra aparte, para que las cuentas cierren.
+      if(oEfe-sEfe>0) its.push({falta:true, medio:'Efectivo', concepto:'', monto:oEfe-sEfe});
+      if(oMP-sMP>0)   its.push({falta:true, medio:'Mercado Pago / transferencia', concepto:'', monto:oMP-sMP});
+      otros='<div class="cx-tit-h"><span>Titular / Pagó</span><span>Importe</span></div>'+its.map(function(x){
+        return '<div class="cx-tit'+(x.falta?' falta':'')+'"><div><b>'+(x.falta?'Sin detalle de titular':(x.n?escH(x.n):'sin titular'))+'</b>'+
+               '<span class="cx-sub">'+badgeMedio(x.medio)+(x.concepto?' '+escH(x.concepto):'')+'</span></div><div class="m">'+pesos(x.monto)+'</div></div>';
+      }).join('');
+    }
+    if(cont||otros){
+      izq+='<div class="cx-sec"><h3>Arqueo</h3>'+
+           (cont?'<div class="cx-sub-t">Lo contado</div><div class="cx-kv">'+cont+'</div>':'')+
+           (cont&&otros?'<div class="cx-sep"></div>':'')+
+           (otros?'<div class="cx-sub-t">Lo que entró y no es venta</div>'+otros:'')+'</div>';
     }
     if(hayS){
-      h+='<div class="c-ops"><span class="c-nota">Stock — abrió: '+sa.map(cant0).join(' / ')+
-         ' · cerró: '+sc.map(cant0).join(' / ')+' <i>(carne / pan Julio / pan José / barras / packs)</i></span></div>';
+      var et=['Carnes','Pan Julio','Pan José','Barras','Packs'], filasS='';
+      for(var q=0;q<5;q++) filasS+='<tr><td class="cli">'+et[q]+'</td><td class="m">'+cant0(sa[q])+'</td><td class="m">'+cant0(sc[q])+'</td></tr>';
+      izq+='<div class="cx-sec"><h3>Stock</h3><table class="cx-tabla"><tr><th>Producto</th><th class="m">Apertura</th><th class="m">Cierre</th></tr>'+filasS+'</table></div>';
     }
-    if(String(v.PagadoresMP||'').trim()){
-      h+='<div class="c-ops"><span class="c-nota">Pagaron por MP: '+v.PagadoresMP+'</span></div>';
+    // La observación va PRIMERO y con su propio bloque: es lo único que un socio
+    // escribió a mano para avisar algo puntual.
+    if(obsP.op) der+='<div class="cx-sec"><h3>Observación del operador</h3><div class="c-obs" data-obs="1">📝 <b>Observación:</b> '+escH(obsP.op)+'</div></div>';
+    if(mov.cobros.length) der+=tablaCobros(mov.cobros,saldadas);
+    if(mov.nuevas.length) der+=tablaCredito(mov.nuevas);
+    if(entro.length) der+=tablaEntroPlata(entro);
+    if(pagMP.length) der+=tablaPagadoresMP(pagMP);
+    if(sobran.length){
+      der+='<div class="cx-sec cx-auto"><h3>Otros movimientos del cierre</h3><details><summary>Ver el texto original ('+sobran.length+(sobran.length===1?' línea':' líneas')+')</summary>'+
+           sobran.map(function(l){ return '<div>'+escH(l)+'</div>'; }).join('')+'</details></div>';
     }
-    h+=desgloseDeudasDelDia(v);
-    h+='</div>';
+    h+='<div class="cierre"><div class="c-cab">'+
+       '<div class="c-quien">'+fery(v.Fecha)+' · <b>'+(v.QuienCerro||'—')+'</b> · '+rango+'</div>'+
+       '<div class="c-total">'+pesos(num(v.Total))+'</div></div>'+tiles+
+       '<div class="cx-grid" style="margin-top:0"><div>'+izq+'</div><div>'+der+'</div></div></div>';
   });
+  // Movimientos de Deudas que no caen en ningún turno del rango (por ejemplo,
+  // los de un turno que todavía no cerró): se muestran, no se esconden.
+  if(!SOLO_OBS && (asig.sin.cobros.length||asig.sin.nuevas.length)){
+    h+='<div class="cierre"><div class="c-cab"><div class="c-quien"><b>Sin turno asignado</b> · todavía sin cierre, de un turno fuera del rango, o sin hora en la nota</div></div>'+
+       '<div class="cx-grid"><div>'+(asig.sin.nuevas.length?tablaCredito(asig.sin.nuevas):'')+'</div><div>'+
+       (asig.sin.cobros.length?tablaCobros(asig.sin.cobros):'')+'</div></div></div>';
+  }
 
   /* --- 2. plata --- */
   var entraEfe=cierres.reduce(function(a,v){ return a+num(v.Efectivo); },0);
