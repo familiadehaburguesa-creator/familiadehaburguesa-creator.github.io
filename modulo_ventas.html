@@ -1255,10 +1255,15 @@ function esDeHoy(v){
 
 /* ---------------------- nube ---------------------- */
 
+/** Fecha 'aaaa-mm-dd' de hace n dias (para pedirle al MENSAJERO solo lo reciente). */
+function haceDias(n){
+  var d = new Date(); d.setDate(d.getDate() - n);
+  return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+}
 /* ESCRITURAS cuenta los envios al Cuaderno; ENTREGADO guarda el ultimo pedido de cada hoja
    que ya entrego datos. Sirven para descartar respuestas viejas (ver traer). */
 var cbN = 0, ESCRITURAS = 0, ENTREGADO = {};
-function traer(hoja, ok){
+function traer(hoja, ok, extra){
   var seq = ++cbN, nombre = 'fdhcb' + seq, e0 = ESCRITURAS;
   var listo = false, avisado = false;
   window[nombre] = function(r){
@@ -1271,7 +1276,9 @@ function traer(hoja, ok){
     limpiar();
   };
   var s = document.createElement('script');
-  s.src = NUBE + (hoja ? '?hoja=' + encodeURIComponent(hoja) + '&' : '?') + 'callback=' + nombre;
+  // `extra` = parametros opcionales (ej. 'ultimas=1', 'desde=2026-10-05'). Un MENSAJERO que no los
+  // conoce los ignora y devuelve la hoja completa, asi que nunca rompen nada.
+  s.src = NUBE + (hoja ? '?hoja=' + encodeURIComponent(hoja) + '&' : '?') + (extra ? extra + '&' : '') + 'callback=' + nombre;
   s.onerror = avisar;
   document.head.appendChild(s);
   // El aviso de error sale a los 20 s, pero el callback sigue vivo hasta los 35 s: si la
@@ -1891,12 +1898,22 @@ function espejoCierre(){   espejoBolsas('zBolsas', {carne:'zCarne', panJ:'zPanJ'
  */
 var FABRICA = {listas:0, camara:0, quien:'', fecha:'', sabido:false};
 
+var K_FAB_CACHE = 'fdh_fabrica_v1';
+function leerCacheFabrica(){
+  try{ var c = JSON.parse(localStorage.getItem(K_FAB_CACHE) || 'null'); return (c && typeof c.listas === 'number') ? c : null; }catch(e){ return null; }
+}
 function traerFabrica(cuandoTermine){
-  pintarFabrica('Consultando…', null);
+  // Mientras llega el dato fresco se muestra el ultimo conocido. Es solo para MIRAR: FABRICA.sabido sigue
+  // en false hasta que la nube conteste, asi que ninguna validacion se apoya en un dato viejo.
+  var cache = leerCacheFabrica();
+  if (cache) pintarFabrica(null, cache); else pintarFabrica('Consultando…', null);
   traer('Producción', function(r){
     if (!r || !r.ok || !r.datos || !r.datos.length){
       FABRICA = {listas:0, camara:0, quien:'', fecha:'', sabido:false};
-      pintarFabrica(r ? 'La fábrica todavía no cargó producción hoy.' : 'No se pudo consultar la fábrica.', null);
+      if (r) pintarFabrica('La fábrica todavía no cargó producción hoy.', null);
+      else if (cache) pintarFabrica(null, {listas:cache.listas, camara:cache.camara, quien:cache.quien, fecha:cache.fecha,
+                                           nota:'Sin conexión: es el último dato conocido.'});
+      else pintarFabrica('No se pudo consultar la fábrica.', null);
       if (cuandoTermine) cuandoTermine(FABRICA);
       return;
     }
@@ -1909,9 +1926,10 @@ function traerFabrica(cuandoTermine){
       fecha:  f.Fecha || '',
       sabido: true
     };
+    try{ localStorage.setItem(K_FAB_CACHE, JSON.stringify({listas:FABRICA.listas, camara:FABRICA.camara, quien:FABRICA.quien, fecha:FABRICA.fecha})); }catch(e){}
     pintarFabrica(null, FABRICA);
     if (cuandoTermine) cuandoTermine(FABRICA);
-  });
+  }, 'ultimas=1');   // solo se usa la ultima fila
 }
 
 function pintarFabrica(mensaje, d){
@@ -1941,6 +1959,7 @@ function pintarFabrica(mensaje, d){
     var pie = [];
     if (d.fecha) pie.push('Último parte: ' + String(d.fecha).slice(0,10));
     if (d.quien) pie.push('cargado por ' + d.quien);
+    if (d.nota) pie.push(d.nota);
     if (pie.length) h += '<div class="nota" style="text-align:center">' + pie.join(' · ') + '</div>';
 
     el.innerHTML = h;
@@ -3168,7 +3187,7 @@ function abrirRetiro(){
   $('btnGuardarRetiro').classList.remove('oculto');
   traer('Gastos', function(r){
     GASTOS_HOY = (r && r.ok && r.datos) ? r.datos.filter(esGastoManualDeHoy) : [];
-  });
+  }, 'desde=' + haceDias(3));
   $('infoCaja').textContent = 'En la caja hay ' + pesos(T.caja) + '. Arrancaste con ' + pesos(T.ini.caja) + ' de cambio.';
   mostrar('pRetiro');
 }
