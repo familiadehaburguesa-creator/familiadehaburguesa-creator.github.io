@@ -3720,9 +3720,16 @@ function iniciar(){
 
   // Refresco suave del panel: stock de fabrica y deudores, cada 2 minutos.
   // Solo pinta paneles de lectura: no toca ningun formulario a medio llenar.
-  setInterval(function(){
-    if (T && T.abierto){ traerFabrica(); sincronizarDeudas(); }
-  }, 120000);
+  // Con la pestaña oculta no se consulta; al volver, si pasaron mas de 60 s, se refresca.
+  var ULT_REFRESCO = Date.now();
+  function refrescarPaneles(){
+    if (document.hidden || !(T && T.abierto)) return;
+    ULT_REFRESCO = Date.now(); traerFabrica(); sincronizarDeudas();
+  }
+  setInterval(refrescarPaneles, 120000);
+  document.addEventListener('visibilitychange', function(){
+    if (!document.hidden && Date.now() - ULT_REFRESCO > 60000) refrescarPaneles();
+  });
 
   $('btnAbrir').addEventListener('click', abrirTurno);
   $('btnNueva').addEventListener('click', nuevaVenta);

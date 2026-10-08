@@ -420,13 +420,18 @@ function ahora(){ return new Date().toLocaleTimeString('es-AR',{hour:'2-digit',m
 /* ===== nube: UNA consulta trae todas las hojas ===== */
 var cbN=0;
 function traerTodo(ok){
-  var nombre='fdhfin'+(++cbN), listo=false;
+  var nombre='fdhfin'+(++cbN), listo=false, avisado=false;
   window[nombre]=function(r){ listo=true; try{ ok(r); }catch(e){} limpiar(); };
   var s=document.createElement('script');
   s.src=NUBE_URL+'?callback='+nombre;
-  s.onerror=function(){ if(!listo){ ok(null); limpiar(); } };
+  s.onerror=avisar;
   document.head.appendChild(s);
-  setTimeout(function(){ if(!listo){ ok(null); limpiar(); } },15000);
+  /* El aviso de error sale a los 20 s, pero el callback sigue vivo hasta los 35 s: si la nube
+     contesta tarde, el dato se aprovecha en vez de chocar con un callback ya borrado (igual
+     que Fabrica, Tablero y Ventas). */
+  setTimeout(avisar,20000);
+  setTimeout(function(){ if(!listo) limpiar(); },35000);
+  function avisar(){ if(listo||avisado) return; avisado=true; try{ ok(null); }catch(e){} }
   function limpiar(){ try{ delete window[nombre]; }catch(e){} if(s.parentNode) s.parentNode.removeChild(s); }
 }
 function subirNube(hoja,fila){
@@ -437,6 +442,17 @@ function subirNube(hoja,fila){
   }catch(e){}
 }
 function nubeEstado(cls,txt){ var e=$('nubeEstado'); e.className='nube-estado '+cls; e.textContent=txt; }
+/* "Actualizado hace X": quien mira sabe cuan fresco es lo que ve. */
+var ULTIMA_CARGA=0;
+function etiquetaHace(ms){
+  var m=Math.floor(ms/60000);
+  return m<1?'actualizado hace instantes':(m===1?'actualizado hace 1 min':'actualizado hace '+m+' min');
+}
+function pintarHace(){
+  var e=$('nubeEstado');
+  if(!ULTIMA_CARGA||!e||e.className.indexOf('ok')<0) return;
+  e.textContent='☁️ Nube al día · '+etiquetaHace(Date.now()-ULTIMA_CARGA);
+}
 
 var D={ventas:[], deudas:[], gastos:[], fondos:[], tesoreria:[], sabido:false};
 function cargarNube(){
@@ -451,7 +467,8 @@ function cargarNube(){
     D.tesoreria=r.datos.Tesoreria||[];
     D.sabido=true;
     try{ localStorage.setItem(K_CACHE,JSON.stringify(D)); }catch(e){}
-    nubeEstado('ok','☁️ Nube al día');
+    ULTIMA_CARGA=Date.now();
+    nubeEstado('ok','☁️ Nube al día · '+etiquetaHace(0));
     render();
   });
 }
@@ -1452,10 +1469,15 @@ try{ var c=JSON.parse(localStorage.getItem(K_CACHE)||'null');
      if(c){ D=c; D.ventas=D.ventas||[]; D.deudas=D.deudas||[]; D.gastos=D.gastos||[]; D.fondos=D.fondos||[]; D.tesoreria=D.tesoreria||[]; render(); } }catch(e){}
 render();
 cargarNube();
-setInterval(cargarNube, 90000);
+// Con la pestaña oculta no se consulta la nube (cada consulta baja todas las hojas); al
+// volver, si pasaron más de 30 s, se trae lo último.
+setInterval(function(){ if(!document.hidden) cargarNube(); }, 90000);
+setInterval(pintarHace, 30000);
 // HU12: al volver a la pestaña (o a la app instalada) se trae lo último,
 // así un turno recién cerrado aparece en el total del día sin esperar.
-document.addEventListener('visibilitychange', function(){ if(!document.hidden) cargarNube(); });
+document.addEventListener('visibilitychange', function(){
+  if(!document.hidden && (!ULTIMA_CARGA || Date.now()-ULTIMA_CARGA>30000)) cargarNube();
+});
 // HU13 · escenario 4: a la medianoche el total del día vuelve a $0 aunque no
 // haya internet. Se recalcula con lo que ya está en memoria, sin pedir nada.
 setInterval(function(){ if(D.sabido) pintarTotalHoy(); }, 60000);
