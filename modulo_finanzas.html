@@ -1033,6 +1033,16 @@ function pintarReporte(){
   h+='<div class="bloque-tit" style="margin-top:6px">Turnos del período'+(SOLO_OBS?' (solo con observación)':'')+'</div>';
   if(!cierresMostrados.length) h+='<div class="vacio">'+(SOLO_OBS?'Ninguno en este rango tiene observación.':'Sin cierres en el rango.')+'</div>';
   var asig=asignarMovsATurnos(D.ventas,deudas,cierres);
+  /* Retiros de caja por turno. Hasta ahora solo se veían sumados en "Salió" del período,
+     así que el arqueo de un turno no mostraba qué plata se había sacado de SU caja.
+     Se ubican igual que las deudas: por la hora del retiro dentro de la ventana del turno
+     (o por "turno de X" en el detalle). Gastos no usa Nota, por eso se arma una equivalente. */
+  var retTurno=[];
+  vigentes().forEach(function(g){
+    if(limpiaClave(g.Categoria)!=='retiro de caja') return;
+    var dest=turnoDeMov({Fecha:g.Fecha,Nota:g.Detalle},asig.res);
+    if(dest) retTurno.push({v:dest.v,g:g});
+  });
   cierresMostrados.slice().reverse().forEach(function(v){
     var ho=soloHora(v.HoraApertura), hc=soloHora(v.HoraCierre);
     var rango=(ho||hc) ? (ho||'—')+' a '+(hc||'—')+' hs' : 'sin horario registrado';
@@ -1099,11 +1109,23 @@ function pintarReporte(){
                '<span class="cx-sub">'+badgeMedio(x.medio)+(x.concepto?' '+escH(x.concepto):'')+'</span></div><div class="m">'+pesos(x.monto)+'</div></div>';
       }).join('');
     }
-    if(cont||otros){
+    var rets=retTurno.filter(function(x){ return x.v===v; }).map(function(x){ return x.g; });
+    var retHtml='';
+    if(rets.length){
+      var totRet=rets.reduce(function(a,g){ return a+num(g.Monto); },0);
+      retHtml='<div class="cx-sub-t">Salió de la caja en este turno · '+pesos(totRet)+'</div>'+rets.map(function(g){
+        var partes=String(g.Detalle||'').split('\u00b7'), hr=horaDeNota(g.Detalle);
+        return '<div class="cx-tit"><div><b>'+escH(partes[0].trim()||'Retiro de caja')+'</b>'+
+               '<span class="cx-sub">'+escH(g.Quien||'sin dato')+(hr?' · '+hr+' hs':'')+'</span></div>'+
+               '<div class="m">−'+pesos(num(g.Monto))+'</div></div>';
+      }).join('');
+    }
+    if(cont||otros||retHtml){
       izq+='<div class="cx-sec"><h3>Arqueo</h3>'+
            (cont?'<div class="cx-sub-t">Lo contado</div><div class="cx-kv">'+cont+'</div>':'')+
            (cont&&otros?'<div class="cx-sep"></div>':'')+
-           (otros?'<div class="cx-sub-t">Lo que entró y no es venta</div>'+otros:'')+'</div>';
+           (otros?'<div class="cx-sub-t">Lo que entró y no es venta</div>'+otros:'')+
+           ((cont||otros)&&retHtml?'<div class="cx-sep"></div>':'')+retHtml+'</div>';
     }
     if(hayS){
       var et=['Carnes','Pan Julio','Pan José','Barras','Packs'], filasS='';

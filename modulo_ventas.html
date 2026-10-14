@@ -1118,7 +1118,7 @@ var GENTE = ['Pablo','Yami','Cielo','Paula','Mara','Soporte','Valen'];
 // de cada fila; con eso se arma el link directo al evento.
 var CALENDARIO = '919b78a49a29ebfa942650df011e34e9d55a4b8a2acef4f6a63886fa58e44f2b@group.calendar.google.com';
 
-var K_TURNO = 'fdh_turno_v1', K_PRECIOS = 'fdh_precios_v1', K_DEUDAS = 'fdh_deudas_v1', K_SALDADOS = 'fdh_saldados_v1';
+var K_TURNO = 'fdh_turno_v1', K_PRECIOS = 'fdh_precios_v1', K_DEUDAS = 'fdh_deudas_v1', K_SALDADOS = 'fdh_saldados_v1', K_DEUDAS_PEND = 'fdh_deudas_pend_v1';
 
 var T = null;          // turno activo
 var PRECIOS = {};
@@ -1455,6 +1455,21 @@ function totalPorCobrar(){
   return deudasAbiertas().reduce(function(t,d){ return t + num(d.saldo); }, 0);
 }
 
+/* Deudas cargadas acá que todavía no se vieron en la nube. El POST al Cuaderno
+   no se puede confirmar (respuesta opaca): sin esta cola, una deuda que no llegó
+   a escribirse desaparecía de "Falta cobrar" en la próxima sincronización, porque
+   el libro local se reemplaza por lo que devuelve la nube. */
+function leerPend(){
+  try{ var l = JSON.parse(localStorage.getItem(K_DEUDAS_PEND) || '[]'); return Array.isArray(l) ? l : []; }
+  catch(e){ return []; }
+}
+function guardarPend(l){ try{ localStorage.setItem(K_DEUDAS_PEND, JSON.stringify(l)); }catch(e){} }
+function marcarPendFallo(ts){
+  var l = leerPend();
+  l.forEach(function(p){ if (p.ts === ts) p.fallo = true; });
+  guardarPend(l);
+}
+
 function anotarDeuda(quien, monto, nota, sello, detalle){
   // HU7: usuario, fecha y hora los pone el sistema en el momento de confirmar.
   sello = sello || {usuario: usuarioActivo(), fecha: hoyLocal(), hora: hora()};
@@ -1477,7 +1492,7 @@ function anotarDeuda(quien, monto, nota, sello, detalle){
   // los dispositivos y no muere con este navegador.
   // Sin tocar el MENSAJERO: `Quien` = el usuario que lo cargó y la hora va
   // al final de la nota (así ya venía; horaDeNota() la lee de vuelta).
-  guardarEnNube('Deudas', {
+  var fila = {
     Fecha: sello.fecha, Cliente: quien || 'Sin nombre', Movimiento: 'Deuda nueva',
     Monto: monto, Via: '', Quien: sello.usuario,
     // HU-10: el detalle de lo que se llev\u00f3 viaja en la MISMA nota, con el
@@ -1485,7 +1500,13 @@ function anotarDeuda(quien, monto, nota, sello, detalle){
     // el MENSAJERO. La hora queda al final para que horaDeNota() la siga leyendo.
     Nota: (nota || '') + (detalle ? ' \u00b7 ' + detalle : '') + ' \u00b7 ' + sello.hora +
           (turno && turno !== sello.usuario ? ' \u00b7 turno de ' + turno : '')
-  });
+  };
+  // Queda en la cola hasta que la sincronización la encuentre en la nube.
+  var ts = Date.now();
+  var pend = leerPend();
+  pend.push({ts: ts, fila: fila, fallo: false});
+  guardarPend(pend);
+  guardarEnNube('Deudas', fila, function(){ marcarPendFallo(ts); });
 }
 
 /**
@@ -1522,7 +1543,11 @@ function sincronizarDeudas(cuandoTermine){
         if (f.Nota) e.nota = textoDeNota(f.Nota);
         if (f.Quien) e.turno = String(f.Quien);
       }
-      e.saldo = num(f.SaldoCliente);   // el ultimo movimiento del cliente manda
+      // el ultimo movimiento del cliente manda. Si la fila no trae SaldoCliente
+      // (vacio), un 0 haria desaparecer al deudor: se acumula a mano.
+      var haySaldo = f.SaldoCliente !== undefined && f.SaldoCliente !== null && String(f.SaldoCliente).trim() !== '';
+      e.saldo = haySaldo ? num(f.SaldoCliente)
+                         : num(e.saldo) + (/cobro/i.test(String(f.Movimiento || '')) ? -num(f.Monto) : num(f.Monto));
       // Si el cliente quedó en cero, lo anterior ya está saldado: la próxima
       // deuda arranca de nuevo (fecha, hora y quién la cargó son los de ella).
       if (e.saldo <= 0){
@@ -1536,6 +1561,31 @@ function sincronizarDeudas(cuandoTermine){
         e.fecha = ''; e.hora = ''; e.usuario = ''; e.nota = '';
       }
     });
+    // Deudas cargadas acá que la nube todavía no devolvió: se siguen mostrando
+    // (y se reenvían si el POST falló) en vez de borrarlas del libro.
+    var pendientes = [];
+    leerPend().forEach(function(p){
+      var f0 = p.fila, clave0 = limpiaClave(f0.Cliente);
+      var en = r.datos.some(function(f){
+        return limpiaClave(f.Cliente) === clave0 && !/cobro/i.test(String(f.Movimiento || '')) &&
+               num(f.Monto) === num(f0.Monto) && horaDeNota(f.Nota) === horaDeNota(f0.Nota);   // sin fecha: la nube puede devolverla con otro huso
+      });
+      if (en || Date.now() - p.ts > 172800000) return;   // ya está en la nube (o pasaron 48 h)
+      pendientes.push(p);
+      var e = porCliente[clave0] || (porCliente[clave0] = {
+        id: 'n:' + clave0, quien: String(f0.Cliente), original: 0, saldo: 0,
+        nota: '', fecha: '', hora: '', usuario: '', turno: '', cargas: [], cobros: []
+      });
+      e.original += num(f0.Monto); e.saldo += num(f0.Monto); e.pend = true;
+      e.cargas.push({fecha: f0.Fecha, hora: horaDeNota(f0.Nota), usuario: String(f0.Quien || ''), monto: num(f0.Monto)});
+      if (!e.fecha){ e.fecha = f0.Fecha; e.hora = horaDeNota(f0.Nota); e.usuario = String(f0.Quien || ''); }
+      if (!e.nota) e.nota = textoDeNota(f0.Nota);
+      if (p.fallo && !p.reenviado){      // el POST ni salió (sin internet): se reenvía una sola vez
+        p.reenviado = true;
+        guardarEnNube('Deudas', f0, function(){ p.reenviado = false; guardarPend(pendientes); });
+      }
+    });
+    guardarPend(pendientes);
     var libro = Object.keys(porCliente).map(function(k){ return porCliente[k]; });
     guardarDeudas(libro);
     saldados.sort(function(a, b){ return (b.fechaSaldo + (b.horaSaldo || '')) < (a.fechaSaldo + (a.horaSaldo || '')) ? -1 : 1; });
@@ -1702,7 +1752,7 @@ function pintarDeudas(){
     var abierta = !!DEU_ABIERTAS[key] || (CARGA_EN_ACCION && CARGA_EN_ACCION.idDeuda === d.id);
     var pagado = Math.max(0, num(d.original) - num(d.saldo));
     var sub = porTab
-      ? (ultimoPago ? 'último pago: ' + diaCorto(ultimoPago.fecha) : 'sin pagos todavía')
+      ? (ultimoPago ? 'último pago: ' + diaCorto(ultimoPago.fecha) : 'sin pagos todavía') + (d.pend ? ' · ⚠ sin confirmar en la nube' : '')
       : 'saldó el ' + diaCorto(d.fechaSaldo) + (d.horaSaldo ? ' ' + d.horaSaldo : '');
     var monto = porTab ? d.saldo : d.original;
     h += '<div class="deu" data-deuda="' + d.id + '">' +
