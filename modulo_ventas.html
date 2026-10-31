@@ -2800,6 +2800,19 @@ function finalizarVenta(){
     $('mpQuien').value = '';
   }
 
+  // Detalle del efectivo del turno (columna EfectivoDetalle, MENSAJERO V27): una entrada por
+  // venta o entrega que cobró algo en efectivo, con el mismo formato que PagadoresMP:
+  // "Nombre $monto {HH:MM Venta local}" o "{HH:MM Entrega de pedido: Cliente[, pago parcial]}".
+  // La suma de las entradas es el `Efectivo` del cierre; los cobros de deuda y las señas
+  // NO van acá porque ya viajan por su lado (hoja Deudas y Observacion).
+  if (efe > 0){
+    T.efectivoDetalle = T.efectivoDetalle || [];
+    var limpiaE = function(t){ return String(t).replace(/[\u00b7\r\n]+/g, ' ').replace(/[{}|$]/g, ' ').replace(/\s+/g, ' ').trim(); };
+    var nomE = venta.pedido ? (campo(venta.pedido,'nombre','apellido') || 'Pedido') : 'Mostrador';
+    var detE = venta.pedido ? 'Entrega de pedido: ' + nomE + (efe < total ? ', pago parcial' : '') : 'Venta local';
+    T.efectivoDetalle.push(limpiaE(nomE) + ' ' + pesos(efe) + ' {' + hora() + ' ' + limpiaE(detE) + '}');
+  }
+
   if (deb > 0){
     var quienDebe = $('dQuien').value.trim();
     var sello = {usuario: usuarioActivo(), fecha: hoyLocal(), hora: hora()};
@@ -3622,7 +3635,9 @@ function confirmarCierre(){
     // v21: plata que entró y no fue venta de este turno. Va aparte para que
     // Total/Efectivo/MercadoPago sigan siendo SOLO ventas y la cuenta cierre.
     OtrosIngresosEfe: otrosEfe(),
-    OtrosIngresosMP:  otrosMP()
+    OtrosIngresosMP:  otrosMP(),
+    // v27 (MENSAJERO V27): cada venta/entrega en efectivo del turno. Va ULTIMA, igual que la columna AC.
+    EfectivoDetalle: (T.efectivoDetalle || []).join(' · ')
   });
 
   var h = '<div class="aviso verde">Turno de <b>' + T.quien + '</b> cerrado. Se mandó el resumen al Cuaderno.</div>';
