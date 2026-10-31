@@ -79,6 +79,34 @@ button.mini{padding:5px 10px;font-size:.8rem;border-radius:7px}
 .hoy-m.deb .c-et::before{background:var(--gris)}
 .hoy-m.deb.hay .c-et::before{background:var(--amarillo)}
 .hoy-m.deb.hay .hoy-v{color:var(--amarillo)}
+.hoy-efe{margin-top:10px;border-top:1px solid rgba(214,172,90,.25);padding-top:8px}
+.hoy-efe-tit{font-size:.72rem;color:var(--verde);font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:2px}
+.hoy-turno{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid rgba(214,172,90,.15)}
+.ht-n{font-size:.85rem;color:#fff}
+.ht-h{font-size:.74rem;color:#d8cdb9;margin-top:1px}
+.ht-der{text-align:right}
+.ht-m{font-weight:800;font-size:1.05rem;color:var(--verde);white-space:nowrap}
+.ht-a{font-size:.72rem;color:#d8cdb9;white-space:nowrap}
+.hoy-turno.suma{border-bottom:0;padding-bottom:0}
+.hoy-turno.suma .ht-n{font-weight:700}
+.hoy-turno.suma .ht-m{font-size:1.25rem}
+.ht-turno{border-bottom:1px solid rgba(214,172,90,.15)}
+.ht-turno summary{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0;cursor:pointer;list-style:none}
+.ht-turno summary::-webkit-details-marker{display:none}
+.ht-turno summary::before{content:"▸";color:var(--dorado);margin-right:6px;font-size:.8rem}
+.ht-turno[open] summary::before{content:"▾"}
+.ht-izq{flex:1;min-width:0}
+.ht-movs{padding:0 0 8px 14px}
+.ht-mov{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-top:1px dashed rgba(214,172,90,.15)}
+.ht-hr{flex:none;width:2.8rem;font-size:.75rem;color:#d8cdb9;padding-top:2px}
+.ht-d{flex:1;min-width:0;font-size:.85rem;color:#fff}
+.ht-d b{font-weight:700}
+.ht-s{display:block;font-size:.74rem;color:#d8cdb9;margin-top:1px;word-break:break-word}
+.ht-p{flex:none;font-weight:800;font-size:.95rem;color:var(--verde);white-space:nowrap}
+.ht-mov.sin .ht-p{color:var(--amarillo)}
+.ht-nota{font-size:.72rem;color:#d8cdb9;margin-top:8px}
+.hoy-aviso{margin-top:6px;font-size:.88rem;color:#d8cdb9}
+.hoy-aviso.err{color:var(--amarillo)}
 
 .cierre{border:1px solid rgba(214,172,90,.22);border-radius:12px;padding:11px 12px;margin-bottom:10px;background:#120f0b}
 .c-cab{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
@@ -460,7 +488,8 @@ var D={ventas:[], deudas:[], gastos:[], fondos:[], tesoreria:[], sabido:false};
 function cargarNube(){
   nubeEstado('cargando','☁️ Consultando…');
   traerTodo(function(r){
-    if(!r || !r.ok || !r.datos){ nubeEstado('error','⚠️ Sin conexión — muestro lo último conocido'); return; }
+    if(!r || !r.ok || !r.datos){ FALLO_HOY=true; nubeEstado('error','⚠️ Sin conexión — muestro lo último conocido'); pintarTotalHoy(); return; }
+    FALLO_HOY=false;
     D.ventas=r.datos.Ventas||[]; D.deudas=r.datos.Deudas||[]; D.gastos=r.datos.Gastos||[];
     // HU3/HU4: hoja Fondos (MENSAJERO V17). Si todavía no existe llega vacía y
     // la pantalla sigue funcionando igual: el fondo viejo se lee de Gastos.
@@ -901,22 +930,83 @@ function totalesHoy(){
   var t={efe:0, mp:0, deb:0, total:0, turnos:0};
   D.ventas.forEach(function(v){
     if(String(v.Fecha||'').slice(0,10)!==hoyLocal()) return;
-    t.efe+=num(v.Efectivo); t.mp+=num(v.MercadoPago)+num(v.Transferencia);
+    var efe=num(v.Efectivo);
+    t.efe+=efe; t.mp+=num(v.MercadoPago)+num(v.Transferencia);
     t.deb+=debeDeCierre(v); t.total+=num(v.Total); t.turnos++;
   });
   return t;
 }
+/* Movimientos de efectivo de UN turno, uno por uno. Efectivo del cierre = solo ventas y
+   entregas de pedidos (el cierre no guarda cada venta suelta, solo el total). Lo demás sale de:
+   cobros de deuda en efectivo (hoja Deudas, con hora) y "Entró plata" en efectivo (Observación).
+   Lo que OtrosIngresosEfe trae de más que lo detallado se muestra como "sin detalle". */
+function movimientosEfectivo(v,mov){
+  var it=[], detallado=0;
+  mov.cobros.forEach(function(c){
+    if(!/efect/i.test(String(c.Via||''))) return;
+    var pn=parseNotaCobro(c.Nota), m=num(c.Monto); detallado+=m;
+    it.push({hr:horaMov(c), tipo:'Cobro de deuda', det:(c.Cliente||'Sin nombre')+(/parcial/i.test(String(c.Nota||''))?' · pago parcial':' · pago total')+(pn.persona?' · pagó '+pn.persona:''), monto:m});
+  });
+  partirObservacion(v.Observacion).auto.forEach(function(l){
+    var m=RE_ENTRO.exec(l);
+    if(!m || !/efect/i.test(m[1])) return;
+    var mo=num(m[2]); detallado+=mo;
+    it.push({hr:m[6].padStart(5,'0'), tipo:'Ingreso que no es venta', det:m[3]+(m[4]?' · '+m[4]:'')+' · registró '+m[5], monto:mo});
+  });
+  it.sort(function(a,b){ return a.hr===b.hr?0:(a.hr<b.hr?-1:1); });
+  var resto=num(v.OtrosIngresosEfe)-detallado;
+  if(resto>0) it.push({hr:'', tipo:'Otros ingresos en efectivo', det:'sin detalle en el cierre', monto:resto, sin:true});
+  return it;
+}
+/* Efectivo de hoy turno por turno, cada movimiento y lo que va acumulando. */
+/* Cierres de hoy en orden de planilla = orden de cierre: el primero es el turno de la mañana. */
+function cierresDeHoy(){ return D.ventas.filter(function(v){ return String(v.Fecha||'').slice(0,10)===hoyLocal(); }); }
+function efectivoPorTurno(t){
+  if(!t.turnos) return '<div class="hoy-efe"><div class="vacio">Todavía no hay efectivo cargado hoy. Aparece solo cuando se cierra el primer turno.</div></div>';
+  var hoy=hoyLocal(), cierres=cierresDeHoy();
+  var asig=asignarMovsATurnos(D.ventas,D.deudas.filter(function(f){ var d=String(f.Fecha||'').slice(0,10); return d===hoy||d===diaMenos1(hoy); }),cierres);
+  var acum=0;
+  var h='<div class="hoy-efe"><div class="hoy-efe-tit">Efectivo de hoy, movimiento por movimiento</div>';
+  cierres.forEach(function(v,i){
+    var movs=movimientosEfectivo(v,asig.de(v)), ventas=num(v.Efectivo), otros=movs.reduce(function(a,x){ return a+x.monto; },0);
+    var tot=ventas+otros; acum+=tot;
+    var ap=soloHora(v.HoraApertura), ci=soloHora(v.HoraCierre);
+    var nVen=hayDato(v.ventas_cantidad)?Math.round(num(v.ventas_cantidad)):null, nEnt=hayDato(v.entregas_pedidos_cantidad)?Math.round(num(v.entregas_pedidos_cantidad)):null;
+    h+='<details class="ht-turno" open><summary><div class="ht-izq"><div class="ht-n">Turno '+(i+1)+' · cerró <b>'+escH(v.QuienCerro||'—')+'</b></div>'+
+        '<div class="ht-h">'+(ap&&ci?ap+' a '+ci+' hs':'sin horario')+'</div></div>'+
+        '<div class="ht-der"><div class="ht-m">'+pesos(tot)+'</div><div class="ht-a">va sumando '+pesos(acum)+'</div></div></summary>'+
+      '<div class="ht-movs">'+
+        '<div class="ht-mov"><span class="ht-hr"></span><div class="ht-d"><b>Ventas y entregas de pedidos</b>'+
+          '<span class="ht-s">incluye entregas con pago parcial en efectivo'+(nVen!==null&&nEnt!==null?' · del turno: '+nVen+' ventas y '+nEnt+' entregas (todos los medios)':'')+'</span></div><span class="ht-p">'+pesos(ventas)+'</span></div>'+
+        movs.map(function(x){
+          return '<div class="ht-mov'+(x.sin?' sin':'')+'"><span class="ht-hr">'+(x.hr||'')+'</span><div class="ht-d"><b>'+x.tipo+'</b><span class="ht-s">'+escH(x.det)+'</span></div><span class="ht-p">'+pesos(x.monto)+'</span></div>';
+        }).join('')+
+      '</div></details>';
+  });
+  return h+'<div class="hoy-turno suma"><div class="ht-n">Efectivo acumulado hoy</div><div class="ht-m">'+pesos(acum)+'</div></div>'+
+    '<div class="ht-nota">El cierre guarda el total de ventas y entregas en efectivo, no cada una por separado.</div></div>';
+}
+var FALLO_HOY=false;   // la nube no contestó y no hay nada guardado para mostrar
 function pintarTotalHoy(){
-  var t=totalesHoy(), p=hoyLocal().split('-');
+  var p=hoyLocal().split('-'), tit='Hoy '+Number(p[2])+'/'+Number(p[1]);
+  /* Sin datos todavía no se muestra "$0": se diría que no se vendió nada. */
+  if(!D.sabido){
+    $('totalHoy').innerHTML='<div class="hoy"><div class="hoy-tit">'+tit+'</div>'+(FALLO_HOY
+      ? '<div class="hoy-aviso err">No pudimos traer los cierres de hoy. <button class="mini sec" onclick="cargarNube()">Reintentar</button></div>'
+      : '<div class="hoy-aviso">Consultando los cierres de hoy…</div>')+'</div>';
+    return;
+  }
+  var t=totalesHoy();
   var sub = t.turnos ? t.turnos+(t.turnos===1?' turno cerrado':' turnos cerrados') : 'todavía no cerró ningún turno hoy';
+  if(FALLO_HOY) sub+=' · sin conexión, puede faltar algún cierre';
   $('totalHoy').innerHTML='<div class="hoy">'+
-    '<div class="hoy-cab"><div><div class="hoy-tit">Hoy '+Number(p[2])+'/'+Number(p[1])+'</div><div class="hoy-sub">'+sub+'</div></div>'+
+    '<div class="hoy-cab"><div><div class="hoy-tit">'+tit+'</div><div class="hoy-sub">'+sub+'</div></div>'+
       '<div class="hoy-total"><span class="hoy-et">Total del día</span><span class="hoy-n">'+pesos(t.total)+'</span></div></div>'+
     '<div class="hoy-medios">'+
       '<div class="hoy-m efe"><span class="c-et">Efectivo</span><span class="hoy-v">'+pesos(t.efe)+'</span></div>'+
       '<div class="hoy-m mp"><span class="c-et">Mercado Pago</span><span class="hoy-v">'+pesos(t.mp)+'</span></div>'+
       '<div class="hoy-m deb'+(t.deb>0?' hay':'')+'"><span class="c-et">Se sumó al listado</span><span class="hoy-v">'+pesos(t.deb)+'</span></div>'+
-    '</div></div>';
+    '</div>'+efectivoPorTurno(t)+'</div>';
 }
 
 /* ===== render ===== */
