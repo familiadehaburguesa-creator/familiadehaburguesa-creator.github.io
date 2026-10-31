@@ -3622,7 +3622,6 @@ function confirmarCierre(){
     EfectivoContado: (T.contado ? T.contado.caja : ''),                       // HU-04
     MPContado: (T.contado ? T.contado.mp : ''),                               // HU-04
     PagadoresMP: (T.pagadoresMP || []).join(' · '),                           // HU-05
-    EfectivoDetalle: (T.efectivoDetalle || []).join(' · '),                   // MENSAJERO V27 (va al final de la hoja)
     // HU-03 (MENSAJERO V20): la hora y el conteo ya existían dentro del turno
     // —`T.desde` al abrir y lo que se cuenta al cerrar— pero se perdían al
     // cerrar la pantalla. Ahora viajan al Cuaderno para poder hacer el reporte.
@@ -3636,7 +3635,9 @@ function confirmarCierre(){
     // v21: plata que entró y no fue venta de este turno. Va aparte para que
     // Total/Efectivo/MercadoPago sigan siendo SOLO ventas y la cuenta cierre.
     OtrosIngresosEfe: otrosEfe(),
-    OtrosIngresosMP:  otrosMP()
+    OtrosIngresosMP:  otrosMP(),
+    // v27 (MENSAJERO V27): cada venta/entrega en efectivo del turno. Va ULTIMA, igual que la columna AC.
+    EfectivoDetalle: (T.efectivoDetalle || []).join(' · ')
   });
 
   var h = '<div class="aviso verde">Turno de <b>' + T.quien + '</b> cerrado. Se mandó el resumen al Cuaderno.</div>';
