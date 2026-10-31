@@ -2800,6 +2800,19 @@ function finalizarVenta(){
     $('mpQuien').value = '';
   }
 
+  // Detalle del efectivo del turno (columna EfectivoDetalle, MENSAJERO V27): una entrada por
+  // venta o entrega que cobró algo en efectivo, con el mismo formato que PagadoresMP:
+  // "Nombre $monto {HH:MM Venta local}" o "{HH:MM Entrega de pedido: Cliente[, pago parcial]}".
+  // La suma de las entradas es el `Efectivo` del cierre; los cobros de deuda y las señas
+  // NO van acá porque ya viajan por su lado (hoja Deudas y Observacion).
+  if (efe > 0){
+    T.efectivoDetalle = T.efectivoDetalle || [];
+    var limpiaE = function(t){ return String(t).replace(/[\u00b7\r\n]+/g, ' ').replace(/[{}|$]/g, ' ').replace(/\s+/g, ' ').trim(); };
+    var nomE = venta.pedido ? (campo(venta.pedido,'nombre','apellido') || 'Pedido') : 'Mostrador';
+    var detE = venta.pedido ? 'Entrega de pedido: ' + nomE + (efe < total ? ', pago parcial' : '') : 'Venta local';
+    T.efectivoDetalle.push(limpiaE(nomE) + ' ' + pesos(efe) + ' {' + hora() + ' ' + limpiaE(detE) + '}');
+  }
+
   if (deb > 0){
     var quienDebe = $('dQuien').value.trim();
     var sello = {usuario: usuarioActivo(), fecha: hoyLocal(), hora: hora()};
@@ -3609,6 +3622,7 @@ function confirmarCierre(){
     EfectivoContado: (T.contado ? T.contado.caja : ''),                       // HU-04
     MPContado: (T.contado ? T.contado.mp : ''),                               // HU-04
     PagadoresMP: (T.pagadoresMP || []).join(' · '),                           // HU-05
+    EfectivoDetalle: (T.efectivoDetalle || []).join(' · '),                   // MENSAJERO V27 (va al final de la hoja)
     // HU-03 (MENSAJERO V20): la hora y el conteo ya existían dentro del turno
     // —`T.desde` al abrir y lo que se cuenta al cerrar— pero se perdían al
     // cerrar la pantalla. Ahora viajan al Cuaderno para poder hacer el reporte.

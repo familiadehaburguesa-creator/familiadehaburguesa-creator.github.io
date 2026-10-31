@@ -942,6 +942,20 @@ function totalesHoy(){
    Lo que OtrosIngresosEfe trae de más que lo detallado se muestra como "sin detalle". */
 function movimientosEfectivo(v,mov){
   var it=[], detallado=0;
+  /* Cierres nuevos (MENSAJERO V27): EfectivoDetalle trae cada venta/entrega en efectivo.
+     Cierres viejos no lo traen y quedan con el renglón de total. */
+  if(hayDato(v.EfectivoDetalle)){
+    var sumaVentas=0;
+    partirPagadoresMP(v.EfectivoDetalle).forEach(function(x){
+      if(x.raw) return;
+      var m=num(x.monto), parcial=/pago parcial/i.test(x.det), entrega=/^Entrega de pedido/i.test(x.det);
+      sumaVentas+=m;
+      it.push({hr:x.hr, venta:true, tipo:entrega?'Entrega de pedido'+(parcial?' · pago parcial':''):'Venta en el local',
+               det:x.cli, monto:m});
+    });
+    var faltaV=num(v.Efectivo)-sumaVentas;
+    if(faltaV>0) it.push({hr:'', venta:true, tipo:'Ventas y entregas', det:'sin detalle en el cierre', monto:faltaV, sin:true});
+  }
   mov.cobros.forEach(function(c){
     if(!/efect/i.test(String(c.Via||''))) return;
     var pn=parseNotaCobro(c.Nota), m=num(c.Monto); detallado+=m;
@@ -953,8 +967,8 @@ function movimientosEfectivo(v,mov){
     var mo=num(m[2]); detallado+=mo;
     it.push({hr:m[6].padStart(5,'0'), tipo:'Ingreso que no es venta', det:m[3]+(m[4]?' · '+m[4]:'')+' · registró '+m[5], monto:mo});
   });
-  it.sort(function(a,b){ return a.hr===b.hr?0:(a.hr<b.hr?-1:1); });
-  var resto=num(v.OtrosIngresosEfe)-detallado;
+  it.sort(function(a,b){ var x=a.hr||'99:99', y=b.hr||'99:99'; return x===y?0:(x<y?-1:1); });
+  var resto=num(v.OtrosIngresosEfe)-detallado;   // detallado: solo cobros e ingresos (las ventas van aparte)
   if(resto>0) it.push({hr:'', tipo:'Otros ingresos en efectivo', det:'sin detalle en el cierre', monto:resto, sin:true});
   return it;
 }
@@ -968,7 +982,8 @@ function efectivoPorTurno(t){
   var acum=0;
   var h='<div class="hoy-efe"><div class="hoy-efe-tit">Efectivo de hoy, movimiento por movimiento</div>';
   cierres.forEach(function(v,i){
-    var movs=movimientosEfectivo(v,asig.de(v)), ventas=num(v.Efectivo), otros=movs.reduce(function(a,x){ return a+x.monto; },0);
+    var movs=movimientosEfectivo(v,asig.de(v)), conDetalle=hayDato(v.EfectivoDetalle);
+    var ventas=conDetalle?0:num(v.Efectivo), otros=movs.reduce(function(a,x){ return a+x.monto; },0);
     var tot=ventas+otros; acum+=tot;
     var ap=soloHora(v.HoraApertura), ci=soloHora(v.HoraCierre);
     var nVen=hayDato(v.ventas_cantidad)?Math.round(num(v.ventas_cantidad)):null, nEnt=hayDato(v.entregas_pedidos_cantidad)?Math.round(num(v.entregas_pedidos_cantidad)):null;
@@ -976,15 +991,15 @@ function efectivoPorTurno(t){
         '<div class="ht-h">'+(ap&&ci?ap+' a '+ci+' hs':'sin horario')+'</div></div>'+
         '<div class="ht-der"><div class="ht-m">'+pesos(tot)+'</div><div class="ht-a">va sumando '+pesos(acum)+'</div></div></summary>'+
       '<div class="ht-movs">'+
-        '<div class="ht-mov"><span class="ht-hr"></span><div class="ht-d"><b>Ventas y entregas de pedidos</b>'+
-          '<span class="ht-s">incluye entregas con pago parcial en efectivo'+(nVen!==null&&nEnt!==null?' · del turno: '+nVen+' ventas y '+nEnt+' entregas (todos los medios)':'')+'</span></div><span class="ht-p">'+pesos(ventas)+'</span></div>'+
+        (conDetalle?'':'<div class="ht-mov"><span class="ht-hr"></span><div class="ht-d"><b>Ventas y entregas de pedidos</b>'+
+          '<span class="ht-s">incluye entregas con pago parcial en efectivo'+(nVen!==null&&nEnt!==null?' · del turno: '+nVen+' ventas y '+nEnt+' entregas (todos los medios)':'')+'</span></div><span class="ht-p">'+pesos(ventas)+'</span></div>')+
         movs.map(function(x){
           return '<div class="ht-mov'+(x.sin?' sin':'')+'"><span class="ht-hr">'+(x.hr||'')+'</span><div class="ht-d"><b>'+x.tipo+'</b><span class="ht-s">'+escH(x.det)+'</span></div><span class="ht-p">'+pesos(x.monto)+'</span></div>';
         }).join('')+
       '</div></details>';
   });
   return h+'<div class="hoy-turno suma"><div class="ht-n">Efectivo acumulado hoy</div><div class="ht-m">'+pesos(acum)+'</div></div>'+
-    '<div class="ht-nota">El cierre guarda el total de ventas y entregas en efectivo, no cada una por separado.</div></div>';
+    (cierres.some(function(v){ return !hayDato(v.EfectivoDetalle); })?'<div class="ht-nota">Los turnos cerrados antes de esta mejora solo guardan el total de ventas y entregas en efectivo, no cada una.</div>':'')+'</div>';
 }
 var FALLO_HOY=false;   // la nube no contestó y no hay nada guardado para mostrar
 function pintarTotalHoy(){
