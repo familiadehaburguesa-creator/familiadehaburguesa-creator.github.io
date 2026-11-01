@@ -97,12 +97,22 @@ button.mini{padding:5px 10px;font-size:.8rem;border-radius:7px}
 .ht-turno[open] summary::before{content:"▾"}
 .ht-izq{flex:1;min-width:0}
 .ht-movs{padding:0 0 8px 14px}
-.ht-mov{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-top:1px dashed rgba(214,172,90,.15)}
-.ht-hr{flex:none;width:2.8rem;font-size:.75rem;color:#d8cdb9;padding-top:2px}
-.ht-d{flex:1;min-width:0;font-size:.85rem;color:#fff}
-.ht-d b{font-weight:700}
-.ht-s{display:block;font-size:.74rem;color:#d8cdb9;margin-top:1px;word-break:break-word}
-.ht-p{flex:none;font-weight:800;font-size:.95rem;color:var(--verde);white-space:nowrap}
+.ht-mov{display:grid;grid-template-columns:3rem 13rem minmax(0,1fr) auto;align-items:center;gap:8px;padding:7px 0;border-top:1px dashed rgba(214,172,90,.15)}
+.ht-hr{font-size:.75rem;color:#d8cdb9;font-variant-numeric:tabular-nums}
+.ht-tipo{justify-self:start;font-size:.7rem;font-weight:700;padding:3px 8px;border-radius:99px;white-space:nowrap;background:rgba(214,172,90,.15);color:var(--dorado)}
+.ht-tipo.t-venta{background:rgba(62,196,109,.14);color:var(--verde)}
+.ht-tipo.t-deuda{background:rgba(255,196,60,.14);color:var(--amarillo)}
+.ht-tipo.t-ingreso{background:rgba(120,190,255,.14);color:var(--celeste)}
+.ht-d{min-width:0;font-size:.85rem;color:#fff}
+.ht-s{display:block;font-size:.78rem;color:#d8cdb9;word-break:break-word}
+.ht-p{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums;text-align:right;font-weight:800;font-size:.95rem;color:var(--verde);white-space:nowrap}
+.ht-sub{display:flex;justify-content:space-between;gap:10px;padding:8px 0 2px;border-top:1px solid rgba(214,172,90,.3);font-size:.82rem;font-weight:700;color:#fff}
+.ht-sub .ht-p{font-size:1rem}
+@media(max-width:560px){
+  .ht-movs{padding-left:4px}
+  .ht-mov{grid-template-columns:auto 1fr auto;grid-template-areas:"hr tipo p" "d d d";row-gap:3px;padding:9px 0;min-height:44px}
+  .ht-hr{grid-area:hr;font-size:.85rem}.ht-tipo{grid-area:tipo}.ht-p{grid-area:p;font-size:1.1rem}.ht-d{grid-area:d}
+}
 .ht-mov.sin .ht-p{color:var(--amarillo)}
 .ht-nota{font-size:.72rem;color:#d8cdb9;margin-top:8px}
 .hoy-aviso{margin-top:6px;font-size:.88rem;color:#d8cdb9}
@@ -987,11 +997,13 @@ function turnoEfectivoHtml(v,i,mov,acumAntes,abierto){
       '<div class="ht-h">'+(ap&&ci?ap+' a '+ci+' hs':'sin horario')+'</div></div>'+
       '<div class="ht-der"><div class="ht-m">'+pesos(tot)+'</div><div class="ht-a">va sumando '+pesos(acum)+'</div></div></summary>'+
     '<div class="ht-movs">'+
-      (conDetalle?'':'<div class="ht-mov"><span class="ht-hr"></span><div class="ht-d"><b>Ventas y entregas de pedidos</b>'+
+      (conDetalle?'':'<div class="ht-mov"><span class="ht-hr"></span><span class="ht-tipo t-venta">Ventas y entregas</span><div class="ht-d">'+
         '<span class="ht-s">incluye entregas con pago parcial en efectivo'+(nVen!==null&&nEnt!==null?' · del turno: '+nVen+' ventas y '+nEnt+' entregas (todos los medios)':'')+'</span></div><span class="ht-p">'+pesos(ventas)+'</span></div>')+
       movs.map(function(x){
-        return '<div class="ht-mov'+(x.sin?' sin':'')+'"><span class="ht-hr">'+(x.hr||'')+'</span><div class="ht-d"><b>'+x.tipo+'</b><span class="ht-s">'+escH(x.det)+'</span></div><span class="ht-p">'+pesos(x.monto)+'</span></div>';
+        var cl=x.venta?'t-venta':(x.tipo==='Cobro de deuda'?'t-deuda':(x.tipo==='Ingreso que no es venta'?'t-ingreso':''));
+        return '<div class="ht-mov'+(x.sin?' sin':'')+'"><span class="ht-hr">'+(x.hr||'')+'</span><span class="ht-tipo '+cl+'">'+x.tipo+'</span><div class="ht-d"><span class="ht-s">'+escH(x.det)+'</span></div><span class="ht-p">'+pesos(x.monto)+'</span></div>';
       }).join('')+
+      '<div class="ht-sub"><span>Subtotal efectivo del turno</span><span class="ht-p">'+pesos(tot)+'</span></div>'+
     '</div></details>';
   return {h:h, tot:tot, acum:acum};
 }
