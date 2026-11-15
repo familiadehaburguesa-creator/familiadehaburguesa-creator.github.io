@@ -75,8 +75,46 @@
       .catch(function () { clearTimeout(tm); enviando = false; fallo(); });
   }
 
+  /** POST directo (fuera de la cola) con espera: se usa cuando el servidor tiene que decidir en el momento (codigo de socio).
+      Resuelve con la respuesta JSON (ok:true, o ok:false con motivo/error); rechaza si no hay conexion, si tarda mas de timeoutMs o si no es JSON. */
+  function enviarDirecto(cuerpo) {
+    return new Promise(function (resolve, reject) {
+      var ac = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+      var tm = setTimeout(function () { if (ac) { try { ac.abort(); } catch (e) {} } reject(new Error('tiempo agotado')); }, CFG.directoMs || 20000);
+      var opt = { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(cuerpo) };
+      if (ac) opt.signal = ac.signal;
+      fetch(FDH_STOCK.url, opt)
+        .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+        .then(function (tx) { clearTimeout(tm); try { resolve(JSON.parse(tx)); } catch (e) { reject(new Error('respuesta ilegible')); } })
+        .catch(function (e) { clearTimeout(tm); reject(e); });
+    });
+  }
+
   var FDH_STOCK = {
     url: '',
+    nuevoId: nuevoId,
+    /** Manda UN movimiento SIN pasar por la cola, con el codigo de un socio. El codigo va en el pedido y no se guarda en ningun lado.
+        El movimiento conserva su id: si se reintenta (por ejemplo tras un corte), el servidor no lo duplica. */
+    confirmar: function (mov, socio) {
+      if (!mov.id) mov.id = nuevoId();
+      return enviarDirecto({ accion: 'stockMovimiento', id: mov.id, tipo: mov.tipo, referencia: mov.referencia || '', quien: mov.quien || '',
+        turnoDe: mov.turnoDe || '', turno: mov.turno || '', deltas: mov.deltas || {}, contado: mov.contado || {}, motivo: mov.motivo || '',
+        detalle: mov.detalle || '', socio: { nombre: socio.nombre, codigo: socio.codigo } });
+    },
+    /** Solo verifica nombre y codigo de un socio (por ejemplo para habilitar la correccion de la apertura). */
+    verificarSocio: function (socio) { return enviarDirecto({ accion: 'socioVerificar', nombre: socio.nombre, codigo: socio.codigo }); },
+    /** Lee si la regla de socio esta activa en el servidor (GET ?estado=stock). Resuelve {ok, modo, exigirSocio}. */
+    regla: function () {
+      return new Promise(function (resolve, reject) {
+        var ac = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+        var tm = setTimeout(function () { if (ac) { try { ac.abort(); } catch (e) {} } reject(new Error('tiempo agotado')); }, CFG.reglaMs || 8000);
+        var opt = { cache: 'no-store' }; if (ac) opt.signal = ac.signal;
+        fetch(FDH_STOCK.url + (FDH_STOCK.url.indexOf('?') < 0 ? '?' : '&') + 'estado=stock', opt)
+          .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+          .then(function (tx) { clearTimeout(tm); try { resolve(JSON.parse(tx)); } catch (e) { reject(new Error('respuesta ilegible')); } })
+          .catch(function (e) { clearTimeout(tm); reject(e); });
+      });
+    },
     registrar: function (mov) {
       var m = {};
       ['tipo', 'referencia', 'quien', 'turnoDe', 'turno', 'deltas', 'contado', 'motivo', 'detalle'].forEach(function (c) { if (mov[c] !== undefined) m[c] = mov[c]; });
