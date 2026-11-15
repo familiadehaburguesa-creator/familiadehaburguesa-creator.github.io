@@ -6,6 +6,7 @@
    API: FDH_COLA.url = '<endpoint>';
         FDH_COLA.escribir(hoja, fila, {alConfirmar(resp), alRechazar(motivo)}) -> id
         FDH_COLA.accion({accion:'estadoPedido', ...}, {alConfirmar, alRechazar}) -> id   (misma cola, mismo reintento)
+        FDH_COLA.directo({accion:'turnoAbrir', ...}, ms) -> Promise con la respuesta (sin cola: el servidor decide en el momento)
         FDH_COLA.estado() -> {pendientes, rechazadas, enviando, ultimoOk};  FDH_COLA.onCambio(fn);  FDH_COLA.reintentarYa()
         FDH_COLA.pendientesSalvo(id) -> cuantas hay sin confirmar sin contar la indicada (para frenar un cierre)
    Pruebas: window.FDH_COLA_CFG = {timeoutMs, esperas, arranqueMs, sinIndicador}. */
@@ -104,11 +105,26 @@
     },
     /** Accion al servidor (ej. {accion:'estadoPedido', ...}) por la misma cola: se reintenta hasta que el servidor confirma. Devuelve el ID. */
     accion: function (cuerpo, op) {
-      var m = { id: nuevoId(), cuerpo: cuerpo, t: Date.now() };
+      var m = { id: nuevoId(), t: Date.now() };
+      m.cuerpo = {}; for (var kk in cuerpo) m.cuerpo[kk] = cuerpo[kk]; m.cuerpo.id = m.id;      // el servidor deduplica por este ID
       devs[m.id] = op || {};
       var cola = leer(K_COLA, []); cola.push(m); guardar(K_COLA, cola);
       avisar(); programar(0);
       return m.id;
+    },
+    /** POST directo y con espera (no pasa por la cola): para lo que el servidor tiene que decidir en el momento (abrir un turno, anular).
+        Resuelve con la respuesta JSON ({ok:...}); rechaza si no hay conexion, tarda mas de ms o la respuesta no es JSON. */
+    directo: function (cuerpo, ms) {
+      return new Promise(function (resolve, reject) {
+        var ac = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+        var tm = setTimeout(function () { if (ac) { try { ac.abort(); } catch (e) {} } reject(new Error('tiempo agotado')); }, ms || CFG.directoMs || 25000);
+        var opt = { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(cuerpo) };
+        if (ac) opt.signal = ac.signal;
+        fetch(FDH_COLA.url, opt)
+          .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+          .then(function (tx) { clearTimeout(tm); try { resolve(JSON.parse(tx)); } catch (e) { reject(new Error('respuesta ilegible')); } })
+          .catch(function (e) { clearTimeout(tm); reject(e); });
+      });
     },
     estado: estado,
     pendientesSalvo: function (id) { return leer(K_COLA, []).filter(function (x) { return x.id !== id; }).length; },
