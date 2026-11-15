@@ -240,6 +240,7 @@ button.sec:hover{background:#33291a;color:#fff}
 
 <footer><span class="lema">CASERAS · RICAS · DE VERDAD · EST. 2024</span>Con el favor y la guía de Dios, vivamos y alcancemos la Visión 🙏🚀 · Familia de Hamburguesa · Plan de Transformación 2026</footer>
 
+<script src="fdh_red.js"></script>
 <script>
 const $=id=>document.getElementById(id);
 const hoy=()=>new Date().toISOString().slice(0,10);
@@ -247,7 +248,7 @@ const ahora=()=>new Date().toLocaleString('es-AR',{day:'2-digit',month:'2-digit'
 const peso=n=>'$'+Number(n||0).toLocaleString('es-AR');
 $('fechaHoy').textContent=new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 function leer(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}}
-/* ☁️ Lectura de la nube (cuaderno central) por JSONP, para no chocar con CORS */
+/* ☁️ Lectura de la nube (cuaderno central) con FDH_RED (fetch; el MENSAJERO responde con CORS) */
 const NUBE_URL='https://script.google.com/macros/s/AKfycbxfraGEgAFUeypW4D9wsEct90sH4DRZjOJsQiky-WZtF41qPOaul9HDlgSjynwHAjpk/exec';
 let datosNube=null;
 /* Caché de exhibición: última respuesta buena de la nube en esta pestaña
@@ -265,35 +266,30 @@ function pintarCacheSesion(){
    cargar();
  }catch(e){}
 }
+let nubeSeq=0;
 function cargarNube(){
- const cb='nubeCB_'+Date.now();
+ /* P-3 (Fase 1): el pedido va por FDH_RED (fetch con reintentos y tiempo maximo) en vez de JSONP.
+    Si un intento tarda mas de 12 s se lanza otro sin cancelar el primero: gana el que responda antes. */
+ const mi=++nubeSeq;
  const aviso=$('nubeEstado');
- if(aviso){aviso.textContent='☁️ Trayendo datos de todos los dispositivos...';aviso.className='nube-estado cargando';aviso.style.display='inline-flex'}
- let listo=false;
- window[cb]=function(resp){
-   listo=true;
-   if(resp&&resp.ok&&resp.datos){
-     datosNube=resp.datos;
-     if(aviso){aviso.textContent='✓ Datos de la nube actualizados';aviso.className='nube-estado ok';setTimeout(()=>{aviso.style.display='none'},4000)}
-     cargar(); /* re-render con los datos completos */
-     try{ sessionStorage.setItem(KCACHE_NUBE,JSON.stringify({datos:resp.datos})); }catch(e){}
-   } else if(aviso){aviso.textContent='⚠️ No se pudo traer la nube (muestro lo de esta compu)';aviso.className='nube-estado error'}
-   limpiar();
- };
- const s=document.createElement('script');
+ function pill(txt,cls){ if(aviso){aviso.textContent=txt;aviso.className='nube-estado '+cls;aviso.style.display='inline-flex'} }
+ pill('☁️ Trayendo datos de todos los dispositivos...','cargando');
  /* P-1 (Fase 1): solo las 6 hojas que el Tablero usa. Antes pedia las 10 (incluida Auditoria,
     544 KB) y tardaba 5,3 s; con las 6 tarda 3,4 s. Un MENSAJERO que no entienda ?hojas= devuelve todo
     y el Tablero sigue funcionando (usa solo estas 6 de lo que llegue). */
- s.id=cb;s.src=NUBE_URL+'?hojas='+encodeURIComponent('Ventas,Producción,Gastos,Mayoristas,Deudas,Pedidos')+'&callback='+cb+'&t='+Date.now();
- s.onerror=avisar;
- document.body.appendChild(s);
- /* mismo fix que Producción: no borrar el callback apenas se avisa el
-    error, para que una respuesta tardía de la nube (4-12s+ documentado)
-    no choque con un ReferenceError y se pueda seguir aprovechando. */
- setTimeout(avisar,20000);
- setTimeout(function(){ if(!listo) limpiar(); },35000);
- function avisar(){ if(listo) return; if(aviso){aviso.textContent='⚠️ Sin conexión a la nube (muestro lo local)';aviso.className='nube-estado error'} }
- function limpiar(){ try{ delete window[cb]; }catch(e){} if(s.parentNode) s.parentNode.removeChild(s); }
+ const url=NUBE_URL+'?hojas='+encodeURIComponent('Ventas,Producción,Gastos,Mayoristas,Deudas,Pedidos')+'&t='+Date.now();
+ FDH_RED.pedir(url,{onEstado:function(e){ if(mi===nubeSeq) pill('⚠️ La nube tarda · reintentando ('+e.intento+' de '+e.de+')…','cargando'); }})
+ .then(function(resp){
+   if(resp&&resp.ok&&resp.datos){
+     datosNube=resp.datos;
+     if(mi===nubeSeq){ pill('✓ Datos de la nube actualizados','ok'); setTimeout(()=>{ if(mi===nubeSeq) aviso.style.display='none' },4000) }
+     cargar(); /* re-render con los datos completos */
+     try{ sessionStorage.setItem(KCACHE_NUBE,JSON.stringify({datos:resp.datos})); }catch(e){}
+   } else if(mi===nubeSeq){ pill('⚠️ No se pudo traer la nube (muestro lo de esta compu)','error') }
+ })
+ .catch(function(){
+   if(mi===nubeSeq) pill('⚠️ Sin conexión a la nube (muestro lo local) · tocá 🔄 Actualizar para reintentar','error');
+ });
 }
 function burgy(m){$('burgyDice').textContent=m}
 function toggle(id){$(id).classList.toggle('abierto')}
