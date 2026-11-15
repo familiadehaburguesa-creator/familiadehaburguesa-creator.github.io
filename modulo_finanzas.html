@@ -392,6 +392,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(1) brightness(
 
 <footer><span class="lema">CASERAS · RICAS · DE VERDAD · EST. 2024</span>Con el favor y la guía de Dios, vivamos y alcancemos la Visión 🙏🚀 · Familia de Hamburguesa · Plan de Transformación 2026</footer>
 
+<script src="fdh_red.js"></script>
 <script>
 /* ============================================================================
    FINANZAS v2 — pantalla de LECTURA (saneamiento del 19/08, validado con Samu)
@@ -456,23 +457,18 @@ function burgy(m){ $('burgyDice').textContent=m; }
 function ahora(){ return new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',hour12:false}); }
 
 /* ===== nube: UNA consulta trae todas las hojas ===== */
-var cbN=0;
+/* P-3 (Fase 1): el pedido va por FDH_RED (fetch con reintentos y tiempo maximo) en vez de JSONP.
+   Si un intento tarda mas de 12 s se lanza otro SIN cancelar el primero: gana el que responda antes
+   (una respuesta lenta se sigue aprovechando, como antes). ok(r) recibe la respuesta; ok(null) si
+   fallaron los 3 intentos o se agoto el tiempo. Solo las 5 hojas que Finanzas usa (MENSAJERO V26+,
+   ?hojas=): un script viejo ignora el parametro y devuelve todo, y sigue funcionando. */
+var nubeSeq=0;
 function traerTodo(ok){
-  var nombre='fdhfin'+(++cbN), listo=false, avisado=false;
-  window[nombre]=function(r){ listo=true; try{ ok(r); }catch(e){} limpiar(); };
-  var s=document.createElement('script');
-  /* Solo las 5 hojas que Finanzas usa (MENSAJERO Version 26+, ?hojas=). Un script viejo
-     ignora el parametro y devuelve todo: sigue funcionando, solo que mas pesado. */
-  s.src=NUBE_URL+'?hojas=Ventas,Deudas,Gastos,Fondos,Tesoreria&callback='+nombre;
-  s.onerror=avisar;
-  document.head.appendChild(s);
-  /* El aviso de error sale a los 20 s, pero el callback sigue vivo hasta los 35 s: si la nube
-     contesta tarde, el dato se aprovecha en vez de chocar con un callback ya borrado (igual
-     que Fabrica, Tablero y Ventas). */
-  setTimeout(avisar,20000);
-  setTimeout(function(){ if(!listo) limpiar(); },35000);
-  function avisar(){ if(listo||avisado) return; avisado=true; try{ ok(null); }catch(e){} }
-  function limpiar(){ try{ delete window[nombre]; }catch(e){} if(s.parentNode) s.parentNode.removeChild(s); }
+  var mi=++nubeSeq;
+  FDH_RED.pedir(NUBE_URL+'?hojas=Ventas,Deudas,Gastos,Fondos,Tesoreria',
+    {onEstado:function(e){ if(mi===nubeSeq) nubeEstado('cargando','⚠️ La nube tarda · reintentando ('+e.intento+' de '+e.de+')…'); }})
+  .then(function(r){ try{ ok(r); }catch(e){} })
+  .catch(function(){ try{ ok(null); }catch(e){} });
 }
 function subirNube(hoja,fila){
   try{
