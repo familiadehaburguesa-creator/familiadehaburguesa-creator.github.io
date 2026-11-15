@@ -556,6 +556,8 @@ label.obligatorio::after{content:" *";color:#ff7a6e;font-weight:800}
         <div class="conpeso"><span>$</span><input id="aCaja" value="" placeholder="0"></div>
         <div class="nota">El cambio con el que arranca el turno.</div>
       </div>
+      <div class="aviso info oculto" id="aperturaAviso" style="font-size:12.5px"></div>
+      <button class="btn gris chico oculto" id="btnAperturaCorregir" type="button" style="margin-bottom:10px">Corregir con código de socio</button>
       <button class="btn" id="btnAbrir">Abrir turno</button>
     </div>
     <div class="caja" id="cajaFabrica">
@@ -624,6 +626,7 @@ label.obligatorio::after{content:" *";color:#ff7a6e;font-weight:800}
         <button class="btn gris chico" id="btnRetiro">Retirar plata</button>
         <button class="btn gris chico" id="btnIngPlata">Entró plata</button>
       </div>
+      <div id="ingresosPend" style="margin-top:10px"></div>
     </div>
 
     <div class="caja">
@@ -1043,6 +1046,26 @@ label.obligatorio::after{content:" *";color:#ff7a6e;font-weight:800}
 
 </div>
 
+<!-- S-1c: "Lo carga un socio" (el codigo no se guarda en ningun lado; lo verifica el servidor) -->
+<div id="modalSocio" role="dialog" aria-modal="true" aria-labelledby="socTitulo">
+  <div class="cuadro">
+    <h2 id="socTitulo">Lo carga un socio</h2>
+    <div class="nota" id="socTexto" style="margin-bottom:10px"></div>
+    <div class="campo"><label for="socNombre">¿Qué socio sos?</label><select id="socNombre"></select></div>
+    <div class="campo"><label for="socCodigo">Tu código personal</label><input id="socCodigo" type="password" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="● ● ● ● ● ●"></div>
+    <div id="socMsg"></div>
+    <button class="btn" id="socOk" type="button">Confirmar</button>
+    <button class="btn gris chico oculto" id="socPend" type="button" style="margin-top:8px">Dejar pendiente (sin conexión)</button>
+    <button class="btn gris chico" id="socNo" type="button" style="margin-top:8px">Cancelar</button>
+  </div>
+</div>
+<style>
+#modalSocio{position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(0,0,0,.78);z-index:9999;display:none;align-items:center;justify-content:center;padding:14px}
+#modalSocio.ver{display:flex}
+#modalSocio .cuadro{width:100%;max-width:380px;max-height:94vh;overflow:auto;background:#1c1812;border:1px solid #6b5a33;border-radius:16px;padding:16px}
+#modalSocio .cuadro h2{margin:0 0 6px}
+#modalSocio #socCodigo{letter-spacing:6px;text-align:center;font-size:20px}
+</style>
 <script src="fdh_red.js"></script>
 <script src="fdh_stock.js"></script>
 <script>
@@ -1328,6 +1351,143 @@ function pintarStockSync(e){
   else h = '\u2713 Registrado en la planilla de stock';
   el.textContent = h;
   el.style.color = e.rechazados ? '#f2a6a4' : (e.pendientes ? '#f2c14e' : '');
+}
+
+/* ---------------------- "LO CARGA UN SOCIO" (S-1c) ----------------------
+   Regla no negociable de Samu: la mercaderia de CARNES, corregir el stock y fijar el saldo inicial solo los carga un SOCIO con su
+   codigo personal, en el momento. El codigo viaja dentro del pedido (HTTPS) y NO se guarda en ningun lado; lo verifica el servidor.
+   Mientras la regla no este activa en el servidor (GET ?estado=stock), todo funciona como antes. */
+var SOCIOS = ['Pablo','Paula','Cielo','Yami','Samu'];
+var REGLA_SOCIO = false;                 // ultimo valor conocido de "exigirSocio" del servidor
+var _modalSocio = null;
+function leerRegla(cb){                  // cb(exigir); si el servidor no contesta se usa el ultimo valor conocido
+  var listo = false;
+  function fin(v){ if (listo) return; listo = true; cb(v); }
+  try{ FDH_STOCK.regla().then(function(r){ REGLA_SOCIO = !!(r && r.exigirSocio); fin(REGLA_SOCIO); }).catch(function(){ fin(REGLA_SOCIO); }); }
+  catch(e){ fin(REGLA_SOCIO); }
+}
+function msgSocio(h, tipo){ $('socMsg').innerHTML = h ? '<div class="aviso ' + (tipo || 'rojo') + '" style="margin:8px 0">' + h + '</div>' : ''; }
+/** cfg: {titulo, texto, enviar(socio)->Promise, listo(respuesta, nombre), pendiente: function|null} */
+function modalSocio(cfg){
+  _modalSocio = cfg;
+  var sel = $('socNombre'), ult = '';
+  try{ ult = sessionStorage.getItem('fdh_ult_socio') || ''; }catch(e){}
+  sel.innerHTML = SOCIOS.map(function(s){ return '<option' + (s === ult ? ' selected' : '') + '>' + s + '</option>'; }).join('');
+  $('socTitulo').textContent = cfg.titulo || 'Lo carga un socio';
+  $('socTexto').textContent = cfg.texto || '';
+  $('socCodigo').value = ''; msgSocio('');
+  $('socOk').disabled = false;
+  $('socPend').classList.add('oculto');
+  $('modalSocio').classList.add('ver');
+  setTimeout(function(){ try{ $('socCodigo').focus(); }catch(e){} }, 50);
+}
+function cerrarSocio(){ $('socCodigo').value = ''; $('modalSocio').classList.remove('ver'); _modalSocio = null; }
+function confirmarSocio(){
+  var cfg = _modalSocio; if (!cfg) return;
+  var nombre = $('socNombre').value, cod = ($('socCodigo').value || '').trim();
+  if (!/^\d{4,10}$/.test(cod)){ msgSocio('Escribí tu código personal (solo números).'); return; }
+  $('socOk').disabled = true; msgSocio('Verificando…', 'info');
+  var done = function(){ $('socCodigo').value = ''; $('socOk').disabled = false; };
+  cfg.enviar({nombre: nombre, codigo: cod}).then(function(j){
+    done();
+    if (j && j.ok){ try{ sessionStorage.setItem('fdh_ult_socio', nombre); }catch(e){} cerrarSocio(); cfg.listo(j, nombre); }
+    else { msgSocio((j && j.error) ? j.error : 'No se pudo verificar el código.'); }
+  }).catch(function(){
+    done();
+    msgSocio('No hay conexión con la planilla: ahora no se puede confirmar.' + (cfg.pendiente ? ' Podés dejarlo pendiente y confirmarlo cuando vuelva.' : ''));
+    if (cfg.pendiente) $('socPend').classList.remove('oculto');
+  });
+}
+
+/* Ingresos de carnes que llegaron sin conexion: quedan PENDIENTES (no suman al stock) hasta que un socio los confirme con su codigo. */
+var K_PEND_ING = 'fdh_ingresos_pend_v1', PEND_EN_CURSO = 0;
+function leerPendIng(){ try{ return JSON.parse(localStorage.getItem(K_PEND_ING) || '[]'); }catch(e){ return []; } }
+function guardarPendIng(l){ try{ localStorage.setItem(K_PEND_ING, JSON.stringify(l)); }catch(e){} }
+function pintarPendIng(){
+  var el = $('ingresosPend'); if (!el) return;
+  var l = leerPendIng();
+  if (!l.length){ el.innerHTML = ''; return; }
+  el.innerHTML = l.map(function(p, i){
+    return '<div class="aviso ambar" style="margin-bottom:8px">\u23f3 Ingreso pendiente de confirmar: <b>' + miles(p.c) + ' carnes</b> (' + String(p.de || '').toLowerCase() +
+           '). No suma al stock hasta que un socio lo confirme.<br><button type="button" class="btn chico" style="margin-top:8px" data-pend-conf="' + i + '">Confirmar con código de socio</button></div>';
+  }).join('');
+}
+function dejarIngresoPendiente(c){
+  var l = leerPendIng(); l.push({t: Date.now(), c: c, de: $('iDe').value, quien: $('iQuien').value});
+  guardarPendIng(l); cerrarSocio();
+  anotar('Ingreso de carnes pendiente', miles(c) + ' carnes \u00b7 falta el c\u00f3digo de un socio (sin conexi\u00f3n)', '');
+  guardarTurno(); pintarMovs(); pintarPendIng(); mostrar('pTurno');
+}
+function confirmarPendiente(i){
+  var p = leerPendIng()[i]; if (!p) return;
+  PEND_EN_CURSO = p.t;
+  $('iQue').value = 'carne'; $('iCant').value = ''; ponerNumero('iCant', p.c);
+  try{ $('iDe').value = p.de; $('iQuien').value = p.quien; }catch(e){}
+  espejoIngreso(); $('avisoIngreso').innerHTML = '<div class="aviso info">Tocá "Sumar al stock" y poné el código de un socio para confirmar este ingreso.</div>';
+  mostrar('pIngreso'); traerFabrica();
+}
+
+function detalleIngresoCarnes(c, socio, salvedad){
+  return miles(c) + ' carnes \u00b7 ' + $('iDe').value.toLowerCase() + ' \u00b7 recibi\u00f3 ' + socio + ' \u00b7 carg\u00f3 ' + (usuarioActivo() || '?') + (salvedad ? ' \u00b7 \u26a0 ' + salvedad : '');
+}
+/** Punto de entrada del ingreso: carnes pide socio (si la regla esta activa); panes y cheddar siguen como antes. */
+function ingresarMercaderia(que, c, fabricaNuevo, salvedad){
+  if (que !== 'carne') return confirmarIngreso(que, c, fabricaNuevo, salvedad);
+  $('avisoIngreso').innerHTML = '<div class="aviso info">Verificando…</div>';
+  leerRegla(function(exigir){
+    $('avisoIngreso').innerHTML = '';
+    if (!exigir) return confirmarIngreso(que, c, fabricaNuevo, salvedad);
+    var mov = {id: FDH_STOCK.nuevoId(), tipo: 'INGRESO', deltas: {carne: c}, turnoDe: T.quien};
+    modalSocio({
+      titulo: 'Lo carga un socio',
+      texto: 'Ingreso de ' + miles(c) + ' carnes. Para sumarlas al stock hace falta el código personal de un socio.',
+      enviar: function(socio){ mov.quien = socio.nombre; mov.detalle = detalleIngresoCarnes(c, socio.nombre, salvedad); return FDH_STOCK.confirmar(mov, socio); },
+      listo: function(j, nombre){ confirmarIngreso(que, c, fabricaNuevo, salvedad, {socio: j.socio || nombre}); },
+      pendiente: function(){ dejarIngresoPendiente(c); }
+    });
+  });
+}
+
+/* Apertura: con la regla activa el turno arranca con lo que dejo el cierre anterior (el libro); cambiarlo, o cargar el primer saldo, lo hace un socio. */
+var APERTURA_LIBRO = null;      // {hay:boolean}; null = no se pudo leer el libro
+var APERTURA_SOCIO = '';        // socio que habilito la correccion de la apertura
+function bloquearApertura(si){ ['aCarne','aPanJ','aPanS','aChe','aPack'].forEach(function(id){ var e = $(id); if (e) e.readOnly = !!si; }); }
+function prepararApertura(){
+  APERTURA_SOCIO = ''; APERTURA_LIBRO = null; bloquearApertura(false);
+  ver('aperturaAviso', false); ver('btnAperturaCorregir', false);
+  leerRegla(function(exigir){
+    if (!exigir) return;
+    FDH_RED.pedir(NUBE + '?hoja=StockActual', {totalMs: 12000, maxIntentos: 2}).then(function(r){
+      var d = (r && r.ok && r.datos) || [];
+      if (d.length !== 5) return;
+      var hay = String(d[0].UltimoMovimiento || '') !== 'sin movimientos';
+      APERTURA_LIBRO = {hay: hay};
+      if (hay){
+        ['aCarne','aPanJ','aPanS','aChe','aPack'].forEach(function(id, i){ $(id).value = String(Math.max(0, Math.round(Number(d[i].Saldo) || 0))); });
+        bloquearApertura(true); espejoApertura();
+        $('aperturaAviso').textContent = 'Arrancás con lo que dejó el cierre anterior. Si no coincide con lo que hay, un socio lo corrige con su código.';
+        ver('aperturaAviso', true); ver('btnAperturaCorregir', true);
+      } else {
+        $('aperturaAviso').textContent = 'Es la primera vez que se carga el stock en la planilla: lo carga un socio con su código al abrir el turno.';
+        ver('aperturaAviso', true);
+      }
+    }).catch(function(){ APERTURA_LIBRO = null; });
+  });
+}
+function intentarAbrir(){
+  if (!REGLA_SOCIO || !APERTURA_LIBRO) return abrirTurno();            // regla apagada o libro no legible: como antes
+  if (!APERTURA_LIBRO.hay){                                             // primer saldo inicial: lo carga un socio
+    var mov = {id: FDH_STOCK.nuevoId(), tipo: 'APERTURA', turnoDe: $('aQuien').value,
+               contado: numerosStock({carne: ent($('aCarne').value), panJ: ent($('aPanJ').value), panS: ent($('aPanS').value), che: ent($('aChe').value), pack: ent($('aPack').value)})};
+    return modalSocio({
+      titulo: 'Lo carga un socio',
+      texto: 'Es el primer saldo de stock en la planilla: lo carga un socio con su código personal.',
+      enviar: function(socio){ mov.quien = socio.nombre; mov.detalle = 'Saldo inicial: apertura del turno'; return FDH_STOCK.confirmar(mov, socio); },
+      listo: function(j, nombre){ abrirTurno({registrado: true, socio: j.socio || nombre}); },
+      pendiente: null
+    });
+  }
+  abrirTurno(APERTURA_SOCIO ? {corrigio: APERTURA_SOCIO} : null);
 }
 
 /** POST al Cuaderno. No se puede confirmar (respuesta opaca), así que se avisa. */
@@ -3022,7 +3182,7 @@ function guardarIngreso(){
       // dato que carga otro. Se suma al local y queda anotado que la fabrica
       // no se pudo descontar.
       if (!f.sabido){
-        confirmarIngreso(que, c, null, 'no se pudo descontar de la fábrica: no hay parte cargado');
+        ingresarMercaderia(que, c, null, 'no se pudo descontar de la fábrica: no hay parte cargado');
         return;
       }
       // La fábrica solo entrega lo que tiene en los freezers ("Disponible
@@ -3033,30 +3193,32 @@ function guardarIngreso(){
           '</b>. Si de verdad llegó esa cantidad, primero actualizá los freezers en Fábrica.</div>';
         return;
       }
-      confirmarIngreso(que, c, {listas: f.listas - c, camara: f.camara, deCamara: 0}, '');
+      ingresarMercaderia(que, c, {listas: f.listas - c, camara: f.camara, deCamara: 0}, '');
     });
     return;
   }
 
   // De un proveedor o de otro local: entra al local y la fabrica no se toca.
-  confirmarIngreso(que, c, null, '');
+  ingresarMercaderia(que, c, null, '');
 }
 
 /**
  * @param fabricaNuevo  {listas, camara, deCamara}: lo que le queda a la fabrica
  *                      despues del envio, o null si no salio de la fabrica.
  */
-function confirmarIngreso(que, c, fabricaNuevo, salvedad){
+function confirmarIngreso(que, c, fabricaNuevo, salvedad, verif){
   T.entr[que] += c;
   T.stock[que] += c;
+  // Si venia de un ingreso pendiente, ya queda confirmado.
+  if (verif && PEND_EN_CURSO){ guardarPendIng(leerPendIng().filter(function(p){ return p.t !== PEND_EN_CURSO; })); PEND_EN_CURSO = 0; pintarPendIng(); }
 
   var nombres = {carne:'carnes', panJ:'panes de Julio', panS:'panes de José', che:'barras de cheddar', pack:'packs de cheddar'};
   var deDonde = $('iDe').value;
-  var quien = $('iQuien').value;
+  var quien = (verif && verif.socio) ? verif.socio : $('iQuien').value;   // con regla activa: el socio verificado
 
   // Libro de stock: el ingreso queda registrado en la planilla (modo sombra: solo registro).
   var _dIng = {}; _dIng[que] = c;
-  stockRegistrar('INGRESO', {deltas: _dIng, quien: quien,
+  if (!verif) stockRegistrar('INGRESO', {deltas: _dIng, quien: quien,     // con socio verificado ya lo registro el servidor
     detalle: miles(c) + ' ' + nombres[que] + ' \u00b7 ' + deDonde.toLowerCase() + ' \u00b7 recibi\u00f3 ' + quien + ' \u00b7 carg\u00f3 ' + (usuarioActivo() || '?') + (salvedad ? ' \u00b7 \u26a0 ' + salvedad : '')});
 
   anotar('Llegó mercadería',
@@ -3129,19 +3291,34 @@ function guardarAjusteStock(){
   var quien = $('ajQuien').value;
   var motivo = $('ajMotivo').value.trim();
 
-  T.stock[que] = nuevo;
-  // Libro de stock: la correccion queda registrada con quien la hizo y el motivo (modo sombra: solo registro).
   var _cont = {}; _cont[que] = nuevo;
-  stockRegistrar('AJUSTE', {contado: _cont, motivo: motivo || '(sin motivo indicado)', quien: quien,
-    detalle: 'Corrigi\u00f3 por error de carga: el sistema dec\u00eda ' + anterior});
-  anotar('Corrigió por error de carga',
-    NOMBRES_INSUMO[que] + ': ' + miles(anterior) + ' → ' + miles(nuevo) + ' · corrigió ' + quien +
-    (motivo ? ' · ' + motivo : ''),
-    '');
-
-  guardarTurno();
-  pintarKPIs(); pintarMovs(); pintarReservas(); pintarStockTurno();
-  mostrar('pTurno');
+  function aplicarAjuste(quienFinal, yaRegistrado){
+    T.stock[que] = nuevo;
+    // Libro de stock: la correccion queda registrada con quien la hizo y el motivo (con socio verificado ya la registro el servidor).
+    if (!yaRegistrado) stockRegistrar('AJUSTE', {contado: _cont, motivo: motivo || '(sin motivo indicado)', quien: quienFinal,
+      detalle: 'Corrigi\u00f3 por error de carga: el sistema dec\u00eda ' + anterior});
+    anotar('Corrigió por error de carga',
+      NOMBRES_INSUMO[que] + ': ' + miles(anterior) + ' → ' + miles(nuevo) + ' · corrigió ' + quienFinal +
+      (motivo ? ' · ' + motivo : ''),
+      '');
+    guardarTurno();
+    pintarKPIs(); pintarMovs(); pintarReservas(); pintarStockTurno();
+    mostrar('pTurno');
+  }
+  $('avisoAjuste').innerHTML = '<div class="aviso info">Verificando…</div>';
+  leerRegla(function(exigir){
+    $('avisoAjuste').innerHTML = '';
+    if (!exigir) return aplicarAjuste(quien, false);
+    var mov = {id: FDH_STOCK.nuevoId(), tipo: 'AJUSTE', contado: _cont, motivo: motivo || '(sin motivo indicado)', turnoDe: T.quien,
+               detalle: 'Corrigi\u00f3 por error de carga: el sistema dec\u00eda ' + anterior};
+    modalSocio({
+      titulo: 'Lo carga un socio',
+      texto: 'Corregir ' + NOMBRES_INSUMO[que] + ': de ' + miles(anterior) + ' a ' + miles(nuevo) + '. Hace falta el código personal de un socio.',
+      enviar: function(socio){ mov.quien = socio.nombre; return FDH_STOCK.confirmar(mov, socio); },
+      listo: function(j, nombre){ aplicarAjuste(j.socio || nombre, true); },
+      pendiente: null
+    });
+  });
 }
 
 /* ---------------------- retiro de caja ---------------------- */
@@ -3721,7 +3898,7 @@ function llenarGente(sels){
   });
 }
 
-function abrirTurno(){
+function abrirTurno(opts){
   T = turnoNuevo();
   T.quien = $('aQuien').value;
   T.desde = hora();
@@ -3735,8 +3912,12 @@ function abrirTurno(){
   T.stock = {carne:T.ini.carne, panJ:T.ini.panJ, panS:T.ini.panS, che:T.ini.che, pack:T.ini.pack};
   T.caja = T.ini.caja;
   // Libro de stock: lo tipeado al abrir se compara con el libro (modo sombra: no cambia ningun saldo).
-  stockRegistrar('APERTURA', {contado: numerosStock(T.ini), turnoDe: T.quien,
-    detalle: 'Apertura del turno \u00b7 stock tipeado por ' + (usuarioActivo() || T.quien)});
+  if (!(opts && opts.registrado)){      // con el primer saldo cargado por un socio, ya lo registro el servidor
+    var _ap = {contado: numerosStock(T.ini), turnoDe: T.quien,
+      detalle: 'Apertura del turno \u00b7 ' + (opts && opts.corrigio ? 'stock corregido por el socio ' + opts.corrigio : 'stock tipeado por ' + (usuarioActivo() || T.quien))};
+    if (opts && opts.corrigio) _ap.quien = opts.corrigio;
+    stockRegistrar('APERTURA', _ap);
+  }
   anotar('Se abrió el turno', T.quien + ' · caja con ' + pesos(T.ini.caja), '');
   guardarTurno();
   entrarAlTurno();
@@ -3785,7 +3966,7 @@ function entrarAlTurno(){
 }
 
 function iniciar(){
-  FDH_STOCK.url = NUBE; FDH_STOCK.onCambio(pintarStockSync); pintarStockSync();
+  FDH_STOCK.url = NUBE; FDH_STOCK.onCambio(pintarStockSync); pintarStockSync(); pintarPendIng();
   cargarPrecios();
   llenarGente(['aQuien','iQuien','ajQuien','rQuien','pfQuien','dcQuien','ipQuien']);
   llenarIngresoPlata();
@@ -3793,7 +3974,7 @@ function iniciar(){
 
   var t = cargarTurno();
   if (t){ T = t; entrarAlTurno(); }
-  else { mostrar('pApertura'); traerFabrica(); }
+  else { mostrar('pApertura'); traerFabrica(); prepararApertura(); }
 
   ['aCarne','aPanJ','aPanS'].forEach(function(id){ $(id).addEventListener('input', espejoApertura); });
   ['zCarne','zPanJ','zPanS'].forEach(function(id){ $(id).addEventListener('input', espejoCierre); });
@@ -3812,7 +3993,25 @@ function iniciar(){
     if (!document.hidden && Date.now() - ULT_REFRESCO > 60000) refrescarPaneles();
   });
 
-  $('btnAbrir').addEventListener('click', abrirTurno);
+  $('btnAbrir').addEventListener('click', intentarAbrir);
+  // S-1c: "Lo carga un socio"
+  $('socOk').addEventListener('click', confirmarSocio);
+  $('socNo').addEventListener('click', cerrarSocio);
+  $('socPend').addEventListener('click', function(){ var c = _modalSocio; if (c && c.pendiente) c.pendiente(); });
+  $('socCodigo').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); confirmarSocio(); } else if (e.key === 'Escape') cerrarSocio(); });
+  $('ingresosPend').addEventListener('click', function(e){ var b = e.target.closest ? e.target.closest('[data-pend-conf]') : null; if (b) confirmarPendiente(parseInt(b.getAttribute('data-pend-conf'), 10)); });
+  $('btnAperturaCorregir').addEventListener('click', function(){
+    modalSocio({
+      titulo: 'Corregir la apertura',
+      texto: 'El turno arranca con lo que dejó el cierre anterior. Para cambiar esos números hace falta el código personal de un socio.',
+      enviar: function(socio){ return FDH_STOCK.verificarSocio(socio); },
+      listo: function(j, nombre){
+        APERTURA_SOCIO = j.nombre || nombre; bloquearApertura(false); ver('btnAperturaCorregir', false);
+        $('aperturaAviso').textContent = 'Corrección habilitada por ' + APERTURA_SOCIO + '. Cambiá lo que no coincida y abrí el turno.';
+      },
+      pendiente: null
+    });
+  });
   $('btnNueva').addEventListener('click', nuevaVenta);
   $('btnIngreso').addEventListener('click', abrirIngreso);
   $('btnRetiro').addEventListener('click', abrirRetiro);
