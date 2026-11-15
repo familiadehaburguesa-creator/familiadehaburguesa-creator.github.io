@@ -329,8 +329,8 @@ function burgy(m){ $('burgyDice').textContent=m; }
    (una respuesta lenta se sigue aprovechando, como antes). ok(r) recibe la respuesta; ok(null) si
    fallaron los 3 intentos o se agoto el tiempo. El aviso "reintentando" se muestra solo para la hoja
    Produccion (la que manda el stock); Auditoria es secundaria. */
-function traer(hoja, ok){
-  FDH_RED.pedir(NUBE_URL+'?hoja='+encodeURIComponent(hoja),
+function traer(hoja, ok, extra){
+  FDH_RED.pedir(NUBE_URL+'?hoja='+encodeURIComponent(hoja)+(extra?'&'+extra:''),
     {onEstado:function(e){ if(hoja==='Producción') nubeEstado('cargando','⚠️ La nube tarda · reintentando ('+e.intento+' de '+e.de+')…'); }})
   .then(function(r){ try{ ok(r); }catch(e){} })
   .catch(function(){ try{ ok(null); }catch(e){} });
@@ -388,7 +388,7 @@ function cargarAuditoria(){
   traer('Auditoría', function(r){
     AUD.filas=(r && r.ok && r.datos)?r.datos.filter(function(x){ return x.Origen==='SISTEMA_AUTO_CHECK'; }):null;
     renderAuditoria();
-  });
+  }, 'ultimas=100');   /* P-4: solo las ultimas 100 filas (~2 dias a 48 por dia); un MENSAJERO viejo ignora el parametro y devuelve todo */
 }
 function filtroAud(f){ AUD.filtro=f; renderAuditoria(); }
 function renderAuditoria(){
@@ -405,7 +405,7 @@ function renderAuditoria(){
     var ok=x.Estado==='OK';
     return '<div class="reg"><b>'+String(x.Fecha).slice(0,10)+' '+soloHora(x.Hora)+'</b> <span class="'+(ok?'mas':'menos')+'">'+(ok?'OK':x.Severidad+' · '+x.Estado)+'</span>'+
       '<br>'+miles(num(x.Bolsas))+' bolsas · '+miles(num(x.Carnes))+' carnes<br><span style="font-size:.74rem">'+(x.Detalle||'')+'</span></div>';
-  }).join('')||'<div class="vacio">Sin discrepancias registradas. 👌</div>';
+  }).join('')||'<div class="vacio">Sin discrepancias en los últimos chequeos (unos 2 días). 👌</div>';
 }
 
 /* ===== Freezers: UN solo total, en BOLSAS (1 bolsa = 50 carnes) =====
