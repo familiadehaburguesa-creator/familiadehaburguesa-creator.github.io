@@ -336,6 +336,27 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(1) brightness(
     <div class="mini-lista" id="listaGastos" style="margin-top:12px"><div class="vacio">Consultando…</div></div>
   </div>
 
+  <!-- E3 · TURNOS POR VALIDAR -->
+  <div class="panel" id="panelValidar">
+    <h2>✅ Turnos por validar</h2>
+    <div class="ayuda">El cierre de caja sale del turno (Ventas). Un socio lo <b>valida acá con su código</b>: confirma cuánto efectivo pasa a Tesorería (viene lo que contó el turno). Si es distinto, hay que contar por qué y queda anotado en ese turno.</div>
+    <div id="listaValidar"><div class="vacio">Consultando…</div></div>
+    <div id="avisoValidar"></div>
+    <div class="bloque-tit" style="margin-top:16px">Últimos validados</div>
+    <div id="listaValidados"></div>
+  </div>
+  <div id="modalValidar" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center;padding:16px">
+    <div style="background:var(--carbon);border:1px solid var(--dorado);border-radius:14px;padding:16px;width:100%;max-width:380px">
+      <h2 style="margin:0 0 6px">Validar el turno</h2>
+      <div id="valTexto" class="ayuda"></div>
+      <label>¿Qué socio sos?</label><select id="valSocio"></select>
+      <label>Tu código personal</label><input id="valCodigo" type="password" inputmode="numeric" autocomplete="off" placeholder="••••••">
+      <div id="valMsg" class="aviso ambar" style="min-height:1em"></div>
+      <button id="valOk" style="width:100%;margin-top:10px" onclick="confirmarValidar()">Confirmar</button>
+      <button class="sec" style="width:100%;margin-top:8px" onclick="cerrarModalValidar()">Cancelar</button>
+    </div>
+  </div>
+
   <!-- TESORERÍA -->
   <div class="panel">
     <h2>🏦 Tesorería — efectivo guardado</h2>
@@ -466,7 +487,7 @@ function ahora(){ return new Date().toLocaleTimeString('es-AR',{hour:'2-digit',m
 var nubeSeq=0;
 function traerTodo(ok){
   var mi=++nubeSeq;
-  FDH_RED.pedir(NUBE_URL+'?hojas=Ventas,Deudas,Gastos,Fondos,Tesoreria',
+  FDH_RED.pedir(NUBE_URL+'?hojas=Ventas,Deudas,Gastos,Fondos,Tesoreria,Turnos',
     {onEstado:function(e){ if(mi===nubeSeq) nubeEstado('cargando','⚠️ La nube tarda · reintentando ('+e.intento+' de '+e.de+')…'); }})
   .then(function(r){ try{ ok(r); }catch(e){} })
   .catch(function(){ try{ ok(null); }catch(e){} });
@@ -489,7 +510,7 @@ function pintarHace(){
   e.textContent='☁️ Nube al día · '+etiquetaHace(Date.now()-ULTIMA_CARGA);
 }
 
-var D={ventas:[], deudas:[], gastos:[], fondos:[], tesoreria:[], sabido:false};
+var D={ventas:[], deudas:[], gastos:[], fondos:[], tesoreria:[], turnos:[], sabido:false};
 function cargarNube(){
   nubeEstado('cargando','☁️ Consultando…');
   traerTodo(function(r){
@@ -501,6 +522,7 @@ function cargarNube(){
     D.fondos=r.datos.Fondos||[];
     // HU5: hoja Tesoreria (MENSAJERO V18) — el libro del efectivo guardado.
     D.tesoreria=r.datos.Tesoreria||[];
+    D.turnos=r.datos.Turnos||[];     // E3: turnos (los CERRADOS esperan validacion)
     D.sabido=true;
     try{ localStorage.setItem(K_CACHE,JSON.stringify(D)); }catch(e){}
     ULTIMA_CARGA=Date.now();
@@ -1040,6 +1062,7 @@ function pintarTotalHoy(){
 
 /* ===== render ===== */
 function render(){
+  pintarValidar();
   pintarProveedores();
   pintarReporte();
   /* cierres */
@@ -1480,6 +1503,95 @@ function guardarGasto(forzar){
   $('avisoGasto').innerHTML='<div class="aviso verde">Gasto registrado: '+fila.Categoria+' '+pesos(m)+
     ' · sale de <b>'+etiquetaMedio(seleccion.gMedio)+'</b>.</div>';
   render();
+}
+
+/* ===== E3 · Turnos por validar =====
+   El cierre de caja sale del turno (Ventas). Un socio lo VALIDA acá, con su código: confirma cuánto efectivo pasa a Tesorería
+   (viene lo que contó el turno). Si es distinto, tiene que contar por qué y la diferencia queda anotada en ese turno. */
+var SOCIOS_VAL=['Pablo','Paula','Cielo','Yami','Samu'];
+var VAL_IDS={};          // un ID por turno: si se reintenta, el servidor no duplica
+var _valPend=null;       // {idTurno, efe, mp, obs}
+function escV(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+function ventaDeTurno(idTurno){
+  var r=D.ventas.filter(function(v){ return String(v.IDTurno||'')===String(idTurno); });
+  return r.length?r[r.length-1]:null;
+}
+function turnosPorValidar(){
+  return (D.turnos||[]).filter(function(t){ return t.Estado==='CERRADO' && !String(t.ValidadoPor||'').trim(); }).reverse();
+}
+function pintarValidar(){
+  var el=$('listaValidar'); if(!el) return;
+  var pv=turnosPorValidar(), val=(D.turnos||[]).filter(function(t){ return String(t.ValidadoPor||'').trim(); }).slice(-10).reverse();
+  if(!D.sabido){ el.innerHTML='<div class="vacio">Consultando…</div>'; }
+  else if(!pv.length){ el.innerHTML='<div class="vacio">No hay turnos por validar.</div>'; }
+  else el.innerHTML=pv.map(function(t,i){
+    var v=ventaDeTurno(t.ID);
+    if(!v) return '<div class="item"><div><div class="t1">Turno de '+escV(t.QuienAbre)+' · '+fery(t.Fecha)+'</div><div class="t2">No encuentro su resumen de Ventas. No se puede validar todavía.</div></div></div>';
+    var ec=num(v.EfectivoContado), mc=num(v.MPContado);
+    var esperado=num(v.AperturaCaja)+num(v.Efectivo)+num(v.OtrosIngresosEfe), dif=ec-esperado;
+    return '<div class="item" style="display:block;border:1px solid #2c2c34;border-radius:10px;padding:10px;margin-bottom:10px">'+
+      '<div class="t1">Turno de '+escV(t.QuienAbre)+' · '+fery(t.Fecha)+' · '+escV(t.HoraApertura)+' a '+escV(t.HoraCierre)+' · cerró '+escV(t.QuienCierra)+'</div>'+
+      '<div class="t2">Vendió '+pesos(num(v.Total))+' · efectivo '+pesos(num(v.Efectivo))+' · MP '+pesos(num(v.MercadoPago))+' · debe '+pesos(num(v.Debe))+'</div>'+
+      '<div class="t2">Contó en caja <b>'+pesos(ec)+'</b> · contó en MP <b>'+pesos(mc)+'</b> · caja inicial '+pesos(num(v.AperturaCaja))+(num(v.OtrosIngresosEfe)?' · otros ingresos '+pesos(num(v.OtrosIngresosEfe)):'')+'</div>'+
+      (dif!==0?'<div class="t2" style="color:var(--amarillo,#f2c14e)">Contado vs. caja inicial + efectivo + otros: '+(dif>0?'+':'−')+pesos(Math.abs(dif))+' (sin descontar gastos y retiros)</div>':'')+
+      (v.Observacion?'<div class="t2">Observación del turno: '+escV(v.Observacion)+'</div>':'')+
+      '<div class="fila" style="margin-top:8px"><div class="campo chico"><label>Efectivo que pasa a Tesorería</label><input id="vEfe_'+i+'" inputmode="numeric" value="'+ec+'"></div>'+
+      '<div class="campo chico"><label>Contado en MP (confirmá)</label><input id="vMp_'+i+'" inputmode="numeric" value="'+mc+'"></div></div>'+
+      '<label>Si no coincide con lo contado, contá por qué</label><input id="vObs_'+i+'" placeholder="Ej: pagué al proveedor de la caja">'+
+      '<button style="width:100%;margin-top:8px" onclick="validarTurno('+i+')">Validar con mi código</button></div>';
+  }).join('');
+  var ev=$('listaValidados'); if(!ev) return;
+  ev.innerHTML=val.map(function(t){
+    var de=num(t.DifEfe), dm=num(t.DifMP);
+    return '<div class="item"><div><div class="t1">Turno de '+escV(t.QuienAbre)+' · '+fery(t.Fecha)+'<span class="medio-pill efe">validado</span></div>'+
+      '<div class="t2">validó '+escV(t.ValidadoPor)+' · '+fery(t.ValidadoFecha)+' '+escV(t.ValidadoHora)+
+      (de||dm?' · diferencia efectivo '+(de>0?'+':'')+de+', MP '+(dm>0?'+':'')+dm+(t.ObsValidacion?': '+escV(t.ObsValidacion):''):' · sin diferencias')+'</div></div>'+
+      '<div class="monto verde">'+pesos(num(t.EfeValidado))+'</div></div>';
+  }).join('')||'<div class="vacio">Todavía no se validó ningún turno.</div>';
+}
+function avisoVal(h){ $('avisoValidar').innerHTML=h||''; }
+function validarTurno(i){
+  var t=turnosPorValidar()[i]; if(!t) return;
+  var v=ventaDeTurno(t.ID); if(!v) return;
+  var efe=ent($('vEfe_'+i).value), mp=ent($('vMp_'+i).value), obs=($('vObs_'+i).value||'').trim();
+  var ec=num(v.EfectivoContado), mc=num(v.MPContado);
+  if((efe!==ec||mp!==mc) && obs.length<5){
+    avisoVal('<div class="aviso rojo">Lo que ponés ('+pesos(efe)+' efectivo, '+pesos(mp)+' MP) no coincide con lo que contó el turno ('+pesos(ec)+' y '+pesos(mc)+'). Contá por qué para poder validar.</div>');
+    return;
+  }
+  avisoVal('');
+  _valPend={idTurno:t.ID, efe:efe, mp:mp, obs:obs, texto:'Turno de '+t.QuienAbre+' del '+fery(t.Fecha)+': '+pesos(efe)+' de efectivo pasan a Tesorería.'};
+  abrirModalValidar();
+}
+function abrirModalValidar(){
+  var sel=$('valSocio'), ult=''; try{ ult=sessionStorage.getItem('fdh_ult_socio')||''; }catch(e){}
+  sel.innerHTML=SOCIOS_VAL.map(function(s){ return '<option'+(s===ult?' selected':'')+'>'+s+'</option>'; }).join('');
+  $('valTexto').textContent=_valPend.texto; $('valCodigo').value=''; $('valMsg').textContent=''; $('valOk').disabled=false;
+  $('modalValidar').style.display='flex';
+  setTimeout(function(){ try{ $('valCodigo').focus(); }catch(e){} },50);
+}
+function cerrarModalValidar(){ $('valCodigo').value=''; $('modalValidar').style.display='none'; _valPend=null; }
+function confirmarValidar(){
+  var p=_valPend; if(!p) return;
+  var nombre=$('valSocio').value, cod=($('valCodigo').value||'').trim();
+  if(!/^\d{4,10}$/.test(cod)){ $('valMsg').textContent='Escribí tu código personal (solo números).'; return; }
+  $('valOk').disabled=true; $('valMsg').textContent='Verificando…';
+  VAL_IDS[p.idTurno]=VAL_IDS[p.idTurno]||FDH_COLA.nuevoId();
+  FDH_COLA.url=NUBE_URL;
+  FDH_COLA.directo({accion:'turnoValidar', id:VAL_IDS[p.idTurno], idTurno:p.idTurno, efectivo:p.efe, mp:p.mp, obs:p.obs, socio:{nombre:nombre, codigo:cod}}, 25000).then(function(j){
+    $('valCodigo').value=''; $('valOk').disabled=false;
+    if(j && j.ok){
+      try{ sessionStorage.setItem('fdh_ult_socio',nombre); }catch(e){}
+      var d=j.difEfe||0, dm=j.difMP||0;
+      cerrarModalValidar();
+      avisoVal('<div class="aviso verde">Turno validado por '+escV(j.validadoPor||nombre)+'. '+(j.repetido?'Ya estaba validado.':'El efectivo ya figura en Tesorería.')+
+        (d||dm?' Diferencia anotada en ese turno: efectivo '+d+', MP '+dm+'.':'')+'</div>');
+      cargarNube();
+    } else { $('valMsg').textContent=(j&&j.error)?j.error:'No se pudo validar.'; }
+  }).catch(function(){
+    $('valCodigo').value=''; $('valOk').disabled=false;
+    $('valMsg').textContent='No hay conexión con el Cuaderno: ahora no se puede validar. Probá de nuevo en un momento (no se duplica nada).';
+  });
 }
 
 /* ===== HU5 · movimiento de Tesorería ===== */
