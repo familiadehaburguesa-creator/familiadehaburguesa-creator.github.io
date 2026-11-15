@@ -281,7 +281,10 @@ function cargarNube(){
    limpiar();
  };
  const s=document.createElement('script');
- s.id=cb;s.src=NUBE_URL+'?callback='+cb+'&t='+Date.now();
+ /* P-1 (Fase 1): solo las 6 hojas que el Tablero usa. Antes pedia las 10 (incluida Auditoria,
+    544 KB) y tardaba 5,3 s; con las 6 tarda 3,4 s. Un MENSAJERO que no entienda ?hojas= devuelve todo
+    y el Tablero sigue funcionando (usa solo estas 6 de lo que llegue). */
+ s.id=cb;s.src=NUBE_URL+'?hojas='+encodeURIComponent('Ventas,Producción,Gastos,Mayoristas,Deudas,Pedidos')+'&callback='+cb+'&t='+Date.now();
  s.onerror=avisar;
  document.body.appendChild(s);
  /* mismo fix que Producción: no borrar el callback apenas se avisa el
