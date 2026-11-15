@@ -289,6 +289,7 @@ button.sec:hover{background:#33291a;color:#fff}
 <footer><span class="lema">CASERAS · RICAS · DE VERDAD · EST. 2024</span>Con el favor y la guía de Dios, vivamos y alcancemos la Visión 🙏🚀 · Familia de Hamburguesa · Plan de Transformación 2026</footer>
 
 <script src="fdh_red.js"></script>
+<script src="fdh_cola.js"></script>
 <script>
 /* ============================================================================
    FÁBRICA v8 (antes "Producción"). Vista simplificada: solo "Disponible para
@@ -335,12 +336,9 @@ function traer(hoja, ok, extra){
   .then(function(r){ try{ ok(r); }catch(e){} })
   .catch(function(){ try{ ok(null); }catch(e){} });
 }
+/* E1: toda escritura pasa por la cola con ID (fdh_cola.js): se reintenta con el mismo ID y solo se da por escrita al confirmarla el servidor. */
 function subirNube(fila){
-  try{
-    fetch(NUBE_URL,{method:'POST',mode:'no-cors',keepalive:true,
-      headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({hoja:'Producción',fila:fila})});
-  }catch(e){}
+  try{ FDH_COLA.url=NUBE_URL; FDH_COLA.escribir('Producción',fila); }catch(e){}
 }
 function nubeEstado(cls,txt){
   var e=$('nubeEstado'); e.className='nube-estado '+cls; e.textContent=txt;
