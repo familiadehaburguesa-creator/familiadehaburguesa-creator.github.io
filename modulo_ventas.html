@@ -1068,6 +1068,7 @@ label.obligatorio::after{content:" *";color:#ff7a6e;font-weight:800}
 </style>
 <script src="fdh_red.js"></script>
 <script src="fdh_stock.js"></script>
+<script src="fdh_cola.js"></script>
 <script>
 /* ==========================================================================
    FAMILIA DE HAMBURGUESA — Ventas del turno
@@ -1491,12 +1492,14 @@ function intentarAbrir(){
 }
 
 /** POST al Cuaderno. No se puede confirmar (respuesta opaca), así que se avisa. */
-function guardarEnNube(hoja, fila, aviso){
-  try{
-    fetch((ESCRITURAS++, NUBE), {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain'},
-                 body: JSON.stringify({hoja:hoja, fila:fila})})
-      .catch(function(){ if(aviso) aviso(false); });
-  }catch(e){ if(aviso) aviso(false); }
+/* E1: toda escritura al Cuaderno pasa por la cola con ID (fdh_cola.js): se guarda en el dispositivo, se manda en segundo plano,
+   se reintenta con el mismo ID y solo se da por escrita cuando el servidor lo confirma. Devuelve el ID. */
+function guardarEnNube(hoja, fila, aviso, alConfirmar){
+  ESCRITURAS++;
+  return FDH_COLA.escribir(hoja, fila, {
+    alConfirmar: function(j){ ESCRITURAS++; if (alConfirmar) { try{ alConfirmar(j); }catch(e){} } },
+    alRechazar: function(motivo){ if (aviso) { try{ aviso(false, motivo); }catch(e){} } }
+  });
 }
 
 /**
@@ -1512,16 +1515,13 @@ function marcarEntregadoEnNube(f){
   var marca = campo(f,'marca','temporal');
   var num = numeroPedido(f);
   if (!marca && !num) return false;
-  try{
-    fetch((ESCRITURAS++, NUBE), {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain'},
-      body: JSON.stringify({
-        // "Pedido Entregado" textual: la columna Estado de la planilla tiene
-        // validacion de datos y rechaza cualquier otro texto.
-        accion:'estadoPedido', marca: marca ? new Date(marca).getTime() : '',
-        numero:num, estado:'Pedido Entregado',
-        quien: (T && T.quien) || ''
-      })});
-  }catch(e){}
+  ESCRITURAS++;
+  FDH_COLA.accion({
+    // "Pedido Entregado" textual: la columna Estado de la planilla tiene validacion de datos y rechaza cualquier otro texto.
+    accion:'estadoPedido', marca: marca ? new Date(marca).getTime() : '',
+    numero:num, estado:'Pedido Entregado',
+    quien: (T && T.quien) || ''
+  }, {alConfirmar: function(){ ESCRITURAS++; }});
   return true;
 }
 
@@ -3823,12 +3823,26 @@ function contarMovs(prefijo){
   return (T.movs || []).filter(function(m){ return String(m.titulo || '').indexOf(prefijo) === 0; }).length;
 }
 
+/* E1: el cierre solo se da por escrito cuando el Cuaderno lo confirmó (o se muestra, en rojo, que no se pudo). */
+function cierreEstado(ok, motivo){
+  var e = $('cierreEstado'); if (!e) return;
+  if (ok){ e.className = 'aviso verde'; e.innerHTML = '✔ Turno de <b>' + (T && T.quien || '') + '</b> cerrado. El Cuaderno confirmó el resumen.'; }
+  else { e.className = 'aviso rojo'; e.innerHTML = '⚠ El Cuaderno NO pudo guardar el resumen del turno' + (motivo ? ' (' + motivo + ')' : '') + '. Avisá a un socio: no cierres este turno de nuevo sin hablar con él.'; }
+}
 function confirmarCierre(){
   // HU-07 · escenario 2: con diferencias y sin observación, el cierre se frena.
   if (!obsValida()){
     $('avisoObs').innerHTML = '<div class="aviso deuda">Hay una diferencia entre lo contado y lo esperado (' +
       T.diferencias.join(' · ') + '). Detallá el motivo en Observaciones para poder cerrar el turno.</div>';
     try{ $('zObs').focus(); }catch(e){}
+    return;
+  }
+  // E1: antes de cerrar, todo lo del turno tiene que estar confirmado por el Cuaderno.
+  var _pc = FDH_COLA.estado().pendientes, _ps = FDH_STOCK.estado().pendientes;
+  if (_pc + _ps > 0){
+    $('avisoObs').innerHTML = '<div class="aviso deuda">Todavía hay ' + (_pc + _ps) + ' operación(es) sin confirmar en el Cuaderno. ' +
+      'Esperá unos segundos a que se envíen (se ve abajo a la izquierda) y volvé a tocar "Cerrar turno". Si no hay internet, el turno no se puede cerrar todavía.</div>';
+    try{ FDH_COLA.reintentarYa(); FDH_STOCK.reintentarYa(); }catch(e){}
     return;
   }
   // Libro de stock: lo contado al cerrar queda registrado como RECUENTO, con la diferencia contra el libro.
@@ -3842,7 +3856,7 @@ function confirmarCierre(){
   // una columna a la izquierda y quedarían mal en silencio.
   // Todo lo digital viaja junto en MercadoPago. Se suma `tra` por si el turno
   // se abrió con la versión anterior y la migración no llegó a correr.
-  guardarEnNube('Ventas', {
+  var _idCierre = guardarEnNube('Ventas', {
     Fecha: hoyLocal(),
     Total: T.ventas,
     Efectivo: T.cobros.efe,
@@ -3874,9 +3888,9 @@ function confirmarCierre(){
     OtrosIngresosMP:  otrosMP(),
     // v27 (MENSAJERO V27): cada venta/entrega en efectivo del turno. Va ULTIMA, igual que la columna AC.
     EfectivoDetalle: (T.efectivoDetalle || []).join(' · ')
-  });
+  }, function(ok, motivo){ cierreEstado(false, motivo); }, function(){ cierreEstado(true); });
 
-  var h = '<div class="aviso verde">Turno de <b>' + T.quien + '</b> cerrado. Se mandó el resumen al Cuaderno.</div>';
+  var h = '<div id="cierreEstado" class="aviso deuda">⏳ Turno de <b>' + T.quien + '</b> cerrado en esta pantalla. Enviando el resumen al Cuaderno… esperá la confirmación.</div>';
   h += '<div class="item"><div class="izq"><div class="t1">Se vendió</div></div><div class="der"><div class="monto">' + pesos(T.ventas) + '</div></div></div>';
   h += '<div class="item"><div class="izq"><div class="t1">Efectivo en caja</div></div><div class="der"><div class="monto">' + pesos(T.caja) + '</div></div></div>';
   var abiertas = deudasAbiertas();
@@ -3966,7 +3980,7 @@ function entrarAlTurno(){
 }
 
 function iniciar(){
-  FDH_STOCK.url = NUBE; FDH_STOCK.onCambio(pintarStockSync); pintarStockSync(); pintarPendIng();
+  FDH_STOCK.url = NUBE; FDH_COLA.url = NUBE; FDH_STOCK.onCambio(pintarStockSync); pintarStockSync(); pintarPendIng();
   cargarPrecios();
   llenarGente(['aQuien','iQuien','ajQuien','rQuien','pfQuien','dcQuien','ipQuien']);
   llenarIngresoPlata();
