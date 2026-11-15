@@ -557,6 +557,7 @@ label.obligatorio::after{content:" *";color:#ff7a6e;font-weight:800}
         <div class="nota">El cambio con el que arranca el turno.</div>
       </div>
       <div class="aviso info oculto" id="aperturaAviso" style="font-size:12.5px"></div>
+      <div class="aviso rojo oculto" id="aperturaOcupado" style="font-size:13px"></div>
       <button class="btn gris chico oculto" id="btnAperturaCorregir" type="button" style="margin-bottom:10px">Corregir con código de socio</button>
       <button class="btn" id="btnAbrir">Abrir turno</button>
     </div>
@@ -568,6 +569,7 @@ label.obligatorio::after{content:" *";color:#ff7a6e;font-weight:800}
 
   <!-- ================= TURNO ABIERTO ================= -->
   <section id="pTurno" class="oculto">
+    <div class="aviso rojo oculto" id="turnoAviso" style="margin:8px 0"></div>
     <div class="tablero">
 
     <div class="col">
@@ -3829,6 +3831,16 @@ function cierreEstado(ok, motivo){
   if (ok){ e.className = 'aviso verde'; e.innerHTML = '✔ Turno de <b>' + (T && T.quien || '') + '</b> cerrado. El Cuaderno confirmó el resumen.'; }
   else { e.className = 'aviso rojo'; e.innerHTML = '⚠ El Cuaderno NO pudo guardar el resumen del turno' + (motivo ? ' (' + motivo + ')' : '') + '. Avisá a un socio: no cierres este turno de nuevo sin hablar con él.'; }
 }
+/* E2: el cierre va al servidor como UNA operacion (escribe Ventas con el IDTurno y marca el turno CERRADO).
+   Un turno abierto con la pantalla anterior (sin IDTurno) se cierra como siempre. */
+function cerrarEnNube(fila, aviso, alConfirmar){
+  if (!T || !T.idTurno) return guardarEnNube('Ventas', fila, aviso, alConfirmar);
+  ESCRITURAS++;
+  return FDH_COLA.accion({accion: 'turnoCerrar', idTurno: T.idTurno, fila: fila}, {
+    alConfirmar: function(j){ ESCRITURAS++; if (alConfirmar) { try{ alConfirmar(j); }catch(e){} } },
+    alRechazar: function(m){ if (aviso) { try{ aviso(false, m); }catch(e){} } }
+  });
+}
 function confirmarCierre(){
   // HU-07 · escenario 2: con diferencias y sin observación, el cierre se frena.
   if (!obsValida()){
@@ -3856,7 +3868,7 @@ function confirmarCierre(){
   // una columna a la izquierda y quedarían mal en silencio.
   // Todo lo digital viaja junto en MercadoPago. Se suma `tra` por si el turno
   // se abrió con la versión anterior y la migración no llegó a correr.
-  var _idCierre = guardarEnNube('Ventas', {
+  var _idCierre = cerrarEnNube({
     Fecha: hoyLocal(),
     Total: T.ventas,
     Efectivo: T.cobros.efe,
@@ -3912,8 +3924,57 @@ function llenarGente(sels){
   });
 }
 
+/* E2: el turno se abre PRIMERO en el Cuaderno (hoja Turnos). Sin conexion o con otro turno abierto, no se abre. */
+function escTurno(x){ return String(x == null ? '' : x).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+function avisoApertura(txt){ var e = $('aperturaAviso'); if (!e) return; e.textContent = txt; ver('aperturaAviso', true); }
 function abrirTurno(opts){
+  var idT = FDH_COLA.nuevoId(), btn = $('btnAbrir'), txt = btn.textContent;
+  ver('aperturaOcupado', false); btn.disabled = true; btn.textContent = 'Abriendo el turno…';
+  var libre = function(){ btn.disabled = false; btn.textContent = txt; };
+  FDH_COLA.directo({accion: 'turnoAbrir', id: idT, quien: $('aQuien').value, caja: ent($('aCaja').value)}, 25000).then(function(j){
+    libre();
+    if (j && j.ok){ abrirTurnoLocal(opts, j.id || idT); return; }
+    if (j && j.codigo === 'ocupado' && j.turno){ mostrarOcupado(j.turno); return; }
+    avisoApertura('No se pudo abrir el turno: ' + ((j && j.error) || 'el Cuaderno no respondió bien') + '. Probá de nuevo; si sigue igual, avisá a un socio.');
+  }).catch(function(){
+    libre();
+    avisoApertura('No se puede abrir el turno sin conexión con el Cuaderno. Abrir y cerrar el turno necesitan internet: revisá la conexión y volvé a tocar "Abrir turno".');
+  });
+}
+function mostrarOcupado(t){
+  var el = $('aperturaOcupado');
+  el.innerHTML = '<b>Ya hay un turno abierto.</b> Es el de <b>' + escTurno(t.quien) + '</b>, desde las ' + escTurno(t.hora) + (t.masDe12h ? ' (hace más de 12 horas)' : '') +
+    '. Hay un solo turno a la vez: tiene que cerrarlo quien lo abrió. Si fue una apertura por error o ese dispositivo ya no se usa, un socio puede anularlo.' +
+    '<div style="margin-top:8px"><button class="btn gris chico" id="btnAnularOcupado">Anular ese turno (socio)</button></div>';
+  ver('aperturaOcupado', true);
+  $('btnAnularOcupado').addEventListener('click', function(){ anularTurnoAjeno(t); });
+}
+function anularTurnoAjeno(t){
+  var motivo = (window.prompt('¿Por qué se anula el turno de ' + t.quien + '? Si tenía ventas cargadas, su cierre no se va a poder guardar. Escribí el motivo:') || '').trim();
+  if (motivo.length < 5){ avisoApertura('No se anuló: hace falta contar el motivo (al menos 5 letras).'); return; }
+  modalSocio({
+    titulo: 'Anular el turno de ' + t.quien,
+    texto: 'Para anular un turno hace falta el código personal de un socio. Queda registrado quién lo anuló y por qué.',
+    enviar: function(socio){ return FDH_COLA.directo({accion: 'turnoAnular', id: t.id, motivo: motivo, socio: {nombre: socio.nombre, codigo: socio.codigo}}, 25000); },
+    listo: function(){ ver('aperturaOcupado', false); avisoApertura('Turno anulado. Ya podés abrir el tuyo.'); },
+    pendiente: null
+  });
+}
+/* E2: al arrancar y cada 2 minutos se mira si el Cuaderno todavia tiene abierto el turno de esta pantalla. */
+function verificarTurnoServidor(){
+  if (!T || !T.abierto || !T.idTurno) return;
+  FDH_RED.pedir(NUBE + '?estado=turno&id=' + encodeURIComponent(T.idTurno), {totalMs: 12000, maxIntentos: 2}).then(function(j){
+    var el = $('turnoAviso'); if (!el || !j || !j.ok) return;
+    var msg = '';
+    if (j.turno && j.turno.estado !== 'ABIERTO') msg = 'Este turno ya figura <b>' + escTurno(j.turno.estado) + '</b> en el Cuaderno' + (j.turno.motivo ? ' (' + escTurno(j.turno.motivo) + ')' : '') + '. No cargues más ventas acá: avisá a un socio.';
+    else if (j.turno === null) msg = 'Este turno no figura en el Cuaderno. Avisá a un socio antes de seguir.';
+    else if (j.abierto && j.abierto.id === T.idTurno && j.abierto.masDe12h) msg = 'Este turno lleva abierto más de 12 horas. Si ya terminó, cerralo.';
+    el.innerHTML = msg; ver('turnoAviso', !!msg);
+  }).catch(function(){});
+}
+function abrirTurnoLocal(opts, idTurno){
   T = turnoNuevo();
+  T.idTurno = idTurno || '';
   T.quien = $('aQuien').value;
   T.desde = hora();
   T.abierto = true;
@@ -4002,7 +4063,8 @@ function iniciar(){
     if (document.hidden || !(T && T.abierto)) return;
     ULT_REFRESCO = Date.now(); traerFabrica(); sincronizarDeudas();
   }
-  setInterval(refrescarPaneles, 120000);
+  setInterval(function(){ refrescarPaneles(); verificarTurnoServidor(); }, 120000);
+  verificarTurnoServidor();
   document.addEventListener('visibilitychange', function(){
     if (!document.hidden && Date.now() - ULT_REFRESCO > 60000) refrescarPaneles();
   });
