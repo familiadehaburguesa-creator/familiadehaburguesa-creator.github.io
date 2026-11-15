@@ -1042,6 +1042,7 @@ label.obligatorio::after{content:" *";color:#ff7a6e;font-weight:800}
 
 </div>
 
+<script src="fdh_red.js"></script>
 <script>
 /* ==========================================================================
    FAMILIA DE HAMBURGUESA — Ventas del turno
@@ -1263,30 +1264,29 @@ function haceDias(n){
 /* ESCRITURAS cuenta los envios al Cuaderno; ENTREGADO guarda el ultimo pedido de cada hoja
    que ya entrego datos. Sirven para descartar respuestas viejas (ver traer). */
 var cbN = 0, ESCRITURAS = 0, ENTREGADO = {};
-function traer(hoja, ok, extra){
-  var seq = ++cbN, nombre = 'fdhcb' + seq, e0 = ESCRITURAS;
-  var listo = false, avisado = false;
-  window[nombre] = function(r){
-    listo = true;
-    // Una respuesta se descarta si (a) ya llego otra MAS NUEVA de la misma hoja
-    // (por ejemplo, el reintento) o (b) llego tarde, despues del aviso de error, y mientras
-    // tanto esta pantalla escribio algo en el Cuaderno: seria un dato anterior a ese cambio.
-    var vieja = (ENTREGADO[hoja || ''] || 0) > seq || (avisado && ESCRITURAS !== e0);
-    if (!vieja){ ENTREGADO[hoja || ''] = seq; try{ ok(r); }catch(e){} }
-    limpiar();
-  };
-  var s = document.createElement('script');
+/* P-3 (Fase 1): las lecturas van por FDH_RED (fetch con reintentos y tiempo maximo) en vez de JSONP.
+   Si un intento tarda mas de 12 s se lanza otro SIN cancelar el primero: gana el que responda antes.
+   ok(r) recibe la respuesta, o ok(null) si fallaron los intentos o se agoto el tiempo (igual que antes).
+   Se conserva la regla de descarte de respuestas viejas: ver `vieja` mas abajo.
+   `red` = opciones opcionales para FDH_RED (ej. {totalMs:20000}); por defecto 35 s, lo que vivia el JSONP. */
+function traer(hoja, ok, extra, red){
+  var seq = ++cbN, e0 = ESCRITURAS, t0 = Date.now();
   // `extra` = parametros opcionales (ej. 'ultimas=1', 'desde=2026-10-05'). Un MENSAJERO que no los
   // conoce los ignora y devuelve la hoja completa, asi que nunca rompen nada.
-  s.src = NUBE + (hoja ? '?hoja=' + encodeURIComponent(hoja) + '&' : '?') + (extra ? extra + '&' : '') + 'callback=' + nombre;
-  s.onerror = avisar;
-  document.head.appendChild(s);
-  // El aviso de error sale a los 20 s, pero el callback sigue vivo hasta los 35 s: si la
-  // nube contesta tarde, el dato se aprovecha y la pantalla se recupera sola.
-  setTimeout(avisar, 20000);
-  setTimeout(function(){ if(!listo) limpiar(); }, 35000);
-  function avisar(){ if(listo || avisado) return; avisado = true; try{ ok(null); }catch(e){} }
-  function limpiar(){ try{ delete window[nombre]; }catch(e){} if(s.parentNode) s.parentNode.removeChild(s); }
+  var q = [];
+  if (hoja) q.push('hoja=' + encodeURIComponent(hoja));
+  if (extra) q.push(extra);
+  var op = {totalMs: 35000};
+  if (red) for (var k in red) op[k] = red[k];
+  FDH_RED.pedir(NUBE + (q.length ? '?' + q.join('&') : ''), op)
+  .then(function(r){
+    // Una respuesta se descarta si (a) ya llego otra MAS NUEVA de la misma hoja
+    // (por ejemplo, el reintento) o (b) llego tarde (mas de 20 s, que es cuando antes saltaba el aviso
+    // de error) y mientras tanto esta pantalla escribio algo en el Cuaderno: seria un dato anterior a ese cambio.
+    var vieja = (ENTREGADO[hoja || ''] || 0) > seq || (Date.now() - t0 > 20000 && ESCRITURAS !== e0);
+    if (!vieja){ ENTREGADO[hoja || ''] = seq; try{ ok(r); }catch(e){} }
+  })
+  .catch(function(){ try{ ok(null); }catch(e){} });
 }
 
 /** POST al Cuaderno. No se puede confirmar (respuesta opaca), así que se avisa. */
@@ -2020,7 +2020,7 @@ function traerPedidos(){
     }
     pintarPedidos(); pintarListaPedidos(); pintarStockTurno(); pintarReservas();
     if (!$('pCalendario').classList.contains('oculto')) pintarMes();
-  });
+  }, '', {totalMs: 20000});
 }
 
 /* ---------------------- calendario propio ---------------------- */
