@@ -572,6 +572,7 @@ label.obligatorio::after{content:" *";color:#ff7a6e;font-weight:800}
       <div class="caja">
       <h2>Stock en el local <button class="refrescar" id="btnAjusteStock" type="button" title="Corregir un error de carga">✏️ Corregir</button></h2>
       <div class="kpis" id="kpiStock"></div>
+      <div class="nota" id="stockSync" style="margin-top:8px"></div>
     </div>
 
     <div class="caja">
@@ -1043,6 +1044,7 @@ label.obligatorio::after{content:" *";color:#ff7a6e;font-weight:800}
 </div>
 
 <script src="fdh_red.js"></script>
+<script src="fdh_stock.js"></script>
 <script>
 /* ==========================================================================
    FAMILIA DE HAMBURGUESA — Ventas del turno
@@ -1287,6 +1289,45 @@ function traer(hoja, ok, extra, red){
     if (!vieja){ ENTREGADO[hoja || ''] = seq; try{ ok(r); }catch(e){} }
   })
   .catch(function(){ try{ ok(null); }catch(e){} });
+}
+
+/* ---------------------- LIBRO DE STOCK (servidor) · etapa 1, modo sombra ----------------------
+   Cada movimiento que cambia el stock se registra TAMBIEN en la planilla "Stock" del Cuaderno, con un ID unico,
+   por una cola local (fdh_stock.js): el mostrador no espera y, si no hay internet, se envia despues sin duplicar.
+   En esta etapa es SOLO REGISTRO: el stock que se ve en pantalla (T.stock) sigue mandando. */
+var INSUMOS_STOCK = ['carne','panJ','panS','che','pack'];
+function copiaStock(){ var o = {}; INSUMOS_STOCK.forEach(function(k){ o[k] = T.stock[k]; }); return o; }
+function numerosStock(obj){
+  var o = {};
+  INSUMOS_STOCK.forEach(function(k){
+    var n = obj ? obj[k] : undefined;
+    if (n !== '' && n !== null && n !== undefined && isFinite(Number(n))) o[k] = Math.round(Number(n));
+  });
+  return o;
+}
+function stockRegistrar(tipo, datos){
+  try{
+    var m = {tipo: tipo, quien: (usuarioActivo() || (T && T.quien) || ''), turnoDe: (T && T.quien) || ''};
+    for (var c in datos) m[c] = datos[c];
+    return FDH_STOCK.registrar(m);
+  }catch(e){ try{ console.warn('libro de stock: no se pudo registrar', e); }catch(x){} return null; }
+}
+/** Lo que bajo el stock entre `antes` y ahora, como movimiento (venta o entrega). Si algo SUBIO no se manda: seria otro tipo de movimiento. */
+function stockRegistrarDif(antes, tipo, referencia, detalle){
+  var d = {}, sube = false, hay = false;
+  INSUMOS_STOCK.forEach(function(k){ var x = T.stock[k] - antes[k]; if (x){ d[k] = x; hay = true; if (x > 0) sube = true; } });
+  if (!hay || sube) return null;
+  return stockRegistrar(tipo, {deltas: d, referencia: referencia || '', detalle: detalle || ''});
+}
+function pintarStockSync(e){
+  var el = $('stockSync'); if (!el) return;
+  e = e || FDH_STOCK.estado();
+  var h;
+  if (e.rechazados) h = '\u26a0 ' + e.rechazados + ' movimiento(s) rechazado(s) por la planilla de stock. Avisale a Samu.';
+  else if (e.pendientes) h = '\u23f3 ' + e.pendientes + ' movimiento(s) de stock por enviar a la planilla (se mandan solos).';
+  else h = '\u2713 Registrado en la planilla de stock';
+  el.textContent = h;
+  el.style.color = e.rechazados ? '#f2a6a4' : (e.pendientes ? '#f2c14e' : '');
 }
 
 /** POST al Cuaderno. No se puede confirmar (respuesta opaca), así que se avisa. */
@@ -2739,6 +2780,7 @@ function finalizarVenta(){
 
   // descontar stock — primero lo que sale por el pedido
   var det = [];
+  var _stock0 = copiaStock();   // libro de stock: foto antes de descontar
   if (venta.pedido){
     var sC = ent($('sCarne').value), sJ = ent($('sPanJ').value),
         sS = ent($('sPanS').value),  sH = ent($('sChe').value),
@@ -2781,6 +2823,9 @@ function finalizarVenta(){
            : it.id === 'solopan' ? it.cant + ' solo pan (' + nombrePan(it.prov).toLowerCase() + ')'
            : it.cant + ' ' + it.n.toLowerCase());
   });
+
+  // Libro de stock: lo que bajo en esta venta o entrega queda registrado en la planilla (modo sombra: solo registro).
+  stockRegistrarDif(_stock0, venta.pedido ? 'ENTREGA_PEDIDO' : 'VENTA', venta.pedido ? clavePedido(venta.pedido) : '', det.join(' \u00b7 '));
 
   // plata
   T.ventas += total;
@@ -3009,6 +3054,11 @@ function confirmarIngreso(que, c, fabricaNuevo, salvedad){
   var deDonde = $('iDe').value;
   var quien = $('iQuien').value;
 
+  // Libro de stock: el ingreso queda registrado en la planilla (modo sombra: solo registro).
+  var _dIng = {}; _dIng[que] = c;
+  stockRegistrar('INGRESO', {deltas: _dIng, quien: quien,
+    detalle: miles(c) + ' ' + nombres[que] + ' \u00b7 ' + deDonde.toLowerCase() + ' \u00b7 recibi\u00f3 ' + quien + ' \u00b7 carg\u00f3 ' + (usuarioActivo() || '?') + (salvedad ? ' \u00b7 \u26a0 ' + salvedad : '')});
+
   anotar('Llegó mercadería',
          miles(c) + ' ' + nombres[que] + ' · ' + deDonde.toLowerCase() + ' · recibió ' + quien +
          (fabricaNuevo ? ' · quedan ' + miles(fabricaNuevo.listas) + ' listas en freezers' +
@@ -3080,6 +3130,10 @@ function guardarAjusteStock(){
   var motivo = $('ajMotivo').value.trim();
 
   T.stock[que] = nuevo;
+  // Libro de stock: la correccion queda registrada con quien la hizo y el motivo (modo sombra: solo registro).
+  var _cont = {}; _cont[que] = nuevo;
+  stockRegistrar('AJUSTE', {contado: _cont, motivo: motivo || '(sin motivo indicado)', quien: quien,
+    detalle: 'Corrigi\u00f3 por error de carga: el sistema dec\u00eda ' + anterior});
   anotar('Corrigió por error de carga',
     NOMBRES_INSUMO[que] + ': ' + miles(anterior) + ' → ' + miles(nuevo) + ' · corrigió ' + quien +
     (motivo ? ' · ' + motivo : ''),
@@ -3600,6 +3654,11 @@ function confirmarCierre(){
     try{ $('zObs').focus(); }catch(e){}
     return;
   }
+  // Libro de stock: lo contado al cerrar queda registrado como RECUENTO, con la diferencia contra el libro.
+  if (T.contado){
+    stockRegistrar('RECUENTO', {contado: numerosStock(T.contado), turnoDe: T.quien,
+      detalle: 'Cierre del turno de ' + T.quien});
+  }
   // HU5: ya no se cobra por transferencia. La columna `Transferencia` de la
   // hoja Ventas se sigue MANDANDO EN CERO —no se saca— porque el MENSAJERO
   // escribe POR POSICIÓN: sin esa clave, MercadoPago y QuienCerro se correrían
@@ -3675,6 +3734,9 @@ function abrirTurno(){
   };
   T.stock = {carne:T.ini.carne, panJ:T.ini.panJ, panS:T.ini.panS, che:T.ini.che, pack:T.ini.pack};
   T.caja = T.ini.caja;
+  // Libro de stock: lo tipeado al abrir se compara con el libro (modo sombra: no cambia ningun saldo).
+  stockRegistrar('APERTURA', {contado: numerosStock(T.ini), turnoDe: T.quien,
+    detalle: 'Apertura del turno \u00b7 stock tipeado por ' + (usuarioActivo() || T.quien)});
   anotar('Se abrió el turno', T.quien + ' · caja con ' + pesos(T.ini.caja), '');
   guardarTurno();
   entrarAlTurno();
@@ -3723,6 +3785,7 @@ function entrarAlTurno(){
 }
 
 function iniciar(){
+  FDH_STOCK.url = NUBE; FDH_STOCK.onCambio(pintarStockSync); pintarStockSync();
   cargarPrecios();
   llenarGente(['aQuien','iQuien','ajQuien','rQuien','pfQuien','dcQuien','ipQuien']);
   llenarIngresoPlata();
