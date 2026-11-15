@@ -288,6 +288,7 @@ button.sec:hover{background:#33291a;color:#fff}
 
 <footer><span class="lema">CASERAS · RICAS · DE VERDAD · EST. 2024</span>Con el favor y la guía de Dios, vivamos y alcancemos la Visión 🙏🚀 · Familia de Hamburguesa · Plan de Transformación 2026</footer>
 
+<script src="fdh_red.js"></script>
 <script>
 /* ============================================================================
    FÁBRICA v8 (antes "Producción"). Vista simplificada: solo "Disponible para
@@ -323,18 +324,16 @@ function ahora(){ return new Date().toLocaleTimeString('es-AR',{hour:'2-digit',m
 function burgy(m){ $('burgyDice').textContent=m; }
 
 /* ===== Nube ===== */
-var cbN=0;
+/* P-3 (Fase 1): los pedidos van por FDH_RED (fetch con reintentos y tiempo maximo) en vez de JSONP.
+   Si un intento tarda mas de 12 s se lanza otro SIN cancelar el primero: gana el que responda antes
+   (una respuesta lenta se sigue aprovechando, como antes). ok(r) recibe la respuesta; ok(null) si
+   fallaron los 3 intentos o se agoto el tiempo. El aviso "reintentando" se muestra solo para la hoja
+   Produccion (la que manda el stock); Auditoria es secundaria. */
 function traer(hoja, ok){
-  var nombre='fdhprod'+(++cbN), listo=false, avisado=false;
-  window[nombre]=function(r){ listo=true; try{ ok(r); }catch(e){} limpiar(); };
-  var s=document.createElement('script');
-  s.src=NUBE_URL+'?hoja='+encodeURIComponent(hoja)+'&callback='+nombre;
-  s.onerror=avisar;
-  document.head.appendChild(s);
-  setTimeout(avisar,20000);
-  setTimeout(function(){ if(!listo) limpiar(); },35000);
-  function avisar(){ if(listo||avisado) return; avisado=true; try{ ok(null); }catch(e){} }
-  function limpiar(){ try{ delete window[nombre]; }catch(e){} if(s.parentNode) s.parentNode.removeChild(s); }
+  FDH_RED.pedir(NUBE_URL+'?hoja='+encodeURIComponent(hoja),
+    {onEstado:function(e){ if(hoja==='Producción') nubeEstado('cargando','⚠️ La nube tarda · reintentando ('+e.intento+' de '+e.de+')…'); }})
+  .then(function(r){ try{ ok(r); }catch(e){} })
+  .catch(function(){ try{ ok(null); }catch(e){} });
 }
 function subirNube(fila){
   try{
