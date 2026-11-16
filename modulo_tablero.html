@@ -277,7 +277,7 @@ function cargarNube(){
  /* P-1 (Fase 1): solo las 6 hojas que el Tablero usa. Antes pedia las 10 (incluida Auditoria,
     544 KB) y tardaba 5,3 s; con las 6 tarda 3,4 s. Un MENSAJERO que no entienda ?hojas= devuelve todo
     y el Tablero sigue funcionando (usa solo estas 6 de lo que llegue). */
- const url=NUBE_URL+'?hojas='+encodeURIComponent('Ventas,Producción,Gastos,Mayoristas,Deudas,Pedidos')+'&t='+Date.now();
+ const url=NUBE_URL+'?hojas='+encodeURIComponent('Ventas,Producción,Gastos,Mayoristas,Deudas,Pedidos,Objetivos')+'&t='+Date.now();
  FDH_RED.pedir(url,{onEstado:function(e){ if(mi===nubeSeq) pill('⚠️ La nube tarda · reintentando ('+e.intento+' de '+e.de+')…','cargando'); }})
  .then(function(resp){
    if(resp&&resp.ok&&resp.datos){
@@ -294,7 +294,7 @@ function cargarNube(){
 function burgy(m){$('burgyDice').textContent=m}
 function toggle(id){$(id).classList.toggle('abierto')}
 
-const PERSONAS=['Pablo','Yami','Cielo','Paula','Mara','Soporte'];
+const PERSONAS=['Pablo','Yami','Cielo','Paula','Mara','Soporte','Valen'];
 let quienObj=PERSONAS[0];
 $('aoQuien').innerHTML=PERSONAS.map((p,i)=>'<div class="chip'+(i===0?' sel':'')+'" onclick="setQuien(this,\''+p+'\')">'+p+'</div>').join('');
 function setQuien(el,p){document.querySelectorAll('#aoQuien .chip').forEach(e=>e.classList.remove('sel'));el.classList.add('sel');quienObj=p}
@@ -304,26 +304,81 @@ function setQuien(el,p){document.querySelectorAll('#aoQuien .chip').forEach(e=>e
    Caían acá cada vez que el localStorage estaba vacío (celular nuevo) y
    se mostraban con cuando:ahora() — o sea con la hora ACTUAL — como si
    Pablo/Mara/Yami hubieran actualizado el objetivo recién, sin ser cierto. */
-let objetivos=leer('fdh_objetivos_v1')||[];
-function guardarObj(){localStorage.setItem('fdh_objetivos_v1',JSON.stringify(objetivos))}
+/* E8 (16-11-2026): los objetivos viven en la hoja Objetivos del Cuaderno, compartidos por todos los socios.
+   Cada fila es una version de un objetivo (columna ID); vale la ULTIMA fila de cada ID.
+   Quitar = una fila nueva con Estado QUITADO: no se borra nada y queda quien lo quito y cuando.
+   Lo que un celular tenia guardado de antes (fdh_objetivos_v1) se sube solo una vez y no se borra del celular. */
+let objetivos=[], OBJ_SABIDO=false, OBJ_FILAS=[];
+function fechaObj(f){
+ const s=String(f||''); if(!s) return '';
+ const d=new Date(s); if(/^\d{4}-\d\d-\d\dT/.test(s) && !isNaN(d)) return d.toLocaleString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+ return s;
+}
+function objetivosDeNube(filas){
+ const ult={};
+ (filas||[]).forEach(f=>{ const id=String(f.ID||'').trim(); if(id) ult[id]=f; });
+ return Object.keys(ult).map(k=>ult[k]).filter(f=>String(f.Estado||'').toUpperCase()!=='QUITADO').map(f=>({
+   id:String(f.ID), nombre:String(f.Objetivo||''), a3:Number(f.Avance3)||0, a6:Number(f.Avance6)||0, a12:Number(f.Avance12)||0,
+   quien:String(f.Quien||''), cuando:fechaObj(f.Fecha)}));
+}
+function filaObj(o,estado,quien){
+ return {Fecha:ahora(), Objetivo:o.nombre, Avance3:o.a3, Avance6:o.a6, Avance12:o.a12, Quien:quien||o.quien||'', ID:String(o.id), Estado:estado};
+}
+/* POST con respuesta legible: el objetivo solo se da por guardado cuando el Cuaderno lo confirma. */
+function guardarObjNube(fila){
+ return fetch(NUBE_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({hoja:'Objetivos',fila:fila})})
+  .then(r=>r.text()).then(t=>{ const j=JSON.parse(t); if(!j||!j.ok) throw new Error((j&&j.error)||'el Cuaderno no lo guardó'); return j; });
+}
+function idObj(){ return 'obj'+Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
+function tomarObjetivosNube(){
+ if(!datosNube||!Array.isArray(datosNube.Objetivos)) return;
+ OBJ_FILAS=datosNube.Objetivos; objetivos=objetivosDeNube(OBJ_FILAS); OBJ_SABIDO=true;
+ migrarObjetivosLocales();
+}
+let OBJ_MIGRANDO=false;
+function migrarObjetivosLocales(){
+ if(OBJ_MIGRANDO) return;
+ let viejos=[]; try{ viejos=JSON.parse(localStorage.getItem('fdh_objetivos_v1')||'[]')||[]; }catch(e){}
+ const enHoja={}; OBJ_FILAS.forEach(f=>{ enHoja[String(f.ID||'')]=true; });
+ const faltan=viejos.filter(o=>o&&o.nombre&&!enHoja['loc'+o.id]);
+ if(!faltan.length) return;
+ OBJ_MIGRANDO=true;
+ faltan.reduce((p,o)=>p.then(()=>guardarObjNube({Fecha:ahora(),Objetivo:o.nombre,Avance3:Number(o.a3)||0,Avance6:Number(o.a6)||0,Avance12:Number(o.a12)||0,
+   Quien:(o.quien||'')+(o.cuando?' (cargado en este celular el '+o.cuando+')':''),ID:'loc'+o.id,Estado:'ACTIVO'})),Promise.resolve())
+ .then(()=>{ OBJ_MIGRANDO=false; burgy('Subí al Cuaderno '+faltan.length+' objetivo(s) que estaban solo en este dispositivo. 🎯'); cargarNube(); })
+ .catch(()=>{ OBJ_MIGRANDO=false; });
+}
 function agregarObjetivo(){
  const n=$('aoNombre').value.trim();if(!n){burgy('Escribí el nombre del objetivo. ✍️');return}
- objetivos.push({id:Date.now(),nombre:n,a3:Number($('ao3').value||0),a6:Number($('ao6').value||0),a12:Number($('ao12').value||0),quien:quienObj,cuando:ahora()});
- guardarObj();$('aoNombre').value='';$('ao3').value=0;$('ao6').value=0;$('ao12').value=0;
- burgy('¡Objetivo "'+n+'" agregado! Firmado por '+quienObj+'. 🎯');renderObjetivos();
+ const o={id:idObj(),nombre:n,a3:Number($('ao3').value||0),a6:Number($('ao6').value||0),a12:Number($('ao12').value||0),quien:quienObj};
+ const btn=document.querySelector('button[onclick="agregarObjetivo()"]'); if(btn){btn.disabled=true;btn.textContent='Guardando en el Cuaderno…'}
+ guardarObjNube(filaObj(o,'ACTIVO',quienObj)).then(()=>{
+   $('aoNombre').value='';$('ao3').value=0;$('ao6').value=0;$('ao12').value=0;
+   objetivos.push(Object.assign({},o,{cuando:'recién'}));renderObjetivos();
+   burgy('¡Objetivo "'+n+'" guardado en el Cuaderno! Firmado por '+quienObj+'. 🎯');cargarNube();
+ }).catch(e=>{ burgy('⚠️ No se pudo guardar el objetivo ('+e.message+'). Revisá la conexión y probá de nuevo.'); })
+ .finally(()=>{ if(btn){btn.disabled=false;btn.textContent='Guardar objetivo'} });
 }
-function quitarObjetivo(id){if(!confirm('¿Quitar este objetivo?'))return;objetivos=objetivos.filter(o=>o.id!==id);guardarObj();renderObjetivos()}
+function quitarObjetivo(id){
+ const o=objetivos.find(x=>String(x.id)===String(id)); if(!o) return;
+ if(!confirm('¿Quitar el objetivo "'+o.nombre+'"? Queda registrado que lo quitó '+quienObj+'.'))return;
+ guardarObjNube(filaObj(o,'QUITADO',quienObj)).then(()=>{
+   objetivos=objetivos.filter(x=>String(x.id)!==String(id));renderObjetivos();burgy('Objetivo quitado. Lo quitó '+quienObj+'.');cargarNube();
+ }).catch(e=>{ burgy('⚠️ No se pudo quitar ('+e.message+'). Probá de nuevo.'); });
+}
+function escObj(t){ return String(t==null?'':t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function renderObjetivos(){
+ if(!OBJ_SABIDO){ $('objGrid').innerHTML='<div style="color:var(--gris);font-style:italic">Consultando los objetivos en el Cuaderno…</div>'; return; }
  $('objGrid').innerHTML=objetivos.map(o=>{
    const prom=Math.round((o.a3+o.a6+o.a12)/3);
    const cls=o.a3>=100?'cumplido':(o.a3<50?'riesgo':'');
-   return '<div class="obj-card '+cls+'"><div class="obj-top"><div><div class="obj-nombre">'+o.nombre+'</div><div class="obj-meta-info">avance promedio '+prom+'%</div></div><button class="obj-quitar" onclick="quitarObjetivo('+o.id+')">✕ quitar</button></div>'+
+   return '<div class="obj-card '+cls+'"><div class="obj-top"><div><div class="obj-nombre">'+escObj(o.nombre)+'</div><div class="obj-meta-info">avance promedio '+prom+'%</div></div><button class="obj-quitar" onclick="quitarObjetivo(\''+o.id+'\')">✕ quitar</button></div>'+
      '<div class="obj-plazos">'+
        plazoBox('p3','📗 3 meses',o.a3,true)+
        plazoBox('p6','📦 6 meses',o.a6,true)+
        plazoBox('p12','🏆 12 meses',o.a12,false)+
      '</div>'+
-     '<div class="obj-firma">Última modificación: '+o.quien+' · '+o.cuando+'</div></div>';
+     '<div class="obj-firma">Última modificación: '+escObj(o.quien)+' · '+escObj(o.cuando)+'</div></div>';
  }).join('')||'<div style="color:var(--gris);font-style:italic">Sin objetivos todavía. Agregá el primero abajo. 👇</div>';
 }
 function plazoBox(cls,lbl,pct,flecha){
@@ -342,6 +397,7 @@ function cargar(){
  let hayNube=false,deudaViva=0;
  if(datosNube){
    hayNube=true;
+   tomarObjetivosNube();
    /* Ventas de la nube → mismo formato que cierres locales (fecha, total) */
    if(datosNube.Ventas&&datosNube.Ventas.length){
      /* los cierres marcados EsPrueba (hoja Ventas) no son datos del negocio: no entran en ningun total */
