@@ -344,7 +344,8 @@ function cargar(){
    hayNube=true;
    /* Ventas de la nube → mismo formato que cierres locales (fecha, total) */
    if(datosNube.Ventas&&datosNube.Ventas.length){
-     cierres=datosNube.Ventas.map(v=>({fecha:(''+v.Fecha).slice(0,10),total:Number(v.Total)||0,
+     /* los cierres marcados EsPrueba (hoja Ventas) no son datos del negocio: no entran en ningun total */
+     cierres=datosNube.Ventas.filter(v=>{const x=String(v.EsPrueba==null?'':v.EsPrueba).trim().toUpperCase();return x===''||x==='NO'||x==='FALSE'||x==='0';}).map(v=>({fecha:(''+v.Fecha).slice(0,10),total:Number(v.Total)||0,
        ef:Number(v.Efectivo)||0,tr:Number(v.Transferencia)||0,dif:null}));
    }
    /* Producción de la nube */

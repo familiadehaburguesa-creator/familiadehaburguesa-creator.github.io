@@ -485,6 +485,8 @@ function ahora(){ return new Date().toLocaleTimeString('es-AR',{hour:'2-digit',m
    fallaron los 3 intentos o se agoto el tiempo. Solo las 5 hojas que Finanzas usa (MENSAJERO V26+,
    ?hojas=): un script viejo ignora el parametro y devuelve todo, y sigue funcionando. */
 var nubeSeq=0;
+/* Un cierre de turno marcado como prueba (columna EsPrueba de la hoja Ventas) no es un dato del negocio. */
+function esPrueba(v){ var x=String((v&&v.EsPrueba)==null?'':v.EsPrueba).trim().toUpperCase(); return x!=='' && x!=='NO' && x!=='FALSE' && x!=='0'; }
 function traerTodo(ok){
   var mi=++nubeSeq;
   FDH_RED.pedir(NUBE_URL+'?hojas=Ventas,Deudas,Gastos,Fondos,Tesoreria,Turnos',
@@ -516,7 +518,7 @@ function cargarNube(){
   traerTodo(function(r){
     if(!r || !r.ok || !r.datos){ FALLO_HOY=true; nubeEstado('error','⚠️ Sin conexión — muestro lo último conocido'); pintarTotalHoy(); return; }
     FALLO_HOY=false;
-    D.ventas=r.datos.Ventas||[]; D.deudas=r.datos.Deudas||[]; D.gastos=r.datos.Gastos||[];
+    D.ventas=(r.datos.Ventas||[]).filter(function(v){ return !esPrueba(v); }); D.deudas=r.datos.Deudas||[]; D.gastos=r.datos.Gastos||[];
     // HU3/HU4: hoja Fondos (MENSAJERO V17). Si todavía no existe llega vacía y
     // la pantalla sigue funcionando igual: el fondo viejo se lee de Gastos.
     D.fondos=r.datos.Fondos||[];
