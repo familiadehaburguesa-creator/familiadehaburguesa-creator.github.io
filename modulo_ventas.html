@@ -1701,6 +1701,7 @@ function sincronizarDeudas(cuandoTermine){
     if (!r || !r.ok || !r.datos){ if (cuandoTermine) cuandoTermine(false); return; }
     var porCliente = {}, saldados = [];
     r.datos.forEach(function(f){
+      if (String(f.Estado || '').trim().toUpperCase() === 'ANULADA') return;   // E9: anulada = no cuenta (la fila queda en la planilla)
       var clave = limpiaClave(f.Cliente);
       if (!clave) return;
       var e = porCliente[clave] || (porCliente[clave] = {
@@ -1933,7 +1934,7 @@ function pintarDeudas(){
         // nube con sus 7 campos crudos (raw).
         var iconos = (porTab && c.raw) ?
           ' <span class="accCarga" data-accion="editar" data-deuda="' + d.id + '" data-idx="' + i + '" title="Corregir el monto">✏️</span>' +
-          '<span class="accCarga" data-accion="borrar" data-deuda="' + d.id + '" data-idx="' + i + '" title="Borrar, se cargó mal">🗑️</span>' : '';
+          '<span class="accCarga" data-accion="borrar" data-deuda="' + d.id + '" data-idx="' + i + '" title="Anular, se cargó mal">🗑️</span>' : '';
         h += '<div class="deuLinea deuda">🧾 Deuda ' + pesos(c.monto) + ' · ' + selloTexto(c.fecha, c.hora, c.usuario) + iconos + '</div>';
         if (porTab && CARGA_EN_ACCION && CARGA_EN_ACCION.idDeuda === d.id && CARGA_EN_ACCION.idxCarga === i){
           h += pintarAccionCarga(c);
@@ -1979,8 +1980,8 @@ function pintarDeudas(){
  *  tarjeta, como el resto de la app. */
 function pintarAccionCarga(c){
   if (CARGA_EN_ACCION.modo === 'borrar'){
-    return '<div class="t2 accInline">¿Borrar esta carga de ' + pesos(c.monto) + '? Se anota en la bitácora del turno.' +
-      ' <span class="accConfirmarBorrar" style="color:#f2a6a4;font-weight:700;cursor:pointer">Sí, borrar</span>' +
+    return '<div class="t2 accInline">¿Anular esta carga de ' + pesos(c.monto) + '? No se borra: queda marcada como anulada, deja de sumar y se anota en la bitácora del turno.' +
+      ' <span class="accConfirmarBorrar" style="color:#f2a6a4;font-weight:700;cursor:pointer">Sí, anular</span>' +
       ' · <span class="accCancelar" style="cursor:pointer;text-decoration:underline">Cancelar</span></div>';
   }
   return '<div class="t2 accInline">Nuevo monto: ' +
@@ -2002,8 +2003,8 @@ function confirmarBorrarCarga(){
   var quien = usuarioActivo();
   eliminarDeudaEnNube(ec.c.raw);
   if (T && T.abierto){
-    anotar('Borró una carga de deuda · ' + ec.d.quien,
-           pesos(ec.c.monto) + ' · cargada el ' + diaCorto(ec.c.fecha) + ' · la borró ' + quien, '');
+    anotar('Anuló una carga de deuda · ' + ec.d.quien,
+           pesos(ec.c.monto) + ' · cargada el ' + diaCorto(ec.c.fecha) + ' · la anuló ' + quien, '');
     guardarTurno(); pintarMovs();
   }
   CARGA_EN_ACCION = null;
@@ -2031,19 +2032,31 @@ function confirmarEditarCarga(){
  *  sus 7 campos exactos (no hay ID) y recalcula en cadena el saldo de las
  *  filas posteriores de ese cliente. mode:'no-cors' = no hay respuesta acá;
  *  por eso se resincroniza con la nube después de mandarlo. */
+/* E9: ya no se borra la fila: el Cuaderno la marca ANULADA (deja de sumar al saldo y queda quién fue).
+   Se espera la respuesta: si no se pudo, se avisa y se vuelve a leer el libro de deudas. */
+function avisoDeudaNube(txt){
+  try{ window.alert(txt); }catch(e){}
+  if (T && T.abierto){ anotar('\u26a0 ' + txt, '', ''); guardarTurno(); pintarMovs(); }
+}
+function accionConRespuesta(cuerpo, siFalla){
+  ESCRITURAS++;
+  return FDH_COLA.directo(cuerpo, 25000).then(function(j){
+    if (!j || !j.ok) avisoDeudaNube(siFalla + ((j && j.error) ? ' (' + j.error + ')' : '') + '. Avisá a un socio.');
+    return j;
+  }).catch(function(){
+    avisoDeudaNube(siFalla + ': no hubo conexión con el Cuaderno. Probá de nuevo en un momento.');
+    return null;
+  });
+}
 function eliminarDeudaEnNube(raw){
-  try{
-    fetch((ESCRITURAS++, NUBE), {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain'},
-      body: JSON.stringify({accion:'eliminarDeuda', deuda: raw, quien: usuarioActivo()})});
-  }catch(e){}
+  return accionConRespuesta({accion:'eliminarDeuda', deuda: raw, quien: usuarioActivo()}, 'No se pudo anular la deuda')
+    .then(function(){ sincronizarDeudas(); });
 }
 
 /** HU4: corrige el monto de una carga de deuda ya cargada. */
 function editarDeudaEnNube(raw, nuevoMonto, quien){
-  try{
-    fetch((ESCRITURAS++, NUBE), {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain'},
-      body: JSON.stringify({accion:'editarDeuda', deuda: raw, nuevoMonto: nuevoMonto, quien: quien})});
-  }catch(e){}
+  return accionConRespuesta({accion:'editarDeuda', deuda: raw, nuevoMonto: nuevoMonto, quien: quien}, 'No se pudo corregir la deuda')
+    .then(function(){ sincronizarDeudas(); });
 }
 
 /** '11/09 · 14:32 · cargó Paula' — lo que se ve en cada deuda. */
@@ -3341,12 +3354,9 @@ function gastoManualIgual(c){
 }
 /** Pide al MENSAJERO (V16) que anule un gasto: no lo borra, lo marca ANULADO. */
 function anularGastoEnNube(g, motivo){
-  try{
-    fetch((ESCRITURAS++, NUBE), {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain'},
-      body: JSON.stringify({accion:'anularGasto',
-        gasto:{Categoria:g.Categoria, Monto:num(g.Monto), Detalle:String(g.Detalle || '')},
-        quien: usuarioActivo() || (T && T.quien) || '', motivo: motivo})});
-  }catch(e){}
+  return accionConRespuesta({accion:'anularGasto',
+    gasto:{Categoria:g.Categoria, Monto:num(g.Monto), Detalle:String(g.Detalle || '')},
+    quien: usuarioActivo() || (T && T.quien) || '', motivo: motivo}, 'No se pudo anular el gasto repetido en Finanzas');
 }
 
 

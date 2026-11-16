@@ -426,7 +426,7 @@ function cargar(){
    /* Deuda viva: saldo por cliente que calcula el MENSAJERO (hoja Deudas) */
    if(datosNube.Deudas&&datosNube.Deudas.length){
      const porCli={};
-     datosNube.Deudas.forEach(d=>{const k=String(d.Cliente||'').toLowerCase().trim();if(k)porCli[k]=Number(d.SaldoCliente)||0});
+     datosNube.Deudas.filter(d=>String(d.Estado||'').trim().toUpperCase()!=='ANULADA').forEach(d=>{const k=String(d.Cliente||'').toLowerCase().trim();if(k)porCli[k]=Number(d.SaldoCliente)||0});
      deudaViva=Object.values(porCli).filter(x=>x>0).reduce((a,b)=>a+b,0);
    }
    /* Pedidos del público de la nube */

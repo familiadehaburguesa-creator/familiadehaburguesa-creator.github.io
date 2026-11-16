@@ -521,7 +521,7 @@ function cargarNube(){
   traerTodo(function(r){
     if(!r || !r.ok || !r.datos){ FALLO_HOY=true; nubeEstado('error','⚠️ Sin conexión — muestro lo último conocido'); pintarTotalHoy(); return; }
     FALLO_HOY=false;
-    D.ventas=(r.datos.Ventas||[]).filter(function(v){ return !esPrueba(v); }); D.deudas=r.datos.Deudas||[]; D.gastos=r.datos.Gastos||[];
+    D.ventas=(r.datos.Ventas||[]).filter(function(v){ return !esPrueba(v); }); D.deudas=(r.datos.Deudas||[]).filter(function(f){ return String(f.Estado||'').trim().toUpperCase()!=='ANULADA'; });   /* E9: una deuda anulada no cuenta */ D.gastos=r.datos.Gastos||[];
     // HU3/HU4: hoja Fondos (MENSAJERO V17). Si todavía no existe llega vacía y
     // la pantalla sigue funcionando igual: el fondo viejo se lee de Gastos.
     D.fondos=r.datos.Fondos||[];
