@@ -144,6 +144,9 @@ button.mini{padding:5px 10px;font-size:.8rem;border-radius:7px}
 .cx-grid{display:grid;grid-template-columns:minmax(260px,2fr) minmax(0,3fr);gap:14px;align-items:start;margin-top:10px}
 @media(max-width:899px){.cx-grid{grid-template-columns:1fr}}
 .cx-sec{background:#171310;border:1px solid #2c2c34;border-radius:10px;padding:9px 11px;margin-bottom:10px}
+/* en celular una tabla ancha se desliza dentro de su bloque en vez de ensanchar toda la pantalla */
+.cx-grid>div{min-width:0}
+.cx-sec{overflow-x:auto}
 .cx-sec>h3{font-family:'Oswald','Segoe UI',sans-serif;font-weight:600;font-size:.72rem;letter-spacing:1.2px;text-transform:uppercase;color:var(--dorado);margin:0 0 7px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
 .cx-sec>h3 .n{color:var(--gris);font-weight:400;letter-spacing:0;text-transform:none;font-size:.75rem}
 .cx-sec .c-medios{margin-top:0}
@@ -1161,6 +1164,113 @@ function efeTurnoReporte(v,asig){
   }
   return '';
 }
+/* ===== HU-03 · que paso en cada turno: quien abrio, cerro y valido (hoja Turnos), caja, gastos y stock =====
+   Todo sale de lo que ya esta en el Cuaderno. Gastos y stock se ubican en el turno por dia y hora
+   (o por el ID del turno cuando el movimiento lo trae). */
+function turnoDeCierre(v){
+  var id=String(v.IDTurno||'').trim(); if(!id) return null;
+  return (D.turnos||[]).filter(function(t){ return String(t.ID)===id; })[0]||null;
+}
+function enVentanaTurno(v,dia,hr){
+  var r=rangoCierre(v); if(!r||!dia||!hr) return false;
+  var t=dia+' '+hr; return t>=r.ini && t<=r.fin;
+}
+function gastosDeTurno(v){
+  return vigentes().filter(function(g){ return !esFondo(g) && enVentanaTurno(v,String(g.Fecha||'').slice(0,10),horaDeNota(g.Detalle)); });
+}
+function conSigno(n){ return (n>0?'+':(n<0?'−':''))+pesos(Math.abs(n)); }
+function bloqueTurnoHtml(v){
+  var t=turnoDeCierre(v), ho=soloHora(v.HoraApertura), hc=soloHora(v.HoraCierre), kv='', nota='';
+  var par=function(a,b){ return '<span>'+a+'</span><span>'+b+'</span>'; };
+  if(t){
+    kv+=par('Abrió', escH(t.QuienAbre||'—')+' · '+escH(soloHora(t.HoraApertura)||ho||'—'));
+    kv+=par('Cerró', escH(t.QuienCierra||v.QuienCerro||'—')+' · '+escH(soloHora(t.HoraCierre)||hc||'—'));
+    if(String(t.ValidadoPor||'').trim()){
+      var de=num(t.DifEfe), dm=num(t.DifMP);
+      kv+=par('Validó', escH(t.ValidadoPor)+' · '+fery(t.ValidadoFecha)+' '+escH(soloHora(t.ValidadoHora)||''));
+      kv+=par('Efectivo que pasó a Tesorería', pesos(num(t.EfeValidado)));
+      kv+=par('Diferencia al validar', (de||dm)?('efectivo '+conSigno(de)+' · MP '+conSigno(dm)):'ninguna');
+      if(String(t.ObsValidacion||'').trim()) nota='<div class="ht-nota">Al validar se anotó: '+escH(t.ObsValidacion)+'</div>';
+    } else {
+      kv+=par('Validación', t.Estado==='ANULADO'?'turno anulado':'<b style="color:var(--amarillo,#f2c14e)">falta que un socio lo valide</b>');
+    }
+  } else {
+    kv+=par('Abrió y cerró', escH(v.QuienCerro||'—')+' · '+(ho||'—')+' a '+(hc||'—'));
+    kv+=par('Validación','turno de antes del registro de turnos');
+  }
+  return '<div class="cx-sec"><h3>Quién abrió, cerró y validó</h3><div class="cx-kv">'+kv+'</div>'+nota+'</div>';
+}
+/* Caja del turno: la misma cuenta que hace la pantalla de Ventas al cerrar
+   (caja de inicio + efectivo de ventas + lo que entró sin ser venta − retiros de caja). */
+function bloqueCajaHtml(v,gs){
+  if(!hayDato(v.EfectivoContado) || !hayDato(v.AperturaCaja)) return '';
+  var ini=num(v.AperturaCaja), efe=num(v.Efectivo), otros=num(v.OtrosIngresosEfe);
+  var ret=gs.filter(function(g){ return /^retiro de caja/i.test(String(g.Categoria||'')); }).reduce(function(a,g){ return a+num(g.Monto); },0);
+  var esp=ini+efe+otros-ret, cont=num(v.EfectivoContado), dif=cont-esp;
+  var par=function(a,b){ return '<span>'+a+'</span><span>'+b+'</span>'; };
+  return '<div class="cx-sec"><h3>Caja del turno</h3><div class="cx-kv">'+
+    par('Caja de inicio', pesos(ini))+
+    par('+ Efectivo de ventas y entregas', pesos(efe))+
+    par('+ Entró sin ser venta (efectivo)', pesos(otros))+
+    par('− Retiros de caja', pesos(ret))+
+    par('<b>Tenía que haber</b>', '<b>'+pesos(esp)+'</b>')+
+    par('<b>Contó en caja</b>', '<b>'+pesos(cont)+'</b>')+
+    par('<b>Diferencia</b>', '<b style="color:'+(dif===0?'var(--verde,#7bd389)':'var(--amarillo,#f2c14e)')+'">'+(dif===0?'ninguna':conSigno(dif)+(dif>0?' (sobra)':' (falta)'))+'</b>')+
+    '</div></div>';
+}
+function tablaGastosTurno(gs){
+  var tot=gs.reduce(function(a,g){ return a+num(g.Monto); },0);
+  return '<div class="cx-sec"><h3>Gastos y retiros durante el turno <span class="n">'+gs.length+' · '+pesos(tot)+'</span></h3><table class="cx-tabla"><tr><th>Hora</th><th>Qué</th><th>De dónde</th><th class="m">Monto</th></tr>'+
+    gs.slice().sort(function(a,b){ return horaDeNota(a.Detalle)<horaDeNota(b.Detalle)?-1:1; }).map(function(g){
+      var prov=String(g.Proveedor||'').trim(), mot=String(g.Detalle||'').split('·')[0].trim();
+      return '<tr><td>'+horaDeNota(g.Detalle)+'</td><td class="cli">'+escH(g.Categoria||'')+(prov?' · '+escH(prov):'')+(mot?' · '+escH(mot):'')+' <span class="cx-sub">'+escH(g.Quien||'')+'</span></td><td>'+escH(etiquetaMedio(medioDe(g))||'sin medio')+'</td><td class="m">'+pesos(num(g.Monto))+'</td></tr>';
+    }).join('')+'</table></div>';
+}
+/* Libro de stock: se pide solo cuando alguien lo quiere ver (no frena la carga de la pantalla). */
+var STOCK_MOVS=null, STOCK_EST='';
+var STOCK_TIPO={SALDO_INICIAL:'Saldo inicial',APERTURA:'Apertura · stock contado',INGRESO:'Entró mercadería',VENTA:'Venta',ENTREGA_PEDIDO:'Entrega de pedido',RETIRO:'Retiro',AJUSTE:'Corrección',RECUENTO:'Cierre · stock contado',ANULACION:'Anulación'};
+var STOCK_INS=[['Carne','Carnes'],['PanJ','Pan Julio'],['PanS','Pan José'],['Che','Barras'],['Pack','Packs']];
+function pedirStockMovs(){
+  STOCK_EST='cargando'; pintarReporte();
+  FDH_RED.pedir(NUBE_URL+'?hoja=Stock&ultimas=500').then(function(r){
+    if(r&&r.ok&&r.datos){ STOCK_MOVS=r.datos; STOCK_EST=''; } else { STOCK_MOVS=null; STOCK_EST='error'; }
+    pintarReporte();
+  }).catch(function(){ STOCK_MOVS=null; STOCK_EST='error'; pintarReporte(); });
+}
+function stockDeTurno(v){
+  var id=String(v.IDTurno||'').trim(), t=turnoDeCierre(v), de=limpiaClave((t&&t.QuienAbre)||v.QuienCerro);
+  return (STOCK_MOVS||[]).filter(function(m){
+    var tm=String(m.Turno||'').trim(), td=limpiaClave(m.TurnoDe);
+    if(id && tm) return tm===id;
+    if(td && de && td!==de) return false;          // movimiento del turno de otra persona
+    return enVentanaTurno(v,String(m.Fecha||'').slice(0,10),soloHora(m.Hora));
+  });
+}
+function bloqueStockHtml(v){
+  if(STOCK_MOVS===null){
+    return '<div class="cx-sec"><h3>Movimientos de stock</h3>'+(STOCK_EST==='cargando'?'<div class="ht-nota">Consultando el libro de stock…</div>':
+      '<button class="mini sec" onclick="pedirStockMovs()">Ver los movimientos de stock</button>'+(STOCK_EST==='error'?'<div class="ht-nota">No se pudo consultar. Probá de nuevo.</div>':''))+'</div>';
+  }
+  var ms=stockDeTurno(v);
+  if(!ms.length) return '<div class="cx-sec"><h3>Movimientos de stock</h3><div class="ht-nota">Sin movimientos anotados en el libro de stock para este turno.</div></div>';
+  return '<div class="cx-sec"><h3>Movimientos de stock <span class="n">'+ms.length+'</span></h3><table class="cx-tabla"><tr><th>Hora</th><th>Qué pasó</th><th>Cambio</th></tr>'+
+    ms.map(function(m){
+      var contado=/^(APERTURA|RECUENTO|SALDO_INICIAL)$/.test(String(m.Tipo||''));
+      var cambio=STOCK_INS.map(function(k){
+        var x=num(m[(contado?'S':'D')+k[0]]);
+        if(contado) return k[1]+' '+miles(x);
+        return x?k[1]+' '+(x>0?'+':'−')+miles(Math.abs(x)):'';
+      }).filter(function(x){ return x; }).join(' · ');
+      var det=String(m.Referencia||'').trim()||String(m.Motivo||'').trim()||String(m.Detalle||'').trim();
+      return '<tr><td>'+soloHora(m.Hora)+'</td><td class="cli">'+escH(STOCK_TIPO[m.Tipo]||m.Tipo||'')+(det?' <span class="cx-sub">'+escH(det)+'</span>':'')+' <span class="cx-sub">'+escH(m.Quien||'')+'</span></td><td>'+(cambio||'—')+'</td></tr>';
+    }).join('')+'</table></div>';
+}
+/* Desde la lista de turnos: muestra abajo el reporte del dia de ese turno. */
+function verTurno(fecha){
+  var d=String(fecha||'').slice(0,10); if(!d) return;
+  $('rDesde').value=d; $('rHasta').value=d; SOLO_OBS=false; pintarReporte();
+  try{ $('reporte').scrollIntoView({behavior:'smooth',block:'start'}); }catch(e){}
+}
 function pintarReporte(){
   if(!$('rDesde').value && !$('rHasta').value){
     $('reporte').innerHTML='<div class="vacio">Elegí un rango de fechas o tocá uno de los botones.</div>'; return;
@@ -1199,7 +1309,8 @@ function pintarReporte(){
     var obsP=partirObservacion(v.Observacion);
     var mov=asig.de(v);
     var pagMP=partirPagadoresMP(v.PagadoresMP);
-    var izq='', der='';
+    var gsT=gastosDeTurno(v);
+    var izq=bloqueTurnoHtml(v)+bloqueCajaHtml(v,gsT), der='';
     var tiles='<div class="cx-sec" style="margin-top:10px"><h3>Cómo se cobró</h3><div class="c-medios">'+
          '<div class="c-medio efe"><span class="c-et">Efectivo</span><span class="c-m">'+pesos(num(v.Efectivo))+'</span></div>'+
          '<div class="c-medio mp"><span class="c-et">Mercado Pago</span><span class="c-m">'+pesos(num(v.MercadoPago)+num(v.Transferencia))+'</span></div>'+
@@ -1274,6 +1385,8 @@ function pintarReporte(){
     if(mov.nuevas.length) der+=tablaCredito(mov.nuevas);
     if(entro.length) der+=tablaEntroPlata(entro);
     if(pagMP.length) der+=tablaPagadoresMP(pagMP);
+    if(gsT.length) der+=tablaGastosTurno(gsT);
+    der+=bloqueStockHtml(v);
     if(sobran.length){
       der+='<div class="cx-sec cx-auto"><h3>Otros movimientos del cierre</h3><details><summary>Ver el texto original ('+sobran.length+(sobran.length===1?' línea':' líneas')+')</summary>'+
            sobran.map(function(l){ return '<div>'+escH(l)+'</div>'; }).join('')+'</details></div>';
@@ -1540,14 +1653,16 @@ function pintarValidar(){
       '<div class="fila" style="margin-top:8px"><div class="campo chico"><label>Efectivo que pasa a Tesorería</label><input id="vEfe_'+i+'" inputmode="numeric" value="'+ec+'"></div>'+
       '<div class="campo chico"><label>Contado en MP (confirmá)</label><input id="vMp_'+i+'" inputmode="numeric" value="'+mc+'"></div></div>'+
       '<label>Si no coincide con lo contado, contá por qué</label><input id="vObs_'+i+'" placeholder="Ej: pagué al proveedor de la caja">'+
-      '<button style="width:100%;margin-top:8px" onclick="validarTurno('+i+')">Validar con mi código</button></div>';
+      '<button style="width:100%;margin-top:8px" onclick="validarTurno('+i+')">Validar con mi código</button>'+
+      '<button class="mini sec" style="width:100%;margin-top:6px" onclick="verTurno(\''+escV(String(v.Fecha||t.Fecha).slice(0,10))+'\')">Ver qué pasó en este turno</button></div>';
   }).join('');
   var ev=$('listaValidados'); if(!ev) return;
   ev.innerHTML=val.map(function(t){
     var de=num(t.DifEfe), dm=num(t.DifMP);
     return '<div class="item"><div><div class="t1">Turno de '+escV(t.QuienAbre)+' · '+fery(t.Fecha)+'<span class="medio-pill efe">validado</span></div>'+
       '<div class="t2">validó '+escV(t.ValidadoPor)+' · '+fery(t.ValidadoFecha)+' '+escV(t.ValidadoHora)+
-      (de||dm?' · diferencia efectivo '+(de>0?'+':'')+de+', MP '+(dm>0?'+':'')+dm+(t.ObsValidacion?': '+escV(t.ObsValidacion):''):' · sin diferencias')+'</div></div>'+
+      (de||dm?' · diferencia efectivo '+(de>0?'+':'')+de+', MP '+(dm>0?'+':'')+dm+(t.ObsValidacion?': '+escV(t.ObsValidacion):''):' · sin diferencias')+
+      ' · <a href="#reporte" onclick="verTurno(\''+escV(String(t.Fecha||'').slice(0,10))+'\');return false" style="color:var(--dorado)">ver qué pasó</a></div></div>'+
       '<div class="monto verde">'+pesos(num(t.EfeValidado))+'</div></div>';
   }).join('')||'<div class="vacio">Todavía no se validó ningún turno.</div>';
 }
