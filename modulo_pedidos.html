@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Pedidos · Familia de Hamburguesa</title>
+<style>
+  :root{
+    --fondo:#17110e; --panel:#221913; --panel2:#2b1f17; --borde:#3a2b21;
+    --texto:#f6efe9; --suave:#b3a294; --tenue:#7d6d61;
+    --marca:#e0752c; --marca2:#c25a16; --marcaB:#ffb27a;
+    --verde:#3f9e6a; --verdeC:#5cc08a; --rojo:#d9534f; --rojoC:#ef7e7a;
+    --ambar:#d9a441; --ambarC:#f2c76a; --coral:#e8a07a;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;background:var(--fondo);color:var(--texto);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;padding:12px 12px 40px}
+  .wrap{max-width:720px;margin:0 auto}
+  h1{font-size:19px;margin:0;font-weight:700}
+  h3{font-size:15px;margin:0 0 8px}
+  .sub{font-size:12.5px;color:var(--suave);margin-top:2px}
+  .oculto{display:none!important}
+  .top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .top .t{flex:1;min-width:0}
+  .volver,.mini{flex:none;height:44px;padding:0 14px;border-radius:9px;background:var(--panel2);border:1px solid var(--suave);color:var(--texto);font:inherit;font-size:13.5px;text-decoration:none;display:inline-flex;align-items:center;cursor:pointer}
+  .quien{background:var(--panel);border:1px solid var(--borde);border-radius:12px;padding:8px 12px;margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .quien label{font-size:13px;color:var(--suave)}
+  .quien select{flex:1;min-width:140px}
+  .caja{background:var(--panel);border:1px solid var(--borde);border-radius:13px;padding:14px;margin-bottom:12px}
+  .caja h2{font-size:12px;text-transform:uppercase;letter-spacing:.8px;color:var(--suave);margin:0 0 10px;font-weight:700}
+  input,select,textarea{width:100%;background:var(--panel2);border:1px solid var(--suave);border-radius:10px;color:var(--texto);font:inherit;font-size:16px;padding:10px 12px;min-height:44px}
+  textarea{min-height:64px;resize:vertical}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--marca);border-color:var(--marca)}
+  label.l{display:block;font-size:13px;color:var(--suave);margin:10px 0 4px}
+  .btn{display:block;width:100%;min-height:52px;border-radius:12px;border:1px solid var(--marcaB);background:var(--marca);color:#1a0f08;font:inherit;font-size:16px;font-weight:700;letter-spacing:.3px;cursor:pointer;padding:12px;margin-top:10px;text-align:center}
+  .btn:active{background:var(--marca2)}
+  .btn.cl{background:var(--borde);border-color:var(--texto);color:var(--texto)}
+  .btn.rojo{background:#c0392b;border-color:var(--rojoC);color:#fff}
+  .btn.chico{min-height:44px;font-size:14px;margin-top:0;display:inline-block;width:auto;padding:8px 14px}
+  .fila{display:flex;gap:8px;flex-wrap:wrap}
+  .fila>*{flex:1}
+  .chip{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700}
+  .c-reg{background:var(--ambar);color:#2b1a08}.c-ent{background:var(--verdeC);color:#0d2a1a}.c-can{background:var(--rojoC);color:#2a0b0a}.c-no{background:var(--coral);color:#3a1a0a}
+  .c-cor{background:var(--panel2);color:var(--ambarC);border:1px solid var(--ambar)}
+  .tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:10px}
+  .tile{background:var(--panel);border:1px solid var(--suave);border-radius:12px;padding:10px 4px;text-align:center;color:var(--texto);font:inherit;font-size:12.5px;cursor:pointer}
+  .tile b{display:block;font-size:24px;font-weight:700;line-height:1.2}
+  .tile.on{border-color:var(--marca);box-shadow:0 0 0 2px var(--marca) inset}
+  .filtros{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+  .fl{min-height:44px;padding:7px 14px;border-radius:999px;background:var(--panel2);border:1px solid var(--suave);color:var(--texto);font:inherit;font-size:13px;cursor:pointer}
+  .fl.on{background:var(--marca);border-color:var(--marcaB);color:#1a0f08;font-weight:700}
+  .ped{background:var(--panel);border:1px solid var(--borde);border-radius:12px;padding:10px 12px;margin-bottom:8px;cursor:pointer}
+  .ped.ent{border-color:var(--verde);background:#173026}
+  .ped.can{opacity:.75}
+  .ped.can .num{text-decoration:line-through}
+  .ped .l1{display:flex;justify-content:space-between;gap:8px;align-items:center}
+  .num{font-weight:700}
+  .mu{color:var(--suave);font-size:13px}
+  .cli{background:var(--panel2);border:1px solid var(--borde);border-radius:11px;padding:10px 12px;margin-bottom:8px}
+  .cli.sel{cursor:pointer;border-color:var(--suave)}
+  .tipo{display:inline-block;padding:2px 9px;border-radius:6px;font-size:12px;font-weight:700;color:#1a1212}
+  .tipos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .tipob{min-height:48px;border-radius:11px;border:2px solid transparent;font:inherit;font-weight:700;font-size:15px;color:#1a1212;cursor:pointer}
+  .tipob.off{opacity:.55}.tipob.on{border-color:#fff;box-shadow:0 0 0 2px var(--marca)}
+  .msg{border-radius:11px;padding:10px 12px;margin:10px 0;font-size:14px}
+  .msg.err{background:#331a19;border:1px solid var(--rojo);color:#ffd2d0}
+  .msg.av{background:#3a2a10;border:1px solid var(--ambar);color:#f6e2b0}
+  .msg.ok{background:#173026;border:1px solid var(--verde);color:#c8f0d8}
+  .cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;margin:6px 0}
+  .cal div{height:42px;border-radius:8px;background:var(--panel2);text-align:center;font-size:14px;padding-top:4px;line-height:1.1;cursor:pointer;border:1px solid transparent}
+  .cal div small{display:block;font-size:11px;color:#e0b48a;height:12px}
+  .cal .h{background:none;height:auto;color:var(--suave);font-size:12px;padding:0;cursor:default}
+  .cal .v{background:none;cursor:default}
+  .cal .x{background:none;color:#6b5d52;text-decoration:line-through;cursor:not-allowed}
+  .cal .hoy{border-color:var(--marca)}
+  .cal .sel{background:var(--marca);color:#1a0f08;font-weight:700}.cal .sel small{color:#1a0f08}
+  .mes{display:flex;align-items:center;justify-content:space-between;gap:8px;font-weight:700}
+  .mes button{width:48px;height:44px;border-radius:9px;background:var(--panel2);border:1px solid var(--suave);color:var(--texto);font-size:18px;cursor:pointer}
+  .step{display:flex;align-items:center;gap:8px}
+  .step button{flex:none;width:48px;height:44px;border-radius:10px;background:var(--borde);border:1px solid var(--texto);color:var(--texto);font-size:22px;cursor:pointer}
+  .step input{text-align:center}
+  .rc{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--borde)}
+  .rc>span{font-size:14.5px;min-width:0}
+  .rc .step{flex:none;gap:6px}
+  .rc .step button{width:44px}
+  .rc .step input{width:68px;flex:none;padding:10px 4px}
+  .grid2{display:block}
+  .res{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px solid var(--borde);font-size:14px}
+  .res span:first-child{color:var(--suave)}
+  .tl{font-size:13px;border-left:2px solid var(--borde);padding:2px 0 8px 10px;margin-left:4px}
+  #estado{font-size:12.5px;color:var(--suave);margin:0 0 8px}
+  #estado.mal{color:#ffd2d0}
+  #calBox,#calBox2{max-width:440px}
+  body.espera button{pointer-events:none;opacity:.65}
+  @media (min-width:768px){
+    #vCliente .caja,#vAlta .caja,#vPedido .caja,#vRevisar .caja,#vListo .caja{max-width:760px;margin-left:auto;margin-right:auto}
+    #vRevisar .caja,#vListo .caja{max-width:560px}
+    #vCliente>.btn,#vAlta>.btn,#vPedido>.btn,#vRevisar>.btn,#vListo>.btn,#vPedido .caja>.btn,#vRevisar .caja>.btn,#vAlta .caja>.btn{max-width:420px;margin-left:auto;margin-right:auto}
+    #vPedido>.btn,#vAlta>.btn,#vRevisar>.btn,#vCliente>.btn,#vListo>.btn{margin-top:4px}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:4px 22px;align-items:end}
+    .rc .step input{width:72px}
+  }
+  @media (min-width:900px){ .wrap{max-width:1040px} #vInicio .cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:14px;align-items:start} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <a class="volver" href="home_familia_hamburguesa.html" id="aVolver">‹ Inicio</a>
+    <div class="t"><h1>Pedidos</h1><div class="sub" id="subt">Tomá y seguí los pedidos</div></div>
+    <button class="mini" id="bAct" type="button">Actualizar</button>
+  </div>
+  <div class="quien"><label for="selQuien">Quién carga</label><select id="selQuien"></select></div>
+  <div id="estado"></div>
+
+  <section id="vInicio">
+    <div class="tiles" id="tiles"></div>
+    <div class="fila"><button class="btn" id="bNuevo" type="button">NUEVO PEDIDO</button><button class="btn cl" id="bClientes" type="button">CLIENTES</button></div>
+    <div class="cols" style="margin-top:12px">
+      <div>
+        <div class="caja"><h2 id="tMes">Esta semana</h2>
+          <div class="fila" style="margin-bottom:8px"><button class="btn chico cl" type="button" id="bSemAnt">‹ Anterior</button><button class="btn chico cl" type="button" id="bSemSig">Siguiente ›</button></div>
+          <div id="mesRes"></div>
+        </div>
+      </div>
+      <div>
+        <input id="busca" type="search" placeholder="Buscar pedido: número, cliente, código o teléfono" autocomplete="off">
+        <div class="filtros" id="filtros"></div>
+        <div id="lista"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="vCliente" class="oculto">
+    <div class="caja"><h2>Paso 1 · ¿Para quién es el pedido?</h2>
+      <input id="bcCli" type="search" placeholder="Nombre, apellido, código, teléfono o tipo (ej: pastor)" autocomplete="off">
+      <div id="resCli" style="margin-top:10px"></div>
+      <button class="btn cl" id="bAltaDesde" type="button">NO ESTÁ: DAR DE ALTA CLIENTE NUEVO</button>
+    </div>
+    <button class="btn cl" data-ir="inicio" type="button">CANCELAR</button>
+  </section>
+
+  <section id="vAlta" class="oculto">
+    <div class="caja"><h2 id="tAlta">Alta de cliente nuevo</h2>
+      <label class="l">Tipo de cliente</label><div class="tipos" id="tiposAlta"></div>
+      <div class="grid2"><div><label class="l" for="aNom">Nombre</label><input id="aNom" autocomplete="off" style="text-transform:uppercase"></div>
+      <div><label class="l" for="aApe">Apellido</label><input id="aApe" autocomplete="off" style="text-transform:uppercase"></div></div>
+      <label class="l" for="aTel">Teléfono (característica y número, sin 0 ni 15)</label><input id="aTel" inputmode="tel" autocomplete="off" placeholder="1155551234">
+      <button class="btn" id="bGuardaCli" type="button">GUARDAR CLIENTE</button>
+      <div id="msgAlta"></div>
+    </div>
+    <button class="btn cl" id="bAltaVolver" type="button">VOLVER</button>
+  </section>
+
+  <section id="vPedido" class="oculto">
+    <div class="caja"><h2 id="tPed">Paso 2 · El pedido</h2>
+      <div class="cli" id="cliSel"></div>
+      <label class="l">¿Cuándo retira?</label>
+      <div class="filtros" id="chipsFecha"></div>
+      <div id="calBox"></div>
+      <div class="msg ok oculto" id="fechaTxt"></div>
+      <div class="grid2"><div><label class="l" for="pCombo">Combo</label><select id="pCombo"></select></div><div class="rc" style="border-bottom:0"><span>Cantidad de combos</span><div class="step"><button type="button" data-st="pCant" data-d="-1">−</button><input id="pCant" inputmode="numeric" value=""><button type="button" data-st="pCant" data-d="1">+</button></div></div></div>
+      <div id="bloquePanCombo" class="oculto"><label class="l">¿Qué pan lleva el combo?</label><div class="tipos" id="chipsPanCombo"></div></div>
+      <label class="l" style="margin-top:14px">Sueltos y extras</label>
+      <div class="grid2"><div class="rc"><span>Carnes sueltas</span><div class="step"><button type="button" data-st="pCar" data-d="-10">−</button><input id="pCar" inputmode="numeric"><button type="button" data-st="pCar" data-d="10">+</button></div></div><div class="rc"><span>Panes sueltos de Julio</span><div class="step"><button type="button" data-st="pPanJ" data-d="-10">−</button><input id="pPanJ" inputmode="numeric"><button type="button" data-st="pPanJ" data-d="10">+</button></div></div><div class="rc"><span>Panes sueltos de José</span><div class="step"><button type="button" data-st="pPanS" data-d="-10">−</button><input id="pPanS" inputmode="numeric"><button type="button" data-st="pPanS" data-d="10">+</button></div></div><div class="rc"><span>Cheddar en barras</span><div class="step"><button type="button" data-st="pBar" data-d="-1">−</button><input id="pBar" inputmode="numeric"><button type="button" data-st="pBar" data-d="1">+</button></div></div><div class="rc"><span>Cheddar en fetas (packs de 10)</span><div class="step"><button type="button" data-st="pPack" data-d="-1">−</button><input id="pPack" inputmode="numeric"><button type="button" data-st="pPack" data-d="1">+</button></div></div></div>
+      <label class="l" for="pObs">Observaciones</label><textarea id="pObs"></textarea>
+      <div class="fila"><div><label class="l" for="pSena">Seña (si dejó algo)</label><input id="pSena" inputmode="numeric" placeholder="0"></div>
+      <div><label class="l" for="pMedio">¿Cómo la pagó?</label><select id="pMedio"></select></div></div>
+      <div id="msgPed"></div>
+      <button class="btn" id="bRevisar" type="button">SEGUIR Y REVISAR</button>
+    </div>
+    <button class="btn cl" id="bPedVolver" type="button">VOLVER</button>
+  </section>
+
+  <section id="vRevisar" class="oculto">
+    <div class="caja"><h2>Paso 3 · Revisá antes de guardar</h2><div id="revisa"></div><div id="msgRev"></div>
+      <button class="btn" id="bGuardaPed" type="button">GUARDAR PEDIDO</button>
+    </div>
+    <button class="btn cl" id="bRevVolver" type="button">VOLVER A CORREGIR</button>
+  </section>
+
+  <section id="vListo" class="oculto">
+    <div class="caja"><h2>Pedido guardado</h2><div id="listoTxt"></div>
+      <button class="btn" id="bOtro" type="button">CARGAR OTRO PEDIDO</button>
+      <button class="btn cl" data-ir="inicio" type="button">VOLVER AL INICIO</button>
+    </div>
+  </section>
+
+  <section id="vDetalle" class="oculto">
+    <div class="caja"><h2 id="dTit">Pedido</h2><div id="dCuerpo"></div><div id="dMsg"></div><div id="dAcc"></div></div>
+    <div class="caja oculto" id="dForm"></div>
+    <div class="caja"><h2>Historial de cambios</h2><div id="dHist" class="mu">Cargando…</div></div>
+    <button class="btn cl" data-ir="inicio" type="button">VOLVER A LA LISTA</button>
+  </section>
+
+  <section id="vClientes" class="oculto">
+    <div class="caja"><h2>Clientes</h2>
+      <input id="bcCl2" type="search" placeholder="Buscar: nombre, código, teléfono o tipo" autocomplete="off">
+      <div id="listaCl" style="margin-top:10px"></div>
+      <button class="btn" id="bAlta2" type="button">DAR DE ALTA CLIENTE NUEVO</button>
+      <div id="clMsg"></div>
+    </div>
+    <button class="btn cl" data-ir="inicio" type="button">VOLVER AL INICIO</button>
+  </section>
+</div>
+
+<script src="fdh_red.js"></script>
+<script src="fdh_cola.js"></script>
+<script>
+var NUBE = 'https://script.google.com/macros/s/AKfycbxfraGEgAFUeypW4D9wsEct90sH4DRZjOJsQiky-WZtF41qPOaul9HDlgSjynwHAjpk/exec';
+var CARGADORES = ['Cielo','Mara','Pablo','Paula','Samu','Soporte Eli','Soporte Yami','Valen','Yami'];
+var TIPOS = {Pastor:'#b79cf0', Frecuente:'#5fc08a', Revendedor:'#f0c05a', Ocasional:'#8fb8e8'};
+var COMBOS = ['100 Carnes + 100 Panes','50 Carnes + 50 Panes','10 Carnes + 10 Panes','10 Carnes + 10 Panes + 10 Fetas de Cheddar'];
+var MEDIOS = ['Efectivo','Transferencia','Mercado Pago'];
+var MAX_MESES = 2;
+var PERFIL = {pablo:'Pablo', paula:'Paula', cielo:'Cielo', yami:'Yami', mara:'Mara', valen:'Valen', samu:'Samu'};
+var DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+var MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+var S = {pedidos:[], clientes:[], tels:[], cargado:false, filtro:'hoy', cli:null, fecha:'', mesVer:'', ped:null, edit:null, altaTipo:'', altaVuelta:'inicio', idPed:'', idCli:''};
+function $(id){ return document.getElementById(id); }
+function esc(s){ return String(s === undefined || s === null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function norm(s){ return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim(); }
+function nro(v){ var n = Number(String(v === undefined || v === null ? '' : v).replace(/\./g,'').replace(',','.')); return isNaN(n) ? 0 : n; }
+function miles(n){ return Number(n || 0).toLocaleString('es-AR'); }
+function pad(n){ return String(n).padStart(2,'0'); }
+function iso(y,m,d){ return y + '-' + pad(m) + '-' + pad(d); }
+function hoyISO(){ var d = new Date(); return iso(d.getFullYear(), d.getMonth()+1, d.getDate()); }
+function partes(f){ var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(f || '')); return m ? {y:+m[1], m:+m[2], d:+m[3]} : null; }
+function dow(f){ var p = partes(f); return p ? new Date(Date.UTC(p.y, p.m-1, p.d)).getUTCDay() : -1; }
+function sumarDias(f, n){ var p = partes(f), d = new Date(Date.UTC(p.y, p.m-1, p.d + n)); return iso(d.getUTCFullYear(), d.getUTCMonth()+1, d.getUTCDate()); }
+function limiteISO(){ var p = partes(hoyISO()), m = p.m - 1 + MAX_MESES, ult = new Date(Date.UTC(p.y, m + 1, 0)).getUTCDate(), d = new Date(Date.UTC(p.y, m, Math.min(p.d, ult))); return iso(d.getUTCFullYear(), d.getUTCMonth()+1, d.getUTCDate()); }
+function corta(f){ var p = partes(f); return p ? pad(p.d) + '/' + pad(p.m) : ''; }
+function larga(f){ var p = partes(f); return p ? DIAS[dow(f)] + ' ' + pad(p.d) + '/' + pad(p.m) + '/' + p.y : ''; }
+function horaAhora(){ var d = new Date(); return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+
+/* ---------- quién carga ---------- */
+function usuarioPerfil(){ var id = null; try{ id = sessionStorage.getItem('fdh_sesion'); }catch(e){} return id ? (PERFIL[id] || '') : ''; }
+function iniciarQuien(){
+  var sel = $('selQuien'), guard = ''; try{ guard = localStorage.getItem('fdh_ped_quien') || ''; }catch(e){}
+  sel.innerHTML = '<option value="">Elegí quién carga</option>' + CARGADORES.map(function(n){ return '<option>' + esc(n) + '</option>'; }).join('');
+  var ini = usuarioPerfil() || guard; if (CARGADORES.indexOf(ini) >= 0) sel.value = ini;
+  sel.addEventListener('change', function(){ try{ localStorage.setItem('fdh_ped_quien', sel.value); }catch(e){} });
+}
+function quien(){ return $('selQuien').value; }
+function pedirQuien(msgId){
+  if (quien()) return true;
+  var m = $(msgId); if (m) m.innerHTML = '<div class="msg err">Elegí arriba quién carga.</div>';
+  $('selQuien').focus(); return false;
+}
+
+/* ---------- datos ---------- */
+function estado(txt, mal){ var e = $('estado'); e.textContent = txt; e.className = mal ? 'mal' : ''; }
+var cargando = false;
+function cargar(manual){
+  if (cargando) return Promise.resolve();
+  cargando = true; if (manual || !S.cargado) estado('Cargando pedidos…');
+  // E13: mientras el formulario siga abierto, lo nuevo se copia al modulo (el servidor no duplica nada).
+  try { var ult = +sessionStorage.getItem('fdh_copia_form') || 0; if (Date.now() - ult > 180000){ sessionStorage.setItem('fdh_copia_form', String(Date.now())); FDH_COLA.directo({accion:'pedidosCopiar'}, 60000).catch(function(){}); } } catch(e){}
+  return FDH_RED.pedir(NUBE + '?hojas=PedidosModulo,Clientes,TelefonosCliente&t=' + Date.now(), {totalMs: 30000, maxIntentos: 3}).then(function(j){
+    cargando = false;
+    if (!j || !j.ok || !j.datos) throw new Error('respuesta vacía');
+    S.pedidos = j.datos.PedidosModulo || []; S.clientes = j.datos.Clientes || []; S.tels = j.datos.TelefonosCliente || [];
+    S.cargado = true; estado('Actualizado a las ' + horaAhora()); pintarInicio();
+    if (!$('vClientes').classList.contains('oculto') && !document.querySelector('[data-caja]:not(.oculto)')) pintarClientes();
+    if (!$('vDetalle').classList.contains('oculto') && S.ped) abrirDetalle(S.ped.NumeroPedido, true);
+  }).catch(function(e){
+    cargando = false; estado('No se pudo leer la planilla. ' + (S.cargado ? 'Se muestra lo último que se vio. ' : '') + 'Tocá Actualizar.', true);
+  });
+}
+function enviar(cuerpo){
+  var intento = 0; document.body.classList.add('espera');
+  function uno(){
+    intento++;
+    return FDH_COLA.directo(cuerpo, 25000).catch(function(e){
+      if (intento >= 3) throw e;
+      return new Promise(function(ok){ setTimeout(ok, 1500); }).then(uno);
+    });
+  }
+  return uno().then(function(j){ document.body.classList.remove('espera'); return j; }, function(e){ document.body.classList.remove('espera'); throw e; });
+}
+var SIN_RED = 'No se pudo confirmar con la planilla. No toques nada más: tocá el botón de nuevo (si ya se guardó, no se duplica).';
+
+/* ---------- cuentas ---------- */
+function comboNums(c){ var m = /^(\d+)\s*Carnes\s*\+\s*(\d+)\s*Panes/i.exec(String(c || '')); return m ? {c:+m[1], p:+m[2]} : {c:0, p:0}; }
+function carnesDe(p){ var cn = comboNums(p.Combo), k = nro(p.CantCombos) || (p.Combo ? 1 : 0); return cn.c * k + nro(p.Carnes); }
+function panesPorProveedor(p){
+  var cn = comboNums(p.Combo), k = nro(p.CantCombos) || (p.Combo ? 1 : 0), pc = cn.p * k, j = nro(p.PanesJulio), q = nro(p.PanesJose), sin = 0;
+  if (p.PanCombo === 'Julio') j += pc; else if (p.PanCombo === 'José') q += pc; else sin += pc;
+  var suelto = nro(p.Panes), partido = nro(p.PanesJulio) + nro(p.PanesJose);
+  if (suelto > partido) sin += suelto - partido;
+  return {j: j, s: q, sin: sin};
+}
+function htmlPanes(p){
+  var x = panesPorProveedor(p);
+  return '<div class="res"><span>Pan de Julio</span><b>' + miles(x.j) + '</b></div><div class="res"><span>Pan de José</span><b>' + miles(x.s) + '</b></div>' +
+    (x.sin ? '<div class="res"><span>Panes sin elegir proveedor</span><b>' + miles(x.sin) + '</b></div>' : '');
+}
+function fetasDe(p){ var m = /(\d+)\s*Fetas/i.exec(String(p.Combo || '')), k = nro(p.CantCombos) || (p.Combo ? 1 : 0); return (m ? +m[1] * k : 0) + nro(p.PackCheddar) * 10; }
+function htmlCheddar(p){
+  var b = nro(p.BarrasCheddar), f = fetasDe(p);
+  return (b ? '<div class="res"><span>Cheddar en barras</span><b>' + miles(b) + '</b></div>' : '') + (f ? '<div class="res"><span>Cheddar en fetas</span><b>' + miles(f) + '</b></div>' : '');
+}
+function panesDe(p){ var cn = comboNums(p.Combo), k = nro(p.CantCombos) || (p.Combo ? 1 : 0); return cn.p * k + nro(p.Panes); }
+function resumenDe(p){
+  var o = [], k = nro(p.CantCombos) || (p.Combo ? 1 : 0);
+  if (p.Combo) o.push(k + (k === 1 ? ' combo' : ' combos') + ' de ' + p.Combo + (p.PanCombo ? ' (pan de ' + p.PanCombo + ')' : ''));
+  if (nro(p.Carnes)) o.push(nro(p.Carnes) + ' carnes');
+  var pj = nro(p.PanesJulio), pq = nro(p.PanesJose);
+  if (pj || pq){ if (pj) o.push(pj + ' panes de Julio'); if (pq) o.push(pq + ' panes de José'); }
+  else if (nro(p.Panes)) o.push(nro(p.Panes) + ' panes');
+  if (nro(p.BarrasCheddar)) o.push(nro(p.BarrasCheddar) + (nro(p.BarrasCheddar) === 1 ? ' barra de cheddar' : ' barras de cheddar'));
+  if (nro(p.PackCheddar)) o.push(nro(p.PackCheddar) + (nro(p.PackCheddar) === 1 ? ' pack de cheddar' : ' packs de cheddar') + ' (' + (nro(p.PackCheddar) * 10) + ' fetas)');
+  return o.join(' · ');
+}
+function chipEstado(p){
+  if (p.Estado === 'Pedido Entregado') return '<span class="chip c-ent">Entregado</span>';
+  if (p.Estado === 'Pedido Cancelado') return '<span class="chip c-can">Cancelado</span>';
+  if (noPaso(p)) return '<span class="chip c-no">No pasó</span>';
+  return '<span class="chip c-reg">Registrado</span>';
+}
+function noPaso(p){ return p.Estado === 'Pedido Registrado' && p.FechaRetiro < hoyISO(); }
+
+/* ---------- inicio ---------- */
+function pintarInicio(){
+  var hoy = hoyISO(), P = S.pedidos;
+  var deHoy = P.filter(function(p){ return p.FechaRetiro === hoy && p.Estado !== 'Pedido Cancelado'; });
+  var ret = deHoy.filter(function(p){ return p.Estado === 'Pedido Entregado'; }).length;
+  var pen = deHoy.filter(function(p){ return p.Estado === 'Pedido Registrado'; }).length;
+  var nop = P.filter(noPaso).length;
+  var T = [['hoy','Para hoy',deHoy.length,''],['retirados','Retirados',ret,'var(--verdeC)'],['pendientes','Pendientes',pen,'var(--ambarC)'],['nopasaron','No pasaron',nop,'var(--coral)']];
+  $('tiles').innerHTML = T.map(function(t){ return '<button type="button" class="tile' + (S.filtro === t[0] ? ' on' : '') + '" data-f="' + t[0] + '">' + t[1] + '<b style="color:' + (t[3] || 'inherit') + '">' + t[2] + '</b></button>'; }).join('');
+  var F = [['proximos','Próximos'],['cancelados','Cancelados'],['todos','Todos']];
+  $('filtros').innerHTML = F.map(function(f){ return '<button type="button" class="fl' + (S.filtro === f[0] ? ' on' : '') + '" data-f="' + f[0] + '">' + f[1] + '</button>'; }).join('');
+  var q = norm($('busca').value), lista;
+  if (q){
+    lista = P.filter(function(p){ return norm([p.NumeroPedido, p.ClienteNombre, p.ClienteCodigo, p.ClienteTelefono].join(' ')).indexOf(q) >= 0; });
+  } else if (S.filtro === 'hoy') lista = deHoy;
+  else if (S.filtro === 'retirados') lista = deHoy.filter(function(p){ return p.Estado === 'Pedido Entregado'; });
+  else if (S.filtro === 'pendientes') lista = deHoy.filter(function(p){ return p.Estado === 'Pedido Registrado'; });
+  else if (S.filtro === 'nopasaron') lista = P.filter(noPaso);
+  else if (S.filtro === 'proximos') lista = P.filter(function(p){ return p.Estado === 'Pedido Registrado' && p.FechaRetiro > hoy; });
+  else if (S.filtro === 'cancelados') lista = P.filter(function(p){ return p.Estado === 'Pedido Cancelado'; });
+  else lista = P.slice();
+  lista = lista.slice().sort(function(a,b){ return (a.FechaRetiro + a.NumeroPedido) < (b.FechaRetiro + b.NumeroPedido) ? -1 : 1; });
+  if (S.filtro === 'cancelados' || S.filtro === 'todos') lista.reverse();
+  lista = lista.slice(0, 120);
+  $('lista').innerHTML = lista.length ? lista.map(tarjeta).join('') : '<div class="mu" style="padding:14px 4px">' + (S.cargado ? 'No hay pedidos para mostrar.' : 'Cargando…') + '</div>';
+  pintarMes();
+}
+function tarjeta(p){
+  var sena = nro(p.Sena) ? ' · Seña $' + miles(nro(p.Sena)) + (p.MedioSena ? ' (' + esc(p.MedioSena) + ')' : '') : '';
+  return '<div class="ped ' + (p.Estado === 'Pedido Entregado' ? 'ent' : p.Estado === 'Pedido Cancelado' ? 'can' : '') + '" data-num="' + esc(p.NumeroPedido) + '">' +
+    '<div class="l1"><span class="num">' + esc(p.NumeroPedido) + '</span><span>' + (p.Editado === 'SI' ? '<span class="chip c-cor">Corregido</span> ' : '') + chipEstado(p) + '</span></div>' +
+    '<div>' + esc(p.ClienteNombre) + ' <span class="mu">· ' + esc(p.ClienteCodigo) + '</span></div>' +
+    '<div>' + esc(resumenDe(p)) + '</div>' +
+    '<div class="mu">Retira ' + esc(larga(p.FechaRetiro)) + sena + '</div>' +
+    '<div class="mu">Carga: ' + esc(p.CargadoPor) + ' ' + esc(p.HoraCarga) + (p.Estado === 'Pedido Entregado' ? ' · Entregó: ' + esc(p.EntregadoPor) : '') + (p.MotivoCancelacion ? ' · ' + esc(p.MotivoCancelacion) : '') + '</div></div>';
+}
+S.semOff = 0;
+function pintarMes(){ pintarSemana(); }
+/** Semana de lunes a sabado (el domingo no abre). Si hoy es domingo, la semana "actual" es la que empieza manana. */
+function pintarSemana(){
+  var p0 = partes(hoyISO()), lun = new Date(p0.y, p0.m - 1, p0.d, 12), w = lun.getDay();
+  lun.setDate(lun.getDate() + (w === 0 ? 1 : 1 - w) + 7 * (S.semOff || 0));
+  var sab = new Date(lun.getTime()); sab.setDate(sab.getDate() + 5);
+  function f(x){ return iso(x.getFullYear(), x.getMonth() + 1, x.getDate()); }
+  var a = f(lun), b = f(sab);
+  var nom = S.semOff === 0 ? 'Esta semana' : (S.semOff === 1 ? 'Semana que viene' : (S.semOff === -1 ? 'Semana pasada' : 'Semana'));
+  $('tMes').textContent = nom + ' · ' + corta(a) + ' al ' + corta(b);
+  var d = S.pedidos.filter(function(p){ var r = String(p.FechaRetiro).slice(0, 10); return r >= a && r <= b; });
+  var vig = d.filter(function(p){ return p.Estado !== 'Pedido Cancelado'; });
+  var ent = d.filter(function(p){ return p.Estado === 'Pedido Entregado'; });
+  var pen = d.filter(function(p){ return p.Estado === 'Pedido Registrado'; });
+  var car = 0, pj = 0, pq = 0, sin = 0, bar = 0, fet = 0;
+  pen.forEach(function(p){ car += carnesDe(p); var x = panesPorProveedor(p); pj += x.j; pq += x.s; sin += x.sin; bar += nro(p.BarrasCheddar); fet += fetasDe(p); });
+  function res(t, v){ return '<div class="res"><span>' + t + '</span><b>' + v + '</b></div>'; }
+  $('mesRes').innerHTML = res('Pedidos de la semana', vig.length) + res('Entregados', ent.length) + res('Cancelados', d.length - vig.length) +
+    '<div class="mu" style="margin:10px 0 2px">Para cumplir los pedidos que faltan entregar</div>' +
+    res('Carnes necesarias', miles(car)) + res('Pan de Julio', miles(pj)) + res('Pan de José', miles(pq)) + (sin ? res('Panes sin elegir proveedor', miles(sin)) : '') + res('Cheddar en barras', miles(bar)) + res('Cheddar en fetas', miles(fet));
+}
+
+/* ---------- navegación ---------- */
+var VISTAS = ['vInicio','vCliente','vAlta','vPedido','vRevisar','vListo','vDetalle','vClientes'];
+function ver(id){ VISTAS.forEach(function(v){ $(v).classList.toggle('oculto', v !== id); }); window.scrollTo(0,0); }
+function ir(que){
+  if (que === 'inicio'){ ver('vInicio'); pintarInicio(); cargar(); }
+}
+
+/* ---------- clientes: búsqueda, alta ---------- */
+function telsDe(c){ return S.tels.filter(function(t){ return t.Codigo === c.Codigo; }).map(function(t){ return t.Telefono; }).join(' '); }
+function buscarClientes(q){
+  q = norm(q); if (!q) return S.clientes.filter(function(c){ return c.Estado !== 'Inactivo'; }).slice(0, 40);
+  var out = S.clientes.filter(function(c){
+    var tx = norm([c.Nombre, c.Apellido, c.Codigo, c.Tipo, c.Telefono, telsDe(c)].join(' '));
+    return q.split(' ').every(function(w){ return tx.indexOf(w) >= 0; });
+  });
+  return out.slice(0, 60);
+}
+function tipoChip(t){ return '<span class="tipo" style="background:' + (TIPOS[t] || '#888') + '">' + esc(t) + '</span>'; }
+function tarjetaCli(c, extra){
+  return '<div class="cli' + (extra === 'sel' ? ' sel' : '') + '" data-cod="' + esc(c.Codigo) + '"><div><b>' + esc(c.Nombre + ' ' + c.Apellido) + '</b> <span class="mu">· ' + esc(c.Codigo) + '</span> ' + tipoChip(c.Tipo) + (c.Estado === 'Inactivo' ? ' <span class="chip c-can">Inactivo</span>' : '') + '</div><div class="mu">Tel. ' + esc(c.Telefono) + '</div>' + (extra === 'gest' ? '<div class="fila" style="margin-top:8px"><button class="btn chico cl" type="button" data-tel="' + esc(c.Codigo) + '">Cambiar teléfono</button><button class="btn chico cl" type="button" data-tipo="' + esc(c.Codigo) + '">Cambiar tipo</button></div><div class="oculto" data-caja="' + esc(c.Codigo) + '"></div>' : '') + '</div>';
+}
+function pintarBusquedaCli(){
+  var l = buscarClientes($('bcCli').value);
+  $('resCli').innerHTML = l.length ? l.map(function(c){ return tarjetaCli(c, 'sel'); }).join('') : '<div class="mu">No hay clientes con eso. Podés dar de alta uno nuevo.</div>';
+}
+function iniciarAlta(vuelta, nombre){
+  S.altaVuelta = vuelta; S.altaTipo = ''; S.idCli = FDH_COLA.nuevoId();
+  $('aNom').value = nombre || ''; $('aApe').value = ''; $('aTel').value = ''; $('msgAlta').innerHTML = '';
+  pintarTiposAlta(); ver('vAlta');
+}
+function pintarTiposAlta(){
+  $('tiposAlta').innerHTML = Object.keys(TIPOS).map(function(t){ return '<button type="button" class="tipob ' + (S.altaTipo === t ? 'on' : (S.altaTipo ? 'off' : '')) + '" data-t="' + t + '" style="background:' + TIPOS[t] + '">' + t + '</button>'; }).join('');
+}
+function guardarCliente(confirmar){
+  var m = $('msgAlta'); m.innerHTML = '';
+  if (!pedirQuien('msgAlta')) return;
+  if (!S.altaTipo){ m.innerHTML = '<div class="msg err">Elegí el tipo de cliente.</div>'; return; }
+  if (!$('aNom').value.trim() || !$('aApe').value.trim()){ m.innerHTML = '<div class="msg err">Falta el nombre o el apellido.</div>'; return; }
+  var b = $('bGuardaCli'); b.disabled = true; b.textContent = 'GUARDANDO…';
+  enviar({accion:'clienteAlta', id:S.idCli, tipo:S.altaTipo, nombre:$('aNom').value, apellido:$('aApe').value, telefono:$('aTel').value, quien:quien(), confirmarNombre: confirmar === true}).then(function(j){
+    b.disabled = false; b.textContent = 'GUARDAR CLIENTE';
+    if (j.ok){
+      S.clientes.push({Codigo:j.codigo, Tipo:j.tipo || S.altaTipo, Nombre:j.nombre, Apellido:j.apellido, Telefono:j.telefono, Estado:'Activo'});
+      S.tels.push({Codigo:j.codigo, Telefono:j.telefono, Desde:hoyISO(), Hasta:''});
+      var c = S.clientes[S.clientes.length-1]; cargar();
+      if (S.altaVuelta === 'pedido'){ elegirCliente(c); } else { ver('vClientes'); pintarClientes(); $('clMsg').innerHTML = '<div class="msg ok">Cliente guardado: ' + esc(j.nombre + ' ' + j.apellido) + ' · código ' + esc(j.codigo) + '</div>'; }
+      return;
+    }
+    if (j.codigo === 'nombre_repetido'){
+      m.innerHTML = '<div class="msg av">Ya hay un cliente con ese nombre: ' + j.existentes.map(function(x){ return esc(x.codigo) + ' (tel. ' + esc(x.telefono) + ')'; }).join(', ') + '.<br>Si es la misma persona con otro número, no la repitas: usá "Cambiar teléfono" desde Clientes.<div class="fila" style="margin-top:8px"><button class="btn chico" type="button" id="bEsOtra">ES OTRA PERSONA: DAR DE ALTA</button></div></div>';
+      $('bEsOtra').onclick = function(){ guardarCliente(true); }; return;
+    }
+    if (j.codigo === 'telefono_existente'){
+      m.innerHTML = '<div class="msg err">' + esc(j.error) + '.<div class="fila" style="margin-top:8px"><button class="btn chico cl" type="button" id="bUsarEse">USAR ESE CLIENTE</button></div></div>';
+      $('bUsarEse').onclick = function(){ var c = S.clientes.filter(function(x){ return x.Codigo === j.existente.codigo; })[0]; if (c){ if (S.altaVuelta === 'pedido') elegirCliente(c); else { ver('vClientes'); pintarClientes(); } } else { cargar(true); } }; return;
+    }
+    m.innerHTML = '<div class="msg err">' + esc(j.error || 'No se pudo guardar') + '</div>';
+  }).catch(function(){ b.disabled = false; b.textContent = 'GUARDAR CLIENTE'; m.innerHTML = '<div class="msg err">' + SIN_RED + '</div>'; });
+}
+
+/* ---------- clientes: lista y cambios ---------- */
+function pintarClientes(){
+  var l = buscarClientes($('bcCl2').value);
+  $('listaCl').innerHTML = l.length ? l.map(function(c){ return tarjetaCli(c, 'gest'); }).join('') : '<div class="mu">No hay clientes con eso.</div>';
+}
+function cajaCambio(cod, tipo){
+  var c = S.clientes.filter(function(x){ return x.Codigo === cod; })[0], box = document.querySelector('[data-caja="' + cod + '"]');
+  if (!c || !box) return;
+  box.classList.remove('oculto');
+  if (tipo === 'tel'){
+    box.innerHTML = '<label class="l">Teléfono nuevo de ' + esc(c.Nombre) + ' (el actual ' + esc(c.Telefono) + ' queda en su historial)</label><input inputmode="tel" data-nt="' + esc(cod) + '" placeholder="1155551234"><button class="btn chico" style="margin-top:8px" type="button" data-gtel="' + esc(cod) + '">GUARDAR TELÉFONO NUEVO</button>';
+  } else {
+    box.innerHTML = '<label class="l">Tipo nuevo (el código ' + esc(cod) + ' no cambia)</label><div class="tipos">' + Object.keys(TIPOS).filter(function(t){ return t !== c.Tipo; }).map(function(t){ return '<button type="button" class="tipob" style="background:' + TIPOS[t] + '" data-gt="' + esc(cod) + '|' + t + '">' + t + '</button>'; }).join('') + '</div>';
+  }
+}
+function cambiarTelefono(cod){
+  var inp = document.querySelector('[data-nt="' + cod + '"]'), m = $('clMsg'); m.innerHTML = '';
+  if (!pedirQuien('clMsg')) return;
+  enviar({accion:'clienteTelefono', codigo:cod, telefono:inp.value, quien:quien()}).then(function(j){
+    if (j.ok){ m.innerHTML = '<div class="msg ok">' + (j.sinCambios ? 'Ese ya era su teléfono.' : 'Teléfono cambiado. El número anterior quedó en el historial y el cliente conserva su código ' + esc(cod) + '.') + '</div>'; cargar(true); }
+    else m.innerHTML = '<div class="msg err">' + esc(j.error || 'No se pudo cambiar') + '</div>';
+  }).catch(function(){ m.innerHTML = '<div class="msg err">' + SIN_RED + '</div>'; });
+}
+function cambiarTipo(cod, tipo){
+  var m = $('clMsg'); m.innerHTML = '';
+  if (!pedirQuien('clMsg')) return;
+  enviar({accion:'clienteEditar', codigo:cod, cambios:{Tipo:tipo}, quien:quien()}).then(function(j){
+    if (j.ok){ m.innerHTML = '<div class="msg ok">Tipo cambiado a ' + esc(tipo) + '. El código ' + esc(cod) + ' se mantiene y el cambio quedó registrado.</div>'; cargar(true); }
+    else m.innerHTML = '<div class="msg err">' + esc(j.error || 'No se pudo cambiar') + '</div>';
+  }).catch(function(){ m.innerHTML = '<div class="msg err">' + SIN_RED + '</div>'; });
+}
+
+/* ---------- nuevo pedido ---------- */
+function nuevoPedido(){
+  S.cli = null; S.fecha = ''; S.edit = null; S.idPed = FDH_COLA.nuevoId();
+  $('bcCli').value = ''; pintarBusquedaCli(); ver('vCliente'); $('bcCli').focus();
+}
+function conPanCombo(){ var c = $('pCombo').value; return !!c && /pan/i.test(c); }
+function actualizarPanCombo(){
+  var v = conPanCombo(); $('bloquePanCombo').classList.toggle('oculto', !v); if (!v) S.panCombo = '';
+  $('chipsPanCombo').innerHTML = ['Julio', 'José'].map(function(n){
+    return '<button type="button" class="tipob ' + (S.panCombo === n ? 'on' : (S.panCombo ? 'off' : '')) + '" data-pc="' + n + '" style="background:' + (n === 'Julio' ? '#e8c36a' : '#8fc7e8') + '">Pan de ' + n + '</button>'; }).join('');
+}
+function formularioPedido(p){
+  $('pCombo').innerHTML = '<option value="">Sin combo</option>' + COMBOS.map(function(c){ return '<option>' + esc(c) + '</option>'; }).join('');
+  $('pMedio').innerHTML = '<option value="">—</option>' + MEDIOS.map(function(c){ return '<option>' + esc(c) + '</option>'; }).join('');
+  p = p || {};
+  $('pCombo').value = p.Combo || ''; $('pCant').value = p.CantCombos || ''; $('pCar').value = p.Carnes || ''; $('pPanJ').value = p.PanesJulio || ''; $('pPanS').value = p.PanesJose || ''; S.panCombo = p.PanCombo || ''; actualizarPanCombo();
+  $('pBar').value = p.BarrasCheddar || ''; $('pPack').value = p.PackCheddar || ''; $('pObs').value = p.Observaciones || '';
+  $('pSena').value = p.Sena || ''; $('pMedio').value = p.MedioSena || '';
+  $('pCombo').onchange = actualizarPanCombo; $('pCant').oninput = actualizarPanCombo;
+  $('msgPed').innerHTML = '';
+}
+function elegirCliente(c){
+  S.cli = c; $('tPed').textContent = 'Paso 2 · El pedido';
+  $('cliSel').innerHTML = '<b>' + esc(c.Nombre + ' ' + c.Apellido) + '</b> <span class="mu">· ' + esc(c.Codigo) + '</span> ' + tipoChip(c.Tipo) + '<div class="mu">Tel. ' + esc(c.Telefono) + '</div>';
+  formularioPedido(S.edit && S.edit.datos); S.fecha = (S.edit && S.edit.datos.FechaRetiro) || '';
+  S.mesVer = (S.fecha || hoyISO()).slice(0,7); pintarFecha(); ver('vPedido');
+}
+function cuentaDia(f){ return S.pedidos.filter(function(p){ return p.FechaRetiro === f && p.Estado !== 'Pedido Cancelado'; }).length; }
+function fechaPermitida(f){ return f >= hoyISO() && f <= limiteISO() && dow(f) !== 0; }
+function htmlCal(){
+  var hoy = hoyISO();
+  var p = partes(S.mesVer + '-01'), prim = new Date(Date.UTC(p.y, p.m-1, 1)).getUTCDay(), offs = (prim + 6) % 7, nd = new Date(Date.UTC(p.y, p.m, 0)).getUTCDate();
+  var pm = partes(hoy), pl = partes(limiteISO());
+  var puedeAtras = (p.y * 12 + p.m) > (pm.y * 12 + pm.m), puedeAdel = (p.y * 12 + p.m) < (pl.y * 12 + pl.m);
+  var h = '<div class="mes"><button type="button" data-mes="-1"' + (puedeAtras ? '' : ' disabled style="opacity:.3"') + '>‹</button><span>' + MESES[p.m-1].charAt(0).toUpperCase() + MESES[p.m-1].slice(1) + ' ' + p.y + '</span><button type="button" data-mes="1"' + (puedeAdel ? '' : ' disabled style="opacity:.3"') + '>›</button></div><div class="cal">';
+  ['L','M','M','J','V','S','D'].forEach(function(x){ h += '<div class="h">' + x + '</div>'; });
+  for (var i = 0; i < offs; i++) h += '<div class="v"></div>';
+  for (var d = 1; d <= nd; d++){
+    var f = iso(p.y, p.m, d), ok = fechaPermitida(f), n = ok ? cuentaDia(f) : 0;
+    h += '<div class="' + (ok ? '' : 'x') + (f === hoy ? ' hoy' : '') + (f === S.fecha ? ' sel' : '') + '"' + (ok ? ' data-fe="' + f + '"' : '') + '>' + d + '<small>' + (n ? n : '') + '</small></div>';
+  }
+  return h + '</div><div class="mu">Se puede elegir hasta el ' + corta(limiteISO()) + ' (2 meses). Domingos cerrado. El número chiquito es cuántos pedidos ya hay ese día.</div>';
+}
+function pintarFecha(){
+  var hoy = hoyISO(), man = sumarDias(hoy, 1), chips = [['Hoy', hoy], ['Mañana', man]];
+  $('chipsFecha').innerHTML = chips.map(function(c){ var ok = fechaPermitida(c[1]); return '<button type="button" class="fl' + (S.fecha === c[1] ? ' on' : '') + '"' + (ok ? ' data-fe="' + c[1] + '"' : ' disabled style="opacity:.4"') + '>' + c[0] + (ok ? '' : ' (no abre)') + '</button>'; }).join('');
+  $('calBox').innerHTML = htmlCal();
+  var t = $('fechaTxt');
+  if (S.fecha){ var n2 = cuentaDia(S.fecha); t.classList.remove('oculto'); t.textContent = 'Retira el ' + larga(S.fecha) + '. ' + (n2 ? 'Ese día ya hay ' + n2 + (n2 === 1 ? ' pedido' : ' pedidos') + '. ' : 'Ese día todavía no hay pedidos. ') + 'Retiro de 10 a 20.' + (S.fecha === hoy && new Date().getHours() >= 20 ? ' Ojo: ya pasaron las 20.' : ''); } else t.classList.add('oculto');
+}
+function repintarFecha(){ if ($('calBox2')) $('calBox2').innerHTML = htmlCal(); else pintarFecha(); }
+function leerFormulario(){
+  return {ClienteCodigo:S.cli.Codigo, FechaRetiro:S.fecha, Combo:$('pCombo').value, CantCombos:$('pCant').value.trim(), Carnes:$('pCar').value.trim(), Panes:(function(){ var n = nro($('pPanJ').value) + nro($('pPanS').value); return n ? String(n) : ''; })(), PanesJulio:$('pPanJ').value.trim(), PanesJose:$('pPanS').value.trim(), PanCombo:(conPanCombo() ? (S.panCombo || '') : ''),
+    BarrasCheddar:$('pBar').value.trim(), PackCheddar:$('pPack').value.trim(), Observaciones:$('pObs').value.trim(), Sena:$('pSena').value.replace(/\./g,'').trim(), MedioSena:$('pMedio').value};
+}
+function errorPedido(f){
+  if (!f.FechaRetiro) return 'Elegí cuándo retira.';
+  if (!fechaPermitida(f.FechaRetiro)) return 'Esa fecha no se puede: elegí un día entre hoy y el ' + corta(limiteISO()) + ', sin domingos.';
+  var suma = 0, camp = ['CantCombos','Carnes','Panes','BarrasCheddar','PackCheddar','PanesJulio','PanesJose'];
+  for (var i = 0; i < camp.length; i++){ var v = f[camp[i]]; if (v !== '' && !/^\d+$/.test(v)) return 'Las cantidades tienen que ser números enteros, sin puntos ni letras.'; suma += Number(v || 0); }
+  if (!suma && !f.Combo) return 'Cargá al menos una cantidad.';
+  if (f.Combo && !f.CantCombos) f.CantCombos = '1';
+  if (!f.Combo && Number(f.CantCombos || 0) > 0) return 'Pusiste cantidad de combos pero no elegiste cuál.';
+  if (f.Combo && /pan/i.test(f.Combo) && !f.PanCombo) return 'Elegí qué pan lleva el combo: Julio o José.';
+  if (f.Sena !== '' && (isNaN(Number(f.Sena)) || Number(f.Sena) < 0)) return 'La seña tiene que ser un número.';
+  if (Number(f.Sena || 0) > 0 && !f.MedioSena) return 'Elegí cómo pagó la seña.';
+  return '';
+}
+function revisar(){
+  var m = $('msgPed'); m.innerHTML = '';
+  var f = leerFormulario(), e = errorPedido(f);
+  if (e){ m.innerHTML = '<div class="msg err">' + esc(e) + '</div>'; return; }
+  S.borrador = f;
+  var p = Object.assign({}, f);
+  var html = '<div class="res"><span>Cliente</span><b>' + esc(S.cli.Nombre + ' ' + S.cli.Apellido) + ' · ' + esc(S.cli.Codigo) + '</b></div>' +
+    '<div class="res"><span>Retira</span><b>' + esc(larga(f.FechaRetiro)) + '</b></div>' +
+    '<div class="res"><span>Pedido</span><b>' + esc(resumenDe(p)) + '</b></div>' +
+    '<div class="res"><span>Total de carnes</span><b>' + miles(carnesDe(p)) + '</b></div>' +
+    htmlPanes(p) + htmlCheddar(p) +
+    '<div class="res"><span>Seña</span><b>' + (Number(f.Sena || 0) ? '$' + miles(Number(f.Sena)) + ' · ' + esc(f.MedioSena) : 'No dejó seña (paga todo al retirar)') + '</b></div>' +
+    (f.Observaciones ? '<div class="res"><span>Observaciones</span><b>' + esc(f.Observaciones) + '</b></div>' : '') +
+    '<div class="res"><span>Carga</span><b>' + esc(quien() || '— elegí arriba —') + '</b></div>' +
+    (S.edit ? '<label class="l">Motivo de la corrección</label><select id="motivoSel"><option value="">Elegí el motivo</option><option>Error de carga</option><option>El cliente cambió el pedido</option><option>Otro</option></select><input id="motivoOtro" class="oculto" placeholder="Escribí el motivo" style="margin-top:6px">' : '');
+  $('revisa').innerHTML = html; $('bGuardaPed').classList.remove('oculto');
+  if (S.edit) $('motivoSel').onchange = function(){ $('motivoOtro').classList.toggle('oculto', this.value !== 'Otro'); }; $('msgRev').innerHTML = '';
+  $('bGuardaPed').textContent = S.edit ? 'GUARDAR CORRECCIÓN' : 'GUARDAR PEDIDO';
+  ver('vRevisar');
+}
+function guardarPedido(confirmarDup){
+  var m = $('msgRev'); m.innerHTML = '';
+  if (!pedirQuien('msgRev')) return;
+  var b = $('bGuardaPed'), txt = b.textContent; b.disabled = true; b.textContent = 'GUARDANDO…';
+  var fin = function(){ b.disabled = false; b.textContent = txt; };
+  if (S.edit) return guardarCorreccion(fin);
+  enviar({accion:'pedidoCrear', id:S.idPed, quien:quien(), pantalla:'Pedidos', fila:S.borrador, confirmarDuplicado: confirmarDup === true}).then(function(j){
+    fin();
+    if (j.ok){
+      S.pedidos.push(Object.assign({NumeroPedido:j.numero, Estado:'Pedido Registrado', ClienteNombre:S.cli.Nombre + ' ' + S.cli.Apellido, CargadoPor:quien(), HoraCarga:horaAhora()}, S.borrador));
+      $('listoTxt').innerHTML = '<div class="msg ok"><b>' + esc(j.numero) + '</b><br>' + esc(S.cli.Nombre + ' ' + S.cli.Apellido) + ' · retira el ' + esc(larga(S.borrador.FechaRetiro)) + '</div>' + (j.avisos ? '<div class="msg av">Se guardó con aviso: ' + j.avisos.map(esc).join('. ') + '</div>' : '');
+      cargar(); ver('vListo'); return;
+    }
+    if (j.codigo === 'posible_duplicado'){
+      $('bGuardaPed').classList.add('oculto');
+      m.innerHTML = '<div class="msg av"><b>Parece un pedido repetido.</b><br>' + esc(String(j.error).replace(/^Parece repetido:\s*/, '')) + '.<br>Si es el mismo, no lo cargues otra vez.</div><button class="btn" type="button" id="bNoCargar">ES EL MISMO: NO CARGAR</button><button class="btn cl" type="button" id="bCargarIgual">ES OTRO: CARGAR IGUAL</button>';
+      $('bNoCargar').onclick = function(){ ir('inicio'); }; $('bCargarIgual').onclick = function(){ guardarPedido(true); }; return;
+    }
+    m.innerHTML = '<div class="msg err">' + esc(j.error || 'No se pudo guardar') + '</div>';
+  }).catch(function(){ fin(); m.innerHTML = '<div class="msg err">' + SIN_RED + '</div>'; });
+}
+
+/* ---------- detalle, corrección, cancelación ---------- */
+function abrirDetalle(num, silencioso){
+  var p = S.pedidos.filter(function(x){ return x.NumeroPedido === num; })[0]; if (!p) return;
+  S.ped = p; if (!silencioso) { $('dMsg').innerHTML = ''; $('dForm').classList.add('oculto'); }
+  $('dTit').textContent = p.NumeroPedido;
+  var cli = S.clientes.filter(function(c){ return c.Codigo === p.ClienteCodigo; })[0];
+  $('dCuerpo').innerHTML = '<div style="margin-bottom:6px">' + (p.Editado === 'SI' ? '<span class="chip c-cor">Corregido ' + p.VecesEditado + (p.VecesEditado === '1' ? ' vez' : ' veces') + '</span> ' : '') + chipEstado(p) + '</div>' +
+    '<div class="res"><span>Cliente</span><b>' + esc(p.ClienteNombre) + ' · ' + esc(p.ClienteCodigo) + '</b></div>' +
+    '<div class="res"><span>Teléfono</span><b>' + esc(p.ClienteTelefono) + (cli && cli.Telefono !== p.ClienteTelefono ? ' (hoy: ' + esc(cli.Telefono) + ')' : '') + '</b></div>' +
+    '<div class="res"><span>Retira</span><b>' + esc(larga(p.FechaRetiro)) + '</b></div>' +
+    '<div class="res"><span>Pedido</span><b>' + esc(resumenDe(p)) + '</b></div>' +
+    '<div class="res"><span>Total de carnes</span><b>' + miles(carnesDe(p)) + '</b></div>' + htmlPanes(p) + htmlCheddar(p) +
+    '<div class="res"><span>Seña</span><b>' + (nro(p.Sena) ? '$' + miles(nro(p.Sena)) + ' · ' + esc(p.MedioSena) : 'No dejó seña') + '</b></div>' +
+    (p.Observaciones ? '<div class="res"><span>Observaciones</span><b>' + esc(p.Observaciones) + '</b></div>' : '') +
+    '<div class="res"><span>Cargó</span><b>' + esc(p.CargadoPor) + ' · ' + esc(larga(p.FechaCarga)) + ' ' + esc(p.HoraCarga) + '</b></div>' +
+    (p.Editado === 'SI' ? '<div class="res"><span>Última corrección</span><b>' + esc(p.EditadoPor) + ' · ' + esc(p.EditadoEn) + '</b></div>' : '') +
+    (p.Estado === 'Pedido Entregado' ? '<div class="res"><span>Entregó</span><b>' + esc(p.EntregadoPor) + ' · ' + esc(p.EntregadoEn) + '</b></div>' : '') +
+    (p.MotivoCancelacion ? '<div class="res"><span>Motivo de la cancelación</span><b>' + esc(p.MotivoCancelacion) + '</b></div>' : '');
+  var acc = '';
+  if (p.Estado === 'Pedido Registrado'){
+    acc = '<div class="fila"><button class="btn" type="button" id="bCorregir">CORREGIR</button><button class="btn cl" type="button" id="bReprog">CAMBIAR FECHA</button></div><button class="btn rojo" type="button" id="bCancelar">CANCELAR EL PEDIDO</button>';
+  } else if (p.Estado === 'Pedido Entregado') acc = '<div class="mu">Ya fue entregado en Ventas: no se corrige ni se cancela.</div>';
+  $('dAcc').innerHTML = acc;
+  if (!silencioso) ver('vDetalle');
+  FDH_RED.pedir(NUBE + '?hoja=HistorialPedido&t=' + Date.now(), {totalMs: 25000, maxIntentos: 2}).then(function(j){
+    var h = ((j && j.datos) || []).filter(function(x){ return x.NumeroPedido === num; });
+    $('dHist').innerHTML = h.length ? h.map(function(x){
+      var q = x.Evento === 'ALTA' ? 'Cargado' : x.Evento === 'ENTREGA' ? 'Entregado' : x.Evento === 'DESHACER' ? 'Deshecho' : x.Evento === 'REPROGRAMACION' ? 'Cambio de fecha' : x.Evento === 'EDICION' ? 'Corrección' : x.Evento === 'ANULADO_DUPLICADO' ? 'Anulado por duplicado' : 'Cancelado';
+      var cambio = x.Evento === 'EDICION' || x.Evento === 'REPROGRAMACION' ? ' · ' + esc(x.Campo) + ': ' + esc(x.Anterior || '—') + ' → ' + esc(x.Nuevo) : '';
+      return '<div class="tl"><b>' + q + '</b> · ' + esc(x.Quien) + ' · ' + esc(corta(x.Fecha)) + ' ' + esc(x.Hora) + cambio + (x.Motivo ? ' <span class="mu">(' + esc(x.Motivo) + ')</span>' : '') + '</div>'; }).join('') : 'Sin movimientos.';
+  }).catch(function(){ $('dHist').textContent = 'No se pudo leer el historial.'; });
+}
+function corregir(){
+  var p = S.ped; S.edit = {num:p.NumeroPedido, datos:p, soloFecha:false};
+  var c = S.clientes.filter(function(x){ return x.Codigo === p.ClienteCodigo; })[0] || {Codigo:p.ClienteCodigo, Nombre:p.ClienteNombre, Apellido:'', Tipo:'', Telefono:p.ClienteTelefono};
+  $('tPed').textContent = 'Corregir ' + p.NumeroPedido; S.idPed = '';
+  elegirCliente(c);
+  $('bRevisar').textContent = 'SEGUIR Y REVISAR';
+}
+function guardarCorreccion(fin){
+  var m = $('msgRev'), p = S.edit.datos, f = S.borrador, cambios = {};
+  ['ClienteCodigo','FechaRetiro','Combo','CantCombos','Carnes','Panes','BarrasCheddar','PackCheddar','Observaciones','Sena','MedioSena','PanesJulio','PanesJose','PanCombo'].forEach(function(k){ if (String(f[k] || '') !== String(p[k] || '')) cambios[k] = f[k]; });
+  if (!Object.keys(cambios).length){ fin(); m.innerHTML = '<div class="msg av">No cambiaste nada.</div>'; return; }
+  var motivo = $('motivoSel') ? $('motivoSel').value : '';
+  if (!motivo){ fin(); m.innerHTML = '<div class="msg err">Elegí el motivo de la corrección.</div>'; return; }
+  enviar({accion:'pedidoEditar', numero:S.edit.num, cambios:cambios, motivo:motivo === 'Otro' ? ($('motivoOtro').value.trim() || 'Otro') : motivo, quien:quien(), pantalla:'Pedidos'}).then(function(j){
+    fin();
+    if (j.ok){ var num = S.edit.num; S.edit = null; cargar(true).then(function(){ abrirDetalle(num); $('dMsg').innerHTML = '<div class="msg ok">Corrección guardada. Quedó marcado como corregido, con quién y cuándo.</div>'; }); return; }
+    m.innerHTML = '<div class="msg err">' + esc(j.error || 'No se pudo guardar') + '</div>';
+  }).catch(function(){ fin(); m.innerHTML = '<div class="msg err">' + SIN_RED + '</div>'; });
+}
+function cambiarFecha(){
+  var p = S.ped, f = $('dForm'); S.fecha = p.FechaRetiro; S.mesVer = p.FechaRetiro.slice(0,7);
+  f.classList.remove('oculto');
+  f.innerHTML = '<h2>Cambiar la fecha de retiro</h2><div id="calBox2"></div><div id="msgF"></div><button class="btn" type="button" id="bGuardaFecha">GUARDAR LA FECHA NUEVA</button>';
+  repintarFecha();
+}
+function guardarFecha(){
+  var m = $('msgF'); m.innerHTML = '';
+  if (!pedirQuien('msgF')) return;
+  if (!fechaPermitida(S.fecha)){ m.innerHTML = '<div class="msg err">Elegí una fecha válida.</div>'; return; }
+  if (S.fecha === S.ped.FechaRetiro){ m.innerHTML = '<div class="msg av">Es la misma fecha.</div>'; return; }
+  enviar({accion:'pedidoEditar', numero:S.ped.NumeroPedido, cambios:{FechaRetiro:S.fecha}, evento:'REPROGRAMACION', motivo:'Cambio de fecha', quien:quien(), pantalla:'Pedidos'}).then(function(j){
+    if (j.ok){ var num = S.ped.NumeroPedido; cargar(true).then(function(){ abrirDetalle(num); $('dMsg').innerHTML = '<div class="msg ok">Fecha cambiada. Queda en el historial.</div>'; }); }
+    else m.innerHTML = '<div class="msg err">' + esc(j.error || 'No se pudo') + '</div>';
+  }).catch(function(){ m.innerHTML = '<div class="msg err">' + SIN_RED + '</div>'; });
+}
+function formCancelar(){
+  var p = S.ped, f = $('dForm'); f.classList.remove('oculto');
+  var otros = S.pedidos.filter(function(x){ return x.ClienteCodigo === p.ClienteCodigo && x.NumeroPedido !== p.NumeroPedido && x.Estado !== 'Pedido Cancelado'; });
+  f.innerHTML = '<h2>Cancelar el pedido</h2><label class="l">Motivo</label><select id="cMotivo"><option value="">Elegí el motivo</option><option>Duplicado</option><option>El cliente canceló</option><option>No pasó a retirar</option></select>' +
+    '<div id="cDup" class="oculto"><label class="l">¿De cuál pedido es duplicado?</label><select id="cDupDe"><option value="">Elegí el pedido que se queda</option>' + otros.map(function(x){ return '<option value="' + esc(x.NumeroPedido) + '">' + esc(x.NumeroPedido + ' · retira ' + corta(x.FechaRetiro) + ' · ' + resumenDe(x)) + '</option>'; }).join('') + '</select>' + (otros.length ? '' : '<div class="mu">Este cliente no tiene otros pedidos en el módulo. Si el original es del formulario, escribí su número:</div><input id="cDupTxt" placeholder="#202611-0161">') + '</div>' +
+    '<div id="msgC"></div><button class="btn rojo" type="button" id="bConfCancel">CONFIRMAR CANCELACIÓN</button><div class="mu" style="margin-top:6px">No se borra nada: queda cancelado, con motivo, quién y cuándo, y se puede deshacer.</div>';
+  $('cMotivo').onchange = function(){ $('cDup').classList.toggle('oculto', this.value !== 'Duplicado'); };
+}
+function cancelarPedido(){
+  var m = $('msgC'); m.innerHTML = '';
+  if (!pedirQuien('msgC')) return;
+  var mot = $('cMotivo').value; if (!mot){ m.innerHTML = '<div class="msg err">Elegí el motivo.</div>'; return; }
+  var dup = mot === 'Duplicado' ? ($('cDupDe').value || ($('cDupTxt') ? $('cDupTxt').value.trim() : '')) : '';
+  if (mot === 'Duplicado' && !dup){ m.innerHTML = '<div class="msg err">Elegí de cuál pedido es duplicado.</div>'; return; }
+  enviar({accion:'pedidoCancelar', numero:S.ped.NumeroPedido, motivo:mot, duplicadoDe:dup, quien:quien(), pantalla:'Pedidos'}).then(function(j){
+    if (j.ok){ var num = S.ped.NumeroPedido; $('dForm').classList.add('oculto'); cargar(true).then(function(){ abrirDetalle(num); $('dMsg').innerHTML = '<div class="msg ok">Pedido cancelado (' + esc(j.motivo) + ').</div>'; }); }
+    else m.innerHTML = '<div class="msg err">' + esc(j.error || 'No se pudo cancelar') + '</div>';
+  }).catch(function(){ m.innerHTML = '<div class="msg err">' + SIN_RED + '</div>'; });
+}
+
+/* ---------- eventos ---------- */
+document.addEventListener('click', function(e){
+  var t = e.target, el;
+  if ((el = t.closest('[data-ir]'))) return ir(el.getAttribute('data-ir'));
+  if ((el = t.closest('[data-f]'))){ S.filtro = el.getAttribute('data-f'); $('busca').value = ''; return pintarInicio(); }
+  if ((el = t.closest('.ped[data-num]'))) return abrirDetalle(el.getAttribute('data-num'));
+  if ((el = t.closest('.cli.sel[data-cod]')) && !t.closest('button')){ var c = S.clientes.filter(function(x){ return x.Codigo === el.getAttribute('data-cod'); })[0]; if (c) return elegirCliente(c); }
+  if ((el = t.closest('[data-t]'))){ S.altaTipo = el.getAttribute('data-t'); return pintarTiposAlta(); }
+  if ((el = t.closest('#calBox [data-fe], #chipsFecha [data-fe], #calBox2 [data-fe]'))){ S.fecha = el.getAttribute('data-fe'); S.mesVer = S.fecha.slice(0,7); return repintarFecha(); }
+  if ((el = t.closest('#calBox [data-mes], #calBox2 [data-mes]'))){ var p = partes(S.mesVer + '-01'), d = new Date(Date.UTC(p.y, p.m - 1 + Number(el.getAttribute('data-mes')), 1)); S.mesVer = d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1); return repintarFecha(); }
+  if ((el = t.closest('[data-pc]'))){ S.panCombo = el.getAttribute('data-pc'); return actualizarPanCombo(); }
+  if ((el = t.closest('[data-st]'))){ var i = $(el.getAttribute('data-st')), v = Number(i.value || 0) + Number(el.getAttribute('data-d')); i.value = v > 0 ? String(v) : ''; if (i.id === 'pCant') actualizarPanCombo(); return; }
+  if ((el = t.closest('[data-tel]'))) return cajaCambio(el.getAttribute('data-tel'), 'tel');
+  if ((el = t.closest('[data-tipo]'))) return cajaCambio(el.getAttribute('data-tipo'), 'tipo');
+  if ((el = t.closest('[data-gtel]'))) return cambiarTelefono(el.getAttribute('data-gtel'));
+  if ((el = t.closest('[data-gt]'))){ var pp = el.getAttribute('data-gt').split('|'); return cambiarTipo(pp[0], pp[1]); }
+});
+$('bNuevo').onclick = nuevoPedido;
+$('bSemAnt').onclick = function(){ S.semOff = (S.semOff || 0) - 1; pintarSemana(); };
+$('bSemSig').onclick = function(){ S.semOff = (S.semOff || 0) + 1; pintarSemana(); };
+$('bClientes').onclick = function(){ $('bcCl2').value = ''; $('clMsg').innerHTML = ''; pintarClientes(); ver('vClientes'); };
+$('bAlta2').onclick = function(){ iniciarAlta('clientes'); };
+$('bAltaDesde').onclick = function(){ var q = $('bcCli').value.replace(/[0-9]/g,'').trim(); iniciarAlta('pedido', Object.keys(TIPOS).some(function(t){ return norm(t) === norm(q); }) ? '' : q); };
+$('bAltaVolver').onclick = function(){ if (S.altaVuelta === 'pedido') ver('vCliente'); else ver('vClientes'); };
+$('bGuardaCli').onclick = function(){ guardarCliente(false); };
+$('bcCli').oninput = pintarBusquedaCli; $('bcCl2').oninput = pintarClientes; $('busca').oninput = pintarInicio;
+$('bPedVolver').onclick = function(){ if (S.edit){ S.edit = null; ver('vDetalle'); } else ver('vCliente'); };
+$('bRevisar').onclick = revisar;
+$('bRevVolver').onclick = function(){ ver('vPedido'); };
+$('bGuardaPed').onclick = function(){ guardarPedido(false); };
+$('bOtro').onclick = nuevoPedido;
+$('bAct').onclick = function(){ cargar(true); };
+document.addEventListener('click', function(e){
+  var t = e.target;
+  if (t.id === 'bCorregir') corregir(); else if (t.id === 'bReprog') cambiarFecha(); else if (t.id === 'bCancelar') formCancelar();
+  else if (t.id === 'bGuardaFecha') guardarFecha(); else if (t.id === 'bConfCancel') cancelarPedido();
+});
+document.addEventListener('visibilitychange', function(){ if (!document.hidden) cargar(); });
+setInterval(function(){ if (!document.hidden && !$('vInicio').classList.contains('oculto')) cargar(); }, 30000);
+
+FDH_COLA.url = NUBE;
+iniciarQuien();
+cargar(true);
+</script>
+</body>
+</html>

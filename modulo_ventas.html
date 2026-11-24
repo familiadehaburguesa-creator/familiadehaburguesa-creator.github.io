@@ -2206,37 +2206,103 @@ function fechaDe(f){
 function traerPedidos(){
   ESTADO_PEDIDOS = 'cargando';
   pintarPedidos(); pintarListaPedidos();
-  traer('PedidosForm', function(r){
-    if (!r && PEDIDOS_REINTENTOS < 1){
-      // Un solo reintento automático y silencioso: la mayoría de las fallas
-      // son el relay lento de Google (script.googleusercontent.com/echo), no
-      // un error real. Si el segundo intento también falla, recién ahí se
-      // avisa y se deja el botón "Reintentar" a mano.
-      PEDIDOS_REINTENTOS++;
-      traerPedidos();
-      return;
-    }
-    PEDIDOS_REINTENTOS = 0;
-    if (!r){
+  // E10: se leen EN PARALELO los pedidos del formulario (PedidosForm) y los del modulo nuevo (PedidosModulo).
+  // Los del modulo se convierten al formato del formulario: todo lo demas (paneles, reservas, calendario, entrega) sigue igual.
+  var rf, rm, hecho = false;
+  function listo(){
+    if (hecho || rf === undefined || rm === undefined) return;
+    hecho = true;
+    var r = rf;
+    if (!r || rm === null){
+      if (PEDIDOS_REINTENTOS < 1){
+        // Un solo reintento automático y silencioso: la mayoría de las fallas
+        // son el relay lento de Google (script.googleusercontent.com/echo), no
+        // un error real. Si el segundo intento también falla, recién ahí se
+        // avisa y se deja el botón "Reintentar" a mano.
+        PEDIDOS_REINTENTOS++;
+        traerPedidos();
+        return;
+      }
+      PEDIDOS_REINTENTOS = 0;
       ESTADO_PEDIDOS = 'error';
       pintarPedidos(); pintarListaPedidos(); pintarStockTurno(); pintarReservas();
       return;
     }
+    PEDIDOS_REINTENTOS = 0;
     ESTADO_PEDIDOS = 'listo';
     PEDIDOS_HOY = []; PEDIDOS_TODOS = [];
-    if (r.ok && r.datos){
-      r.datos.forEach(function(f){
-        var est = limpiaClave(campo(f,'estado'));
-        if (est.indexOf('cancelado') >= 0) return;
-        PEDIDOS_TODOS.push(f);
-        if (!esDeHoy(campo(f,'fecha','retiro'))) return;
-        if (est.indexOf('entregado') >= 0) return;
-        PEDIDOS_HOY.push(f);
-      });
+    var filas = (r.ok && r.datos) ? r.datos.slice() : [];
+    // rm.ok === false = la hoja del modulo todavia no existe en este Cuaderno: no es un error, simplemente no hay pedidos nuevos.
+    if (rm && rm.ok && rm.datos){
+      // E13: lo que ya se copio al modulo no se repite con la fila del formulario (mismo N° de pedido).
+      var copiados = {}; rm.datos.forEach(function(p){ copiados[String(p.NumeroPedido)] = true; });
+      filas = filas.filter(function(f){ return !copiados[String(campo(f,'n°','pedido'))]; });
+      rm.datos.forEach(function(p){ filas.push(pedidoModuloComoForm(p)); });
     }
+    filas.forEach(function(f){
+      var est = limpiaClave(campo(f,'estado'));
+      if (est.indexOf('cancelado') >= 0) return;
+      PEDIDOS_TODOS.push(f);
+      if (!esDeHoy(campo(f,'fecha','retiro'))) return;
+      if (est.indexOf('entregado') >= 0) return;
+      PEDIDOS_HOY.push(f);
+    });
     pintarPedidos(); pintarListaPedidos(); pintarStockTurno(); pintarReservas();
     if (!$('pCalendario').classList.contains('oculto')) pintarMes();
-  }, '', {totalMs: 20000});
+  }
+  traer('PedidosForm', function(r){ rf = r; listo(); }, '', {totalMs: 20000});
+  traer('PedidosModulo', function(r){ rm = r; listo(); }, '', {totalMs: 20000});
+}
+
+/** E10: precio de lista de un pedido del modulo (que no lleva precio). 0 = no hay precio de lista: se pone a mano al entregar.
+ *  Solo se calcula cuando TODO el pedido son presentaciones del cartel: combo N+N panes, o N carnes (solas o con la misma cantidad de panes). */
+function precioListaModulo(p){
+  var tot = 0, cc = ent(p.CantCombos), carnes = ent(p.Carnes), panes = ent(p.Panes);
+  if (ent(p.BarrasCheddar) || ent(p.PackCheddar)) return 0;
+  if (p.Combo){
+    var m = String(p.Combo).match(/^(\d+)\s*Carnes\s*\+\s*(\d+)\s*Panes\s*$/i);
+    if (!m || m[1] !== m[2]) return 0;
+    var pc = precioDeLista('pan', ent(m[1]));
+    if (pc === null) return 0;
+    tot += pc * (cc || 1);
+  }
+  if (carnes && panes){
+    if (carnes !== panes) return 0;
+    var pp = precioDeLista('pan', carnes); if (pp === null) return 0; tot += pp;
+  } else if (carnes){
+    var pk = precioDeLista('carne', carnes); if (pk === null) return 0; tot += pk;
+  } else if (panes) return 0;
+  return tot;
+}
+/** E10: un pedido de la hoja PedidosModulo con las MISMAS claves que una fila del formulario (campo() las encuentra por palabras). */
+function pedidoModuloComoForm(p){
+  var barras = ent(p.BarrasCheddar);
+  // E12: pan por proveedor. Los panes del combo van al proveedor que se eligio al cargar el pedido.
+  var mpan = String(p.Combo || '').match(/(\d+)\s*pan/i), pcom = mpan ? ent(mpan[1]) * (ent(p.CantCombos) || 1) : 0;
+  var panJ = ent(p.PanesJulio) + (p.PanCombo === 'Julio' ? pcom : 0), panS = ent(p.PanesJose) + (p.PanCombo === 'José' ? pcom : 0);
+  return {
+    'Marca temporal': '',
+    'Nombre y apellido': p.ClienteNombre,
+    'Teléfono': p.ClienteTelefono,
+    'Fecha de retiro': String(p.FechaRetiro) + 'T12:00:00',
+    'Combo seleccionado': p.Combo,
+    'Cantidad de Combos': p.CantCombos,
+    'Cantidad de carnes': p.Carnes,
+    'Cantidad de Panes': p.Panes,
+    'Sin Cheddar': barras ? (barras + (barras === 1 ? ' Barra' : ' Barras')) : '',
+    'Observaciones': p.Observaciones,
+    '¿Cuánto hay que cobrar en total?': p.TotalOrigen || precioListaModulo(p) || '',
+    '¿Cuánto deja ahora?': p.Sena,
+    '¿Cómo paga?': p.MedioSena,
+    'N° Pedido': p.NumeroPedido,
+    'Estado': p.Estado,
+    'ID Evento': p.EventoCalendar || '',
+    __modulo: true,
+    __packs: p.PackCheddar,
+    __conPan: (p.PanCombo || ent(p.PanesJulio) || ent(p.PanesJose)) ? 1 : 0,
+    __panJ: panJ,
+    __panS: panS
+  };
 }
 
 /* ---------------------- calendario propio ---------------------- */
@@ -2380,6 +2446,9 @@ function desglosarPedido(f){
     else r.dudoso = true;
   }
 
+  // E10: packs de cheddar sueltos de un pedido del modulo nuevo
+  r.packs += ent(f.__packs || 0);
+
   return r;
 }
 
@@ -2450,7 +2519,7 @@ function pendientesHoy(){
    Solo alcanza a los pedidos que se retiran HOY: uno del 18 no compromete el
    stock de este turno, y está bien que no lo haga. */
 function comprometidoHoy(excluir){
-  var r = {carne:0, panJ:0, che:0, pack:0, dudosos:0, pedidos:0};
+  var r = {carne:0, panJ:0, panS:0, che:0, pack:0, dudosos:0, pedidos:0};
   if (typeof PEDIDOS_HOY === 'undefined') return r;
   pendientesHoy().forEach(function(f){
     if (excluir && f === excluir) return;
@@ -2460,7 +2529,7 @@ function comprometidoHoy(excluir){
     r.carne += d.carnes;
     // El desglose no distingue pan de Julio y de José: al entregar, el módulo
     // los carga todos como pan de Julio. Se compromete contra el mismo.
-    r.panJ  += d.panes;
+    if (f.__conPan){ r.panJ += ent(f.__panJ); r.panS += ent(f.__panS); } else r.panJ += d.panes;
     r.che   += d.cheddar;
     r.pack  += d.packs;
   });
@@ -2473,7 +2542,7 @@ function libreEnTurno(excluir){
   return {
     carne: T.stock.carne - c.carne,
     panJ:  T.stock.panJ  - c.panJ,
-    panS:  T.stock.panS,
+    panS:  T.stock.panS  - c.panS,
     che:   T.stock.che   - c.che,
     pack:  T.stock.pack  - c.pack,
     comp:  c
@@ -2824,7 +2893,7 @@ function pintarComanda(){
       venta.importeListo = true;
       ponerNumero('pTotal', c.total);
       $('notaImporte').textContent = c.total > 0
-        ? 'Viene del pedido. Cambialo si acordaron otro precio.'
+        ? (venta.pedido.__modulo ? 'Precio de lista (el pedido no lleva precio). Cambialo si acordaron otro precio.' : 'Viene del pedido. Cambialo si acordaron otro precio.')
         : 'Este pedido no trae importe cargado. Poné cuánto hay que cobrar.';
       $('notaImporte').style.color = c.total > 0 ? '' : '#f0cf94';
     }
@@ -3076,8 +3145,10 @@ function elegirPedido(i){
   // mostrador lo reparte si hace falta.
   var d = desglosarPedido(venta.pedido);
   ponerNumero('sCarne', d.carnes);
-  ponerNumero('sPanJ',  d.panes);
-  ponerNumero('sPanS',  0);
+  // E12: si el pedido del modulo trae el pan por proveedor, se carga como lo eligieron; si no (formulario viejo), todo a Julio.
+  var conPan = venta.pedido.__conPan;
+  ponerNumero('sPanJ',  conPan ? ent(venta.pedido.__panJ) : d.panes);
+  ponerNumero('sPanS',  conPan ? ent(venta.pedido.__panS) : 0);
   ponerNumero('sChe',   d.cheddar);
   ponerNumero('sPack',  d.packs);
 
@@ -3911,6 +3982,9 @@ function confirmarCierre(){
     // v27 (MENSAJERO V27): cada venta/entrega en efectivo del turno. Va ULTIMA, igual que la columna AC.
     EfectivoDetalle: (T.efectivoDetalle || []).join(' · ')
   }, function(ok, motivo){ cierreEstado(false, motivo); }, function(){ cierreEstado(true); });
+  // E14: toda la bitacora del turno (lo que se ve en "Movimientos") viaja al Cuaderno para verla en Finanzas. No frena el cierre.
+  try { if (T.idTurno) FDH_COLA.accion({accion: 'turnoBitacora', idTurno: T.idTurno, fecha: hoyLocal(), quien: T.quien,
+    movs: (T.movs || []).map(function(m){ return [m.hora, m.titulo, m.detalle, m.monto]; })}, {}); } catch(e){}
 
   var h = '<div id="cierreEstado" class="aviso deuda">⏳ Turno de <b>' + T.quien + '</b> cerrado en esta pantalla. Enviando el resumen al Cuaderno… esperá la confirmación.</div>';
   h += '<div class="item"><div class="izq"><div class="t1">Se vendió</div></div><div class="der"><div class="monto">' + pesos(T.ventas) + '</div></div></div>';
