@@ -26,6 +26,28 @@
   .quien{background:var(--panel);border:1px solid var(--borde);border-radius:12px;padding:8px 12px;margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
   .quien label{font-size:13px;color:var(--suave)}
   .quien select{flex:1;min-width:140px}
+  /* E15: aviso "elegí tu usuario" (titila hasta que se elige) */
+  .leyQuien{display:none;flex:1 1 100%;font-size:13px;font-weight:700;color:var(--ambarC)}
+  .quien.pide .leyQuien{display:block;animation:pideTxt 1.2s ease-in-out infinite}
+  .quien.pide select{border-color:var(--marca);animation:pideSel 1.2s ease-in-out infinite}
+  @keyframes pideSel{0%,100%{box-shadow:0 0 0 0 rgba(224,117,44,0)}50%{box-shadow:0 0 0 4px rgba(224,117,44,.6)}}
+  @keyframes pideTxt{0%,100%{opacity:1}50%{opacity:.45}}
+  @media (min-width:560px){ .leyQuien{flex:none} }
+  @media (prefers-reduced-motion:reduce){ .quien.pide select,.quien.pide .leyQuien{animation:none} }
+  .btn.bloq{opacity:.55;cursor:not-allowed}
+  /* E15: botón de alta de cliente, dos colores */
+  .btn.alta{display:flex;align-items:stretch;padding:0;overflow:hidden;background:none;border:1px solid var(--texto);min-height:52px;margin:10px 0}
+  .btn.alta .no{flex:none;display:flex;align-items:center;padding:0 12px;background:#c0392b;color:#fff;font-size:14px;font-weight:800}
+  .btn.alta .si{flex:1;display:flex;align-items:center;justify-content:center;padding:8px 10px;background:var(--verdeC);color:#0d2a1a;font-size:14px;font-weight:800;text-align:center;line-height:1.2}
+  /* E15: panel de lo que falta producir */
+  .faltan{margin:12px 0 6px;padding:8px 10px;background:var(--panel2);border-top:2px solid var(--marca);border-radius:0 0 8px 8px}
+  .faltan b{display:block;font-size:12.5px;text-transform:uppercase;letter-spacing:.7px;color:var(--texto)}
+  .faltan span{font-size:12px;color:var(--suave)}
+  .bq{margin-top:8px;padding:4px 10px 6px;border-left:4px solid var(--c);border-radius:4px;background:var(--panel)}
+  .bq h4{margin:2px 0 2px;font-size:12.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--c)}
+  .bq .res b{color:var(--c)}
+  .bq.hoy{--c:var(--marcaB)}
+  .bq.tot{--c:#8fb8e8}
   .caja{background:var(--panel);border:1px solid var(--borde);border-radius:13px;padding:14px;margin-bottom:12px}
   .caja h2{font-size:12px;text-transform:uppercase;letter-spacing:.8px;color:var(--suave);margin:0 0 10px;font-weight:700}
   input,select,textarea{width:100%;background:var(--panel2);border:1px solid var(--suave);border-radius:10px;color:var(--texto);font:inherit;font-size:16px;padding:10px 12px;min-height:44px}
@@ -110,7 +132,7 @@
     <div class="t"><h1>Pedidos</h1><div class="sub" id="subt">Tomá y seguí los pedidos</div></div>
     <button class="mini" id="bAct" type="button">Actualizar</button>
   </div>
-  <div class="quien"><label for="selQuien">Quién carga</label><select id="selQuien"></select></div>
+  <div class="quien pide" id="barQuien"><label for="selQuien">Quién carga</label><select id="selQuien"></select><span class="leyQuien" id="leyQuien">Desplegar y seleccionar tu usuario</span></div>
   <div id="estado"></div>
 
   <section id="vInicio">
@@ -134,8 +156,8 @@
   <section id="vCliente" class="oculto">
     <div class="caja"><h2>Paso 1 · ¿Para quién es el pedido?</h2>
       <input id="bcCli" type="search" placeholder="Nombre, apellido, código, teléfono o tipo (ej: pastor)" autocomplete="off">
-      <div id="resCli" style="margin-top:10px"></div>
-      <button class="btn cl" id="bAltaDesde" type="button">NO ESTÁ: DAR DE ALTA CLIENTE NUEVO</button>
+      <button class="btn alta" id="bAltaDesde" type="button"><span class="no">NO ESTÁ:</span><span class="si">DAR DE ALTA CLIENTE NUEVO</span></button>
+      <div id="resCli"></div>
     </div>
     <button class="btn cl" data-ir="inicio" type="button">CANCELAR</button>
   </section>
@@ -208,7 +230,7 @@
 <script src="fdh_cola.js"></script>
 <script>
 var NUBE = 'https://script.google.com/macros/s/AKfycbxfraGEgAFUeypW4D9wsEct90sH4DRZjOJsQiky-WZtF41qPOaul9HDlgSjynwHAjpk/exec';
-var CARGADORES = ['Cielo','Mara','Pablo','Paula','Samu','Soporte Eli','Soporte Yami','Valen','Yami'];
+var CARGADORES = ['Soporte Yami','Soporte Eli','Cielo','Mara','Pablo','Paula','Samu','Valen','Yami'];
 var TIPOS = {Pastor:'#b79cf0', Frecuente:'#5fc08a', Revendedor:'#f0c05a', Ocasional:'#8fb8e8'};
 var COMBOS = ['100 Carnes + 100 Panes','50 Carnes + 50 Panes','10 Carnes + 10 Panes','10 Carnes + 10 Panes + 10 Fetas de Cheddar'];
 var MEDIOS = ['Efectivo','Transferencia','Mercado Pago'];
@@ -237,16 +259,26 @@ function horaAhora(){ var d = new Date(); return pad(d.getHours()) + ':' + pad(d
 /* ---------- quién carga ---------- */
 function usuarioPerfil(){ var id = null; try{ id = sessionStorage.getItem('fdh_sesion'); }catch(e){} return id ? (PERFIL[id] || '') : ''; }
 function iniciarQuien(){
-  var sel = $('selQuien'), guard = ''; try{ guard = localStorage.getItem('fdh_ped_quien') || ''; }catch(e){}
+  // E15: ya no se hereda la última selección guardada (quedaba "Pablo" pegado). Solo se preselecciona el usuario del login, si lo hay.
+  var sel = $('selQuien');
   sel.innerHTML = '<option value="">Elegí quién carga</option>' + CARGADORES.map(function(n){ return '<option>' + esc(n) + '</option>'; }).join('');
-  var ini = usuarioPerfil() || guard; if (CARGADORES.indexOf(ini) >= 0) sel.value = ini;
-  sel.addEventListener('change', function(){ try{ localStorage.setItem('fdh_ped_quien', sel.value); }catch(e){} });
+  var ini = usuarioPerfil(); if (CARGADORES.indexOf(ini) >= 0) sel.value = ini;
+  sel.addEventListener('change', actualizarQuien);
+  actualizarQuien();
 }
 function quien(){ return $('selQuien').value; }
+/** Titila el aviso mientras no haya usuario elegido y marca como "bloqueados" los botones de edición. */
+function actualizarQuien(){
+  $('barQuien').classList.toggle('pide', !quien());
+  ['bCorregir','bReprog','bCancelar'].forEach(function(id){ var b = $(id); if (b){ b.classList.toggle('bloq', !quien()); b.setAttribute('aria-disabled', quien() ? 'false' : 'true'); } });
+}
+/** Edición: nunca se hereda el usuario anterior; hay que elegirlo de nuevo para cada pedido que se abre. */
+function exigirQuien(){ $('selQuien').value = ''; actualizarQuien(); }
+function llamarQuien(){ window.scrollTo({top:0, behavior:'smooth'}); setTimeout(function(){ try{ $('selQuien').focus({preventScroll:true}); }catch(e){} }, 250); actualizarQuien(); }
 function pedirQuien(msgId){
   if (quien()) return true;
-  var m = $(msgId); if (m) m.innerHTML = '<div class="msg err">Elegí arriba quién carga.</div>';
-  $('selQuien').focus(); return false;
+  var m = $(msgId); if (m) m.innerHTML = '<div class="msg err">Desplegá arriba «Quién carga» y elegí tu usuario.</div>';
+  llamarQuien(); return false;
 }
 
 /* ---------- datos ---------- */
@@ -372,12 +404,21 @@ function pintarSemana(){
   var vig = d.filter(function(p){ return p.Estado !== 'Pedido Cancelado'; });
   var ent = d.filter(function(p){ return p.Estado === 'Pedido Entregado'; });
   var pen = d.filter(function(p){ return p.Estado === 'Pedido Registrado'; });
-  var car = 0, pj = 0, pq = 0, sin = 0, bar = 0, fet = 0;
-  pen.forEach(function(p){ car += carnesDe(p); var x = panesPorProveedor(p); pj += x.j; pq += x.s; sin += x.sin; bar += nro(p.BarrasCheddar); fet += fetasDe(p); });
   function res(t, v){ return '<div class="res"><span>' + t + '</span><b>' + v + '</b></div>'; }
+  // E15: lo que falta producir se abre en HOY y en el TOTAL de todo lo pendiente (hoy + días siguientes, aunque caigan en otra semana).
+  // No depende de la semana que se esté mirando. Los pendientes de días que ya pasaron ("No pasaron") no entran en ninguno de los dos.
+  var hoy = hoyISO();
+  var pendTot = S.pedidos.filter(function(p){ return p.Estado === 'Pedido Registrado' && String(p.FechaRetiro).slice(0, 10) >= hoy; });
+  var pendHoy = pendTot.filter(function(p){ return String(p.FechaRetiro).slice(0, 10) === hoy; });
+  function bloque(cls, titulo, lista){
+    var car = 0, pj = 0, pq = 0, sin = 0, bar = 0, fet = 0;
+    lista.forEach(function(p){ car += carnesDe(p); var x = panesPorProveedor(p); pj += x.j; pq += x.s; sin += x.sin; bar += nro(p.BarrasCheddar); fet += fetasDe(p); });
+    return '<div class="bq ' + cls + '"><h4>' + titulo + ' · ' + lista.length + (lista.length === 1 ? ' pedido' : ' pedidos') + '</h4>' +
+      res('Carnes necesarias', miles(car)) + res('Pan de Julio', miles(pj)) + res('Pan de José', miles(pq)) + (sin ? res('Panes sin elegir proveedor', miles(sin)) : '') + res('Cheddar en barras', miles(bar)) + res('Cheddar en fetas', miles(fet)) + '</div>';
+  }
   $('mesRes').innerHTML = res('Pedidos de la semana', vig.length) + res('Entregados', ent.length) + res('Cancelados', d.length - vig.length) +
-    '<div class="mu" style="margin:10px 0 2px">Para cumplir los pedidos que faltan entregar</div>' +
-    res('Carnes necesarias', miles(car)) + res('Pan de Julio', miles(pj)) + res('Pan de José', miles(pq)) + (sin ? res('Panes sin elegir proveedor', miles(sin)) : '') + res('Cheddar en barras', miles(bar)) + res('Cheddar en fetas', miles(fet));
+    '<div class="faltan"><b>Para cumplir los pedidos que faltan entregar</b><span>No cambia con la semana que estás mirando</span></div>' +
+    bloque('hoy', 'Para hoy', pendHoy) + bloque('tot', 'Total de todos los pendientes (hoy y días siguientes)', pendTot);
 }
 
 /* ---------- navegación ---------- */
@@ -605,7 +646,8 @@ function abrirDetalle(num, silencioso){
     acc = '<div class="fila"><button class="btn" type="button" id="bCorregir">CORREGIR</button><button class="btn cl" type="button" id="bReprog">CAMBIAR FECHA</button></div><button class="btn rojo" type="button" id="bCancelar">CANCELAR EL PEDIDO</button>';
   } else if (p.Estado === 'Pedido Entregado') acc = '<div class="mu">Ya fue entregado en Ventas: no se corrige ni se cancela.</div>';
   $('dAcc').innerHTML = acc;
-  if (!silencioso) ver('vDetalle');
+  if (!silencioso){ exigirQuien(); ver('vDetalle'); if (acc && acc.indexOf('bCorregir') >= 0) $('dMsg').innerHTML += '<div class="msg av">Para corregir, cambiar la fecha o cancelar, primero desplegá «Quién carga» (arriba) y elegí tu usuario.</div>'; }
+  else actualizarQuien();
   FDH_RED.pedir(NUBE + '?hoja=HistorialPedido&t=' + Date.now(), {totalMs: 25000, maxIntentos: 2}).then(function(j){
     var h = ((j && j.datos) || []).filter(function(x){ return x.NumeroPedido === num; });
     $('dHist').innerHTML = h.length ? h.map(function(x){
@@ -703,6 +745,8 @@ $('bOtro').onclick = nuevoPedido;
 $('bAct').onclick = function(){ cargar(true); };
 document.addEventListener('click', function(e){
   var t = e.target;
+  var eb = t.closest('#bCorregir,#bReprog,#bCancelar');
+  if (eb && !quien()){ $('dMsg').innerHTML = '<div class="msg err">Desplegá arriba «Quién carga» y elegí tu usuario antes de corregir, cambiar la fecha o cancelar.</div>'; llamarQuien(); return; }
   if (t.id === 'bCorregir') corregir(); else if (t.id === 'bReprog') cambiarFecha(); else if (t.id === 'bCancelar') formCancelar();
   else if (t.id === 'bGuardaFecha') guardarFecha(); else if (t.id === 'bConfCancel') cancelarPedido();
 });
