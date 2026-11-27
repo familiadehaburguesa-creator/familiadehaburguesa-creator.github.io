@@ -184,7 +184,7 @@
       <div class="grid2"><div><label class="l" for="pCombo">Combo</label><select id="pCombo"></select></div><div class="rc" style="border-bottom:0"><span>Cantidad de combos</span><div class="step"><button type="button" data-st="pCant" data-d="-1">−</button><input id="pCant" inputmode="numeric" value=""><button type="button" data-st="pCant" data-d="1">+</button></div></div></div>
       <div id="bloquePanCombo" class="oculto"><label class="l">¿Qué pan lleva el combo?</label><div class="tipos" id="chipsPanCombo"></div></div>
       <label class="l" style="margin-top:14px">Sueltos y extras</label>
-      <div class="grid2"><div class="rc"><span>Carnes sueltas</span><div class="step"><button type="button" data-st="pCar" data-d="-10">−</button><input id="pCar" inputmode="numeric"><button type="button" data-st="pCar" data-d="10">+</button></div></div><div class="rc"><span>Panes sueltos de Julio</span><div class="step"><button type="button" data-st="pPanJ" data-d="-10">−</button><input id="pPanJ" inputmode="numeric"><button type="button" data-st="pPanJ" data-d="10">+</button></div></div><div class="rc"><span>Panes sueltos de José</span><div class="step"><button type="button" data-st="pPanS" data-d="-10">−</button><input id="pPanS" inputmode="numeric"><button type="button" data-st="pPanS" data-d="10">+</button></div></div><div class="rc"><span>Cheddar en barras</span><div class="step"><button type="button" data-st="pBar" data-d="-1">−</button><input id="pBar" inputmode="numeric"><button type="button" data-st="pBar" data-d="1">+</button></div></div><div class="rc"><span>Cheddar en fetas (packs de 10)</span><div class="step"><button type="button" data-st="pPack" data-d="-1">−</button><input id="pPack" inputmode="numeric"><button type="button" data-st="pPack" data-d="1">+</button></div></div></div>
+      <div class="grid2"><div class="rc"><span>Carnes sueltas</span><div class="step"><button type="button" data-st="pCar" data-d="-10">−</button><input id="pCar" inputmode="numeric"><button type="button" data-st="pCar" data-d="10">+</button></div></div><div class="rc"><span>Panes sueltos de Julio</span><div class="step"><button type="button" data-st="pPanJ" data-d="-10">−</button><input id="pPanJ" inputmode="numeric"><button type="button" data-st="pPanJ" data-d="10">+</button></div></div><div class="rc"><span>Panes sueltos de José</span><div class="step"><button type="button" data-st="pPanS" data-d="-10">−</button><input id="pPanS" inputmode="numeric"><button type="button" data-st="pPanS" data-d="10">+</button></div></div><div class="rc"><span>Cheddar en barras</span><div class="step"><button type="button" data-st="pBar" data-d="-1">−</button><input id="pBar" inputmode="numeric"><button type="button" data-st="pBar" data-d="1">+</button></div></div><div class="rc"><span>Cheddar en fetas (packs de 10)</span><div class="step"><button type="button" data-st="pPack" data-d="-1">−</button><input id="pPack" inputmode="numeric"><button type="button" data-st="pPack" data-d="1">+</button></div></div><div class="rc"><span>Importe a cobrar</span><div class="step"><span>$</span><input id="pImp" inputmode="numeric" placeholder="0" style="width:120px"></div></div></div>
       <label class="l" for="pObs">Observaciones</label><textarea id="pObs"></textarea>
       <div class="fila"><div><label class="l" for="pSena">Seña (si dejó algo)</label><input id="pSena" inputmode="numeric" placeholder="0"></div>
       <div><label class="l" for="pMedio">¿Cómo la pagó?</label><select id="pMedio"></select></div></div>
@@ -233,7 +233,7 @@ var NUBE = 'https://script.google.com/macros/s/AKfycbxfraGEgAFUeypW4D9wsEct90sH4
 var CARGADORES = ['Soporte Yami','Soporte Eli','Cielo','Mara','Pablo','Paula','Samu','Valen','Yami'];
 var TIPOS = {Pastor:'#b79cf0', Frecuente:'#5fc08a', Revendedor:'#f0c05a', Ocasional:'#8fb8e8'};
 var COMBOS = ['100 Carnes + 100 Panes','50 Carnes + 50 Panes','10 Carnes + 10 Panes','10 Carnes + 10 Panes + 10 Fetas de Cheddar'];
-var MEDIOS = ['Efectivo','Transferencia','Mercado Pago'];
+var MEDIOS = ['Efectivo','Transferencia','Mercado Pago','Se define al retirar el pedido'];
 var MAX_MESES = 2;
 var PERFIL = {pablo:'Pablo', paula:'Paula', cielo:'Cielo', yami:'Yami', mara:'Mara', valen:'Valen', samu:'Samu'};
 var DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
@@ -386,7 +386,7 @@ function tarjeta(p){
     '<div class="l1"><span class="num">' + esc(p.NumeroPedido) + '</span><span>' + (p.Editado === 'SI' ? '<span class="chip c-cor">Corregido</span> ' : '') + chipEstado(p) + '</span></div>' +
     '<div>' + esc(p.ClienteNombre) + ' <span class="mu">· ' + esc(p.ClienteCodigo) + '</span></div>' +
     '<div>' + esc(resumenDe(p)) + '</div>' +
-    '<div class="mu">Retira ' + esc(larga(p.FechaRetiro)) + sena + '</div>' +
+    '<div class="mu">Retira ' + esc(larga(p.FechaRetiro)) + (nro(p.ImporteCobrar) ? ' · Cobrar $' + miles(nro(p.ImporteCobrar)) : '') + sena + '</div>' +
     '<div class="mu">Carga: ' + esc(p.CargadoPor) + ' ' + esc(p.HoraCarga) + (p.Estado === 'Pedido Entregado' ? ' · Entregó: ' + esc(p.EntregadoPor) : '') + (p.MotivoCancelacion ? ' · ' + esc(p.MotivoCancelacion) : '') + '</div></div>';
 }
 S.semOff = 0;
@@ -530,7 +530,7 @@ function formularioPedido(p){
   p = p || {};
   $('pCombo').value = p.Combo || ''; $('pCant').value = p.CantCombos || ''; $('pCar').value = p.Carnes || ''; $('pPanJ').value = p.PanesJulio || ''; $('pPanS').value = p.PanesJose || ''; S.panCombo = p.PanCombo || ''; actualizarPanCombo();
   $('pBar').value = p.BarrasCheddar || ''; $('pPack').value = p.PackCheddar || ''; $('pObs').value = p.Observaciones || '';
-  $('pSena').value = p.Sena || ''; $('pMedio').value = p.MedioSena || '';
+  $('pSena').value = p.Sena || ''; $('pMedio').value = p.MedioSena || ''; $('pImp').value = p.ImporteCobrar || '';
   $('pCombo').onchange = actualizarPanCombo; $('pCant').oninput = actualizarPanCombo;
   $('msgPed').innerHTML = '';
 }
@@ -566,7 +566,7 @@ function pintarFecha(){
 function repintarFecha(){ if ($('calBox2')) $('calBox2').innerHTML = htmlCal(); else pintarFecha(); }
 function leerFormulario(){
   return {ClienteCodigo:S.cli.Codigo, FechaRetiro:S.fecha, Combo:$('pCombo').value, CantCombos:$('pCant').value.trim(), Carnes:$('pCar').value.trim(), Panes:(function(){ var n = nro($('pPanJ').value) + nro($('pPanS').value); return n ? String(n) : ''; })(), PanesJulio:$('pPanJ').value.trim(), PanesJose:$('pPanS').value.trim(), PanCombo:(conPanCombo() ? (S.panCombo || '') : ''),
-    BarrasCheddar:$('pBar').value.trim(), PackCheddar:$('pPack').value.trim(), Observaciones:$('pObs').value.trim(), Sena:$('pSena').value.replace(/\./g,'').trim(), MedioSena:$('pMedio').value};
+    BarrasCheddar:$('pBar').value.trim(), PackCheddar:$('pPack').value.trim(), Observaciones:$('pObs').value.trim(), Sena:$('pSena').value.replace(/\./g,'').trim(), MedioSena:$('pMedio').value, ImporteCobrar:$('pImp').value.replace(/\./g,'').trim()};
 }
 function errorPedido(f){
   if (!f.FechaRetiro) return 'Elegí cuándo retira.';
@@ -579,6 +579,7 @@ function errorPedido(f){
   if (f.Combo && /pan/i.test(f.Combo) && !f.PanCombo) return 'Elegí qué pan lleva el combo: Julio o José.';
   if (f.Sena !== '' && (isNaN(Number(f.Sena)) || Number(f.Sena) < 0)) return 'La seña tiene que ser un número.';
   if (Number(f.Sena || 0) > 0 && !f.MedioSena) return 'Elegí cómo pagó la seña.';
+  if (f.ImporteCobrar !== '' && (isNaN(Number(f.ImporteCobrar)) || Number(f.ImporteCobrar) < 0)) return 'El importe a cobrar tiene que ser un número.';
   return '';
 }
 function revisar(){
@@ -592,7 +593,8 @@ function revisar(){
     '<div class="res"><span>Pedido</span><b>' + esc(resumenDe(p)) + '</b></div>' +
     '<div class="res"><span>Total de carnes</span><b>' + miles(carnesDe(p)) + '</b></div>' +
     htmlPanes(p) + htmlCheddar(p) +
-    '<div class="res"><span>Seña</span><b>' + (Number(f.Sena || 0) ? '$' + miles(Number(f.Sena)) + ' · ' + esc(f.MedioSena) : 'No dejó seña (paga todo al retirar)') + '</b></div>' +
+    '<div class="res"><span>Importe a cobrar</span><b>' + (Number(f.ImporteCobrar || 0) ? '$' + miles(Number(f.ImporteCobrar)) : 'Sin cargar') + '</b></div>' +
+    '<div class="res"><span>Seña</span><b>' + (Number(f.Sena || 0) ? '$' + miles(Number(f.Sena)) + ' · ' + esc(f.MedioSena) : 'No dejó seña (paga todo al retirar)') + (!Number(f.Sena || 0) && f.MedioSena ? ' · Pago: ' + esc(f.MedioSena) : '') + '</b></div>' +
     (f.Observaciones ? '<div class="res"><span>Observaciones</span><b>' + esc(f.Observaciones) + '</b></div>' : '') +
     '<div class="res"><span>Carga</span><b>' + esc(quien() || '— elegí arriba —') + '</b></div>' +
     (S.edit ? '<label class="l">Motivo de la corrección</label><select id="motivoSel"><option value="">Elegí el motivo</option><option>Error de carga</option><option>El cliente cambió el pedido</option><option>Otro</option></select><input id="motivoOtro" class="oculto" placeholder="Escribí el motivo" style="margin-top:6px">' : '');
@@ -635,7 +637,8 @@ function abrirDetalle(num, silencioso){
     '<div class="res"><span>Retira</span><b>' + esc(larga(p.FechaRetiro)) + '</b></div>' +
     '<div class="res"><span>Pedido</span><b>' + esc(resumenDe(p)) + '</b></div>' +
     '<div class="res"><span>Total de carnes</span><b>' + miles(carnesDe(p)) + '</b></div>' + htmlPanes(p) + htmlCheddar(p) +
-    '<div class="res"><span>Seña</span><b>' + (nro(p.Sena) ? '$' + miles(nro(p.Sena)) + ' · ' + esc(p.MedioSena) : 'No dejó seña') + '</b></div>' +
+    '<div class="res"><span>Importe a cobrar</span><b>' + (nro(p.ImporteCobrar) ? '$' + miles(nro(p.ImporteCobrar)) : 'Sin cargar') + '</b></div>' +
+    '<div class="res"><span>Seña</span><b>' + (nro(p.Sena) ? '$' + miles(nro(p.Sena)) + ' · ' + esc(p.MedioSena) : 'No dejó seña' + (p.MedioSena ? ' · Pago: ' + esc(p.MedioSena) : '')) + '</b></div>' +
     (p.Observaciones ? '<div class="res"><span>Observaciones</span><b>' + esc(p.Observaciones) + '</b></div>' : '') +
     '<div class="res"><span>Cargó</span><b>' + esc(p.CargadoPor) + ' · ' + esc(larga(p.FechaCarga)) + ' ' + esc(p.HoraCarga) + '</b></div>' +
     (p.Editado === 'SI' ? '<div class="res"><span>Última corrección</span><b>' + esc(p.EditadoPor) + ' · ' + esc(p.EditadoEn) + '</b></div>' : '') +
@@ -665,7 +668,7 @@ function corregir(){
 }
 function guardarCorreccion(fin){
   var m = $('msgRev'), p = S.edit.datos, f = S.borrador, cambios = {};
-  ['ClienteCodigo','FechaRetiro','Combo','CantCombos','Carnes','Panes','BarrasCheddar','PackCheddar','Observaciones','Sena','MedioSena','PanesJulio','PanesJose','PanCombo'].forEach(function(k){ if (String(f[k] || '') !== String(p[k] || '')) cambios[k] = f[k]; });
+  ['ClienteCodigo','FechaRetiro','Combo','CantCombos','Carnes','Panes','BarrasCheddar','PackCheddar','Observaciones','Sena','MedioSena','ImporteCobrar','PanesJulio','PanesJose','PanCombo'].forEach(function(k){ if (String(f[k] || '') !== String(p[k] || '')) cambios[k] = f[k]; });
   if (!Object.keys(cambios).length){ fin(); m.innerHTML = '<div class="msg av">No cambiaste nada.</div>'; return; }
   var motivo = $('motivoSel') ? $('motivoSel').value : '';
   if (!motivo){ fin(); m.innerHTML = '<div class="msg err">Elegí el motivo de la corrección.</div>'; return; }

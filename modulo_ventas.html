@@ -2254,26 +2254,6 @@ function traerPedidos(){
   traer('PedidosModulo', function(r){ rm = r; listo(); }, '', {totalMs: 20000});
 }
 
-/** E10: precio de lista de un pedido del modulo (que no lleva precio). 0 = no hay precio de lista: se pone a mano al entregar.
- *  Solo se calcula cuando TODO el pedido son presentaciones del cartel: combo N+N panes, o N carnes (solas o con la misma cantidad de panes). */
-function precioListaModulo(p){
-  var tot = 0, cc = ent(p.CantCombos), carnes = ent(p.Carnes), panes = ent(p.Panes);
-  if (ent(p.BarrasCheddar) || ent(p.PackCheddar)) return 0;
-  if (p.Combo){
-    var m = String(p.Combo).match(/^(\d+)\s*Carnes\s*\+\s*(\d+)\s*Panes\s*$/i);
-    if (!m || m[1] !== m[2]) return 0;
-    var pc = precioDeLista('pan', ent(m[1]));
-    if (pc === null) return 0;
-    tot += pc * (cc || 1);
-  }
-  if (carnes && panes){
-    if (carnes !== panes) return 0;
-    var pp = precioDeLista('pan', carnes); if (pp === null) return 0; tot += pp;
-  } else if (carnes){
-    var pk = precioDeLista('carne', carnes); if (pk === null) return 0; tot += pk;
-  } else if (panes) return 0;
-  return tot;
-}
 /** E10: un pedido de la hoja PedidosModulo con las MISMAS claves que una fila del formulario (campo() las encuentra por palabras). */
 function pedidoModuloComoForm(p){
   var barras = ent(p.BarrasCheddar);
@@ -2291,7 +2271,8 @@ function pedidoModuloComoForm(p){
     'Cantidad de Panes': p.Panes,
     'Sin Cheddar': barras ? (barras + (barras === 1 ? ' Barra' : ' Barras')) : '',
     'Observaciones': p.Observaciones,
-    '¿Cuánto hay que cobrar en total?': p.TotalOrigen || precioListaModulo(p) || '',
+    // El importe lo define quien toma el pedido (campo "Importe a cobrar" de Pedidos). Ya no se calcula por lista de precios.
+    '¿Cuánto hay que cobrar en total?': p.ImporteCobrar || p.TotalOrigen || '',
     '¿Cuánto deja ahora?': p.Sena,
     '¿Cómo paga?': p.MedioSena,
     'N° Pedido': p.NumeroPedido,
@@ -2893,7 +2874,7 @@ function pintarComanda(){
       venta.importeListo = true;
       ponerNumero('pTotal', c.total);
       $('notaImporte').textContent = c.total > 0
-        ? (venta.pedido.__modulo ? 'Precio de lista (el pedido no lleva precio). Cambialo si acordaron otro precio.' : 'Viene del pedido. Cambialo si acordaron otro precio.')
+        ? 'Viene del pedido. Cambialo si acordaron otro precio.'
         : 'Este pedido no trae importe cargado. Poné cuánto hay que cobrar.';
       $('notaImporte').style.color = c.total > 0 ? '' : '#f0cf94';
     }
@@ -2934,6 +2915,8 @@ function repartirAuto(){
   var c = cobroDePedido(venta.pedido);
   if (c.dejo <= 0) return;
   var como = limpiaClave(c.como);
+  // "Se define al retirar el pedido": no se sabe como pago la sena, no se adivina una via.
+  if (como.indexOf('define') >= 0) return;
   // El formulario de pedidos todavía ofrece "Transferencia" como forma de
   // pago. Acá adentro ya no hay esa vía: la seña cae en Mercado Pago, que es
   // la única digital que queda.
@@ -4194,8 +4177,13 @@ function iniciar(){
   // devolver a "Ventas del turno", no mandar al home/login y perder el
   // hilo del turno en curso. Sin turno abierto (ej. en "Abrir el turno")
   // sigue yendo a index.html normalmente.
+  // Desde "Ventas del turno" (la pantalla principal) no hay a donde volver
+  // dentro del modulo: ahi "Volver" lleva al Home. El turno no se pierde, vive
+  // en este dispositivo (fdh_turno_v1). Desde cualquier otra pantalla del
+  // turno (vender, retirar, calendario...) vuelve a "Ventas del turno".
   $('btnVolver').addEventListener('click', function(e){
-    if (T && T.abierto){ e.preventDefault(); mostrar('pTurno'); }
+    var enPrincipal = !$('pTurno').classList.contains('oculto');
+    if (T && T.abierto && !enPrincipal){ e.preventDefault(); mostrar('pTurno'); }
   });
   $('mesAnt').addEventListener('click', function(){
     mesVista.m--; if (mesVista.m < 0){ mesVista.m = 11; mesVista.a--; } pintarMes();
