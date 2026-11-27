@@ -31,6 +31,9 @@
   .quien.pide .leyQuien{display:block;animation:pideTxt 1.2s ease-in-out infinite}
   .quien.pide select{border-color:var(--marca);animation:pideSel 1.2s ease-in-out infinite}
   @keyframes pideSel{0%,100%{box-shadow:0 0 0 0 rgba(224,117,44,0)}50%{box-shadow:0 0 0 4px rgba(224,117,44,.6)}}
+  .quien.sacude{animation:sacude .45s}
+  .quien.pide .leyQuien{color:#ff8a6a}
+  @keyframes sacude{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
   @keyframes pideTxt{0%,100%{opacity:1}50%{opacity:.45}}
   @media (min-width:560px){ .leyQuien{flex:none} }
   @media (prefers-reduced-motion:reduce){ .quien.pide select,.quien.pide .leyQuien{animation:none} }
@@ -132,7 +135,7 @@
     <div class="t"><h1>Pedidos</h1><div class="sub" id="subt">Tomá y seguí los pedidos</div></div>
     <button class="mini" id="bAct" type="button">Actualizar</button>
   </div>
-  <div class="quien pide" id="barQuien"><label for="selQuien">Quién carga</label><select id="selQuien"></select><span class="leyQuien" id="leyQuien">Desplegar y seleccionar tu usuario</span></div>
+  <div class="quien pide" id="barQuien"><label for="selQuien">Quién carga</label><select id="selQuien"></select><span class="leyQuien" id="leyQuien">Indicar quién va a iniciar la carga del pedido</span></div>
   <div id="estado"></div>
 
   <section id="vInicio">
@@ -259,10 +262,9 @@ function horaAhora(){ var d = new Date(); return pad(d.getHours()) + ':' + pad(d
 /* ---------- quién carga ---------- */
 function usuarioPerfil(){ var id = null; try{ id = sessionStorage.getItem('fdh_sesion'); }catch(e){} return id ? (PERFIL[id] || '') : ''; }
 function iniciarQuien(){
-  // E15: ya no se hereda la última selección guardada (quedaba "Pablo" pegado). Solo se preselecciona el usuario del login, si lo hay.
+  // Siempre arranca sin elegir: ni la ultima seleccion ni el usuario del login se preseleccionan (el pedido quedaba a nombre de otro).
   var sel = $('selQuien');
-  sel.innerHTML = '<option value="">Elegí quién carga</option>' + CARGADORES.map(function(n){ return '<option>' + esc(n) + '</option>'; }).join('');
-  var ini = usuarioPerfil(); if (CARGADORES.indexOf(ini) >= 0) sel.value = ini;
+  sel.innerHTML = '<option value="">— Seleccioná quién carga —</option>' + CARGADORES.map(function(n){ return '<option>' + esc(n) + '</option>'; }).join('');
   sel.addEventListener('change', actualizarQuien);
   actualizarQuien();
 }
@@ -273,6 +275,11 @@ function actualizarQuien(){
   ['bCorregir','bReprog','bCancelar'].forEach(function(id){ var b = $(id); if (b){ b.classList.toggle('bloq', !quien()); b.setAttribute('aria-disabled', quien() ? 'false' : 'true'); } });
 }
 /** Edición: nunca se hereda el usuario anterior; hay que elegirlo de nuevo para cada pedido que se abre. */
+/** Intento de avanzar sin elegir quien carga: se frena, se sacude el selector y queda el aviso titilando. */
+function sacudirQuien(){
+  var b = $('barQuien'); b.classList.remove('sacude'); void b.offsetWidth; b.classList.add('sacude');
+  llamarQuien();
+}
 function exigirQuien(){ $('selQuien').value = ''; actualizarQuien(); }
 function llamarQuien(){ window.scrollTo({top:0, behavior:'smooth'}); setTimeout(function(){ try{ $('selQuien').focus({preventScroll:true}); }catch(e){} }, 250); actualizarQuien(); }
 function pedirQuien(msgId){
@@ -515,6 +522,7 @@ function cambiarTipo(cod, tipo){
 
 /* ---------- nuevo pedido ---------- */
 function nuevoPedido(){
+  if (!quien()){ sacudirQuien(); return; }
   S.cli = null; S.fecha = ''; S.edit = null; S.idPed = FDH_COLA.nuevoId();
   $('bcCli').value = ''; pintarBusquedaCli(); ver('vCliente'); $('bcCli').focus();
 }
