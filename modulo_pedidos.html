@@ -31,6 +31,7 @@
   .quien.pide .leyQuien{display:block;animation:pideTxt 1.2s ease-in-out infinite}
   .quien.pide select{border-color:var(--marca);animation:pideSel 1.2s ease-in-out infinite}
   @keyframes pideSel{0%,100%{box-shadow:0 0 0 0 rgba(224,117,44,0)}50%{box-shadow:0 0 0 4px rgba(224,117,44,.6)}}
+  input.sacude{animation:sacude .45s;border-color:var(--marca)}
   .quien.sacude{animation:sacude .45s}
   .quien.pide .leyQuien{color:#ff8a6a}
   @keyframes sacude{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
@@ -275,6 +276,31 @@ function actualizarQuien(){
   ['bCorregir','bReprog','bCancelar'].forEach(function(id){ var b = $(id); if (b){ b.classList.toggle('bloq', !quien()); b.setAttribute('aria-disabled', quien() ? 'false' : 'true'); } });
 }
 /** Edición: nunca se hereda el usuario anterior; hay que elegirlo de nuevo para cada pedido que se abre. */
+/* ---------- campos que solo aceptan lo que corresponde ---------- */
+var SOLO_NUMEROS = ['pCant','pCar','pPanJ','pPanS','pBar','pPack','pImp','pSena','aTel'];
+var SOLO_LETRAS = ['aNom','aApe'];
+/** Un telefono son exactamente 10 numeros (sin 0, sin 15, sin +54). */
+function errorTelefono(v){
+  var n = String(v || '').replace(/\D/g, '').length;
+  if (n === 10) return '';
+  return n === 0 ? 'Falta el teléfono: son 10 números.' : 'El teléfono tiene que tener 10 números y cargaste ' + n + '.';
+}
+document.addEventListener('input', function(e){
+  var el = e.target; if (!el || el.tagName !== 'INPUT') return;
+  var esTel = el.id === 'aTel' || el.hasAttribute('data-nt');
+  var v = el.value, limpio = v;
+  if (SOLO_LETRAS.indexOf(el.id) >= 0) limpio = v.replace(/[^\p{L} ]/gu, '');
+  else if (esTel || SOLO_NUMEROS.indexOf(el.id) >= 0) limpio = v.replace(/\D/g, '');
+  var largo = false;
+  if (esTel && limpio.length > 10){ limpio = limpio.slice(0, 10); largo = true; }
+  if (limpio !== v){ var pos = el.selectionStart - (v.length - limpio.length); el.value = limpio; try{ el.setSelectionRange(Math.max(pos, 0), Math.max(pos, 0)); }catch(x){} }
+  if (largo){
+    var m = $(el.id === 'aTel' ? 'msgAlta' : 'clMsg');
+    if (m) m.innerHTML = '<div class="msg err">Un teléfono tiene 10 números: no se puede ingresar un número 11.</div>';
+    el.classList.remove('sacude'); void el.offsetWidth; el.classList.add('sacude');
+  }
+});
+
 /** Intento de avanzar sin elegir quien carga: se frena, se sacude el selector y queda el aviso titilando. */
 function sacudirQuien(){
   var b = $('barQuien'); b.classList.remove('sacude'); void b.offsetWidth; b.classList.add('sacude');
@@ -464,6 +490,7 @@ function pintarTiposAlta(){
 function guardarCliente(confirmar){
   var m = $('msgAlta'); m.innerHTML = '';
   if (!pedirQuien('msgAlta')) return;
+  var et = errorTelefono($('aTel').value); if (et){ m.innerHTML = '<div class="msg err">' + et + '</div>'; return; }
   if (!S.altaTipo){ m.innerHTML = '<div class="msg err">Elegí el tipo de cliente.</div>'; return; }
   if (!$('aNom').value.trim() || !$('aApe').value.trim()){ m.innerHTML = '<div class="msg err">Falta el nombre o el apellido.</div>'; return; }
   var b = $('bGuardaCli'); b.disabled = true; b.textContent = 'GUARDANDO…';
@@ -506,6 +533,7 @@ function cajaCambio(cod, tipo){
 function cambiarTelefono(cod){
   var inp = document.querySelector('[data-nt="' + cod + '"]'), m = $('clMsg'); m.innerHTML = '';
   if (!pedirQuien('clMsg')) return;
+  var et = errorTelefono(inp.value); if (et){ m.innerHTML = '<div class="msg err">' + et + '</div>'; return; }
   enviar({accion:'clienteTelefono', codigo:cod, telefono:inp.value, quien:quien()}).then(function(j){
     if (j.ok){ m.innerHTML = '<div class="msg ok">' + (j.sinCambios ? 'Ese ya era su teléfono.' : 'Teléfono cambiado. El número anterior quedó en el historial y el cliente conserva su código ' + esc(cod) + '.') + '</div>'; cargar(true); }
     else m.innerHTML = '<div class="msg err">' + esc(j.error || 'No se pudo cambiar') + '</div>';
@@ -742,7 +770,7 @@ document.addEventListener('click', function(e){
 $('bNuevo').onclick = nuevoPedido;
 $('bSemAnt').onclick = function(){ S.semOff = (S.semOff || 0) - 1; pintarSemana(); };
 $('bSemSig').onclick = function(){ S.semOff = (S.semOff || 0) + 1; pintarSemana(); };
-$('bClientes').onclick = function(){ $('bcCl2').value = ''; $('clMsg').innerHTML = ''; pintarClientes(); ver('vClientes'); };
+$('bClientes').onclick = function(){ if (!quien()){ sacudirQuien(); return; } $('bcCl2').value = ''; $('clMsg').innerHTML = ''; pintarClientes(); ver('vClientes'); };
 $('bAlta2').onclick = function(){ iniciarAlta('clientes'); };
 $('bAltaDesde').onclick = function(){ var q = $('bcCli').value.replace(/[0-9]/g,'').trim(); iniciarAlta('pedido', Object.keys(TIPOS).some(function(t){ return norm(t) === norm(q); }) ? '' : q); };
 $('bAltaVolver').onclick = function(){ if (S.altaVuelta === 'pedido') ver('vCliente'); else ver('vClientes'); };
